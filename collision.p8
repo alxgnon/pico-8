@@ -1,177 +1,150 @@
 pico-8 cartridge // http://www.pico-8.com
 version 14
 __lua__
--- wall collision example
--- by zep
+-- globals --------------------
 
-actor = {} --all actors in world
+actors = {}
+player = nil
 
--- make an actor
--- and add to global collection
--- x,y means center of the actor
--- in map tiles (not pixels)
-function make_actor(x, y)
- a={}
- a.x = x
- a.y = y
- a.dx = 0
- a.dy = 0
- a.spr = 16
- a.frame = 0
- a.t = 0
- a.inertia = 0.6
- a.bounce  = 1
- 
- -- half-width and half-height
- -- slightly less than 0.5 so
- -- that will fit through 1-wide
- -- holes.
- a.w = 0.4
- a.h = 0.4
- 
- add(actor,a)
- 
- return a
+
+-- actor builders -------------
+
+function gameobject(a)
+	return {
+			x = a.x or 0,
+			y = a.y or 0,
+			dx = a.dx or 0,
+			dy = a.dy or 0,
+			spr = a.spr or 16,
+			frame = a.frame or 0,
+			t = a.t or 0,
+			inertia = a.inertia or 0.6,
+			bounce = a.bounce or 1,
+			w = a.w or 0.4,
+			h = a.h or 0.4,
+	}
 end
+
+function spawn(a)
+	local a = gameobject(a)
+	add(actors, a)
+	return a
+end
+
+
+-- init -----------------------
 
 function _init()
- -- make player top left
- pl = make_actor(2,2)
- pl.spr = 17
- 
- -- make a bouncy ball
- local ball = make_actor(8.5,7.5)
- ball.spr = 33
- ball.dx=0.05
- ball.dy=-0.1
- ball.inertia=1
- 
- -- make less bouncy ball
- local ball = make_actor(7,5)
- ball.spr = 49
- ball.dx=-0.1
- ball.dy=0.15
- ball.inertia=1
- ball.bounce = 0.8
- 
+	player = spawn{x=2, y=2, spr=17}
+
+	spawn{x=8.5, y=7.5, spr=33,
+		dx=0.05, dy=-0.1, inertia=1}
+	
+	spawn{x=7, y=5, spr=49,
+		dx=-0.1, dy=0.15, inertia=1,
+		bounce=0.8}
 end
 
--- for any given point on the
--- map, true if there is wall
--- there.
 
-function solid(x, y)
+-- collision ------------------
 
- -- grab the cell value
- val=mget(x, y)
- 
- -- check if flag 1 is set (the
- -- orange toggle button in the 
- -- sprite editor)
- return fget(val, 1)
- 
+-- is map tile solid?
+function solid(x,y)
+	return fget(mget(x,y), 1)
 end
 
--- solid_area
--- check if a rectangle overlaps
--- with any walls
-
---(this version only works for
---actors less than one tile big)
-
-function solid_area(x,y,w,h)
-
- return 
-  solid(x-w,y-h) or
-  solid(x+w,y-h) or
-  solid(x-w,y+h) or
-  solid(x+w,y+h)
+-- does rect overlap any solids?
+-- todo: support large actors
+function solidarea(x,y, w,h)
+	return
+		solid(x-w,y-h) or
+		solid(x+w,y-h) or
+		solid(x-w,y+h) or
+		solid(x+w,y+h)
 end
 
-function move_actor(a)
-
- -- only move actor along x
- -- if the resulting position
- -- will not overlap with a wall
-
- if not solid_area(a.x + a.dx, 
-  a.y, a.w, a.h) then
-  a.x += a.dx
- else   
-  -- otherwise bounce
-  a.dx *= -a.bounce
-  sfx(2)
- end
-
- -- ditto for y
-
- if not solid_area(a.x, 
-  a.y + a.dy, a.w, a.h) then
-  a.y += a.dy
- else
-  a.dy *= -a.bounce
-  sfx(2)
- end
- 
- -- apply inertia
- -- set dx,dy to zero if you
- -- don't want inertia
- 
- a.dx *= a.inertia
- a.dy *= a.inertia
- 
- -- advance one frame every
- -- time actor moves 1/4 of
- -- a tile
- 
- a.frame += abs(a.dx) * 4
- a.frame += abs(a.dy) * 4
- a.frame %= 2 -- always 2 frames
-
- a.t += 1
- 
+function collidex(a)
+	if not solidarea(
+			a.x+a.dx,a.y, a.w,a.h) then
+		a.x += a.dx
+	else
+		a.dx *= -a.bounce
+		sfx(2)
+	end
 end
 
-function control_player(pl)
+function collidey(a)
+	if not solidarea(
+			a.x,a.y+a.dy, a.w,a.h) then
+		a.y += a.dy
+	else
+		a.dy *= -a.bounce
+		sfx(2)
+	end
+end
 
- -- how fast to accelerate
- accel = 0.1
- if (btn(0)) pl.dx -= accel 
- if (btn(1)) pl.dx += accel 
- if (btn(2)) pl.dy -= accel 
- if (btn(3)) pl.dy += accel 
 
- -- play a sound if moving
- -- (every 4 ticks)
- 
- if (abs(pl.dx)+abs(pl.dy) > 0.1
-     and (pl.t%4) == 0) then
-  sfx(1)
- end
- 
+-- other systems --------------
+
+function inertia(a)
+	a.dx *= a.inertia
+	a.dy *= a.inertia
+end
+
+-- +1 frame every 1/4 tile
+function animate(a)
+	a.frame += abs(a.dx) * 4
+	a.frame += abs(a.dy) * 4
+	a.frame %= 2 -- always 2 frames
+end
+
+
+-- player control -------------
+
+function control(a)
+	accel = 0.1
+	if (btn(0)) a.dx -= accel 
+	if (btn(1)) a.dx += accel 
+	if (btn(2)) a.dy -= accel 
+	if (btn(3)) a.dy += accel 
+
+	-- moving sfx (every 4 ticks)
+	if abs(a.dx)+abs(a.dy) > 0.1
+			and (a.t%4) == 0 then
+		sfx(1)
+	end
+end
+
+
+-- update ---------------------
+
+function act(a)
+	a.t += 1
+	collidex(a)
+	collidey(a)
+	inertia(a)
+	animate(a)
 end
 
 function _update()
- control_player(pl)
- foreach(actor, move_actor)
+	control(player)
+	foreach(actors, act)
 end
 
-function draw_actor(a)
- local sx = (a.x * 8) - 4
- local sy = (a.y * 8) - 4
- spr(a.spr + a.frame, sx, sy)
+
+-- draw -----------------------
+
+function drawactor(a)
+	local sx = a.x * 8 - 4
+	local sy = a.y * 8 - 4
+	spr(a.spr + a.frame, sx, sy)
 end
 
 function _draw()
- cls()
- map(0,0,0,0,16,16)
- foreach(actor,draw_actor)
- 
- print("x "..pl.x,0,120,7)
- print("y "..pl.y,64,120,7)
- 
+	cls()
+	map(0,0,0,0,16,16)
+	foreach(actors, drawactor)
 end
-
 __gfx__
 000000003bbbbbb7dccccc770cccccc0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 000000003000000bd0000077d000007c101110100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
