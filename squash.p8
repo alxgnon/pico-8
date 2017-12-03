@@ -1,59 +1,18 @@
 pico-8 cartridge // http://www.pico-8.com
 version 14
 __lua__
--- lives ----------------------
+-- states ---------------------
 
-lives=3
+function reset()
+	lives=3
+	score=0
 
-function livesdraw()
-	for i=1,lives do
-		spr(001,90+i*8,4)
-	end
-end
+	ballx=64 bally=64
+	ballxdir=5 ballydir=-3
+	ballsize=3
 
--- score ----------------------
-
-score=0
-
-function scoredraw()
-	print(score,12,6,15)
-end
-
--- background -----------------
-
-function bgdraw()
-	rectfill(0,0,128,128,3)
-end
-
--- ball -----------------------
-
-ballx=64 bally=64
-ballxdir=5 ballydir=-3
-ballsize=3
-
-function ballmove()
-	ballx+=ballxdir
-	bally+=ballydir
-end
-
-function ballbounce()
-	-- left
-	if ballx<ballsize then
-		ballxdir=-ballxdir
-		sfx(0)
-	end
-	
-	-- right
-	if ballx>128-ballsize then
-		ballxdir=-ballxdir
-		sfx(0)
-	end
-	
-	-- top
-	if bally<ballsize then
-		ballydir=-ballydir	
-		sfx(0)
-	end
+	padx=52 pady=122
+	padw=24 padh=4
 end
 
 function dieanotherday()
@@ -68,7 +27,60 @@ function gameover()
 	bally=64
 end
 
-function ballkill()
+-- paddle movement ------------
+
+function movepaddle()
+	if btn(0) then
+		padx-=3
+	elseif btn(1) then
+		padx+=3
+	end
+end
+
+-- ball movement --------------
+
+function moveball()
+	ballx+=ballxdir
+	bally+=ballydir
+end
+
+function bounce(vert, sfn)
+	sfx(sfn or 0)
+
+	if vert then
+		ballydir=-ballydir
+	else
+		ballxdir=-ballxdir
+	end
+end
+
+function bounceball()
+	if ballx<ballsize then
+		bounce()
+	end
+
+	if ballx>128-ballsize then
+		bounce()
+	end
+
+	if bally<ballsize then
+		bounce(true)
+	end
+end
+
+function bouncepaddle()
+	if ballx>=padx and
+			ballx<=padx+padw and
+			bally>pady then
+			
+		bounce(true, 1)
+		score+=10
+	end
+end
+
+-- losing ---------------------
+
+function killball()
 	if bally>128-ballsize then
 		if lives>0 then
 			dieanotherday()
@@ -78,58 +90,43 @@ function ballkill()
 	end
 end
 
-function balldraw()
-	circfill(ballx,bally,ballsize,15)
-end
-
--- paddle ---------------------
-
-padx=52 pady=122
-padw=24 padh=4
-
-function padmove()
-	if btn(0) then
-		padx-=3
-	elseif btn(1) then
-		padx+=3
-	end
-end
-
-function padbounce()
-	if ballx>=padx and
-			ballx<=padx+padw and
-			bally>pady then
-			
-		ballydir=-ballydir
-		score+=10
-		sfx(1)
-	end
-end
-
-function paddraw()
- rectfill(padx,pady,
- 	padx+padw,pady+padh,
- 	15)
-end
-
 -- update ---------------------
 
+reset()
+
 function _update()
-	padmove()
-	ballbounce()
-	padbounce()
-	ballmove()
-	ballkill()
+	movepaddle()
+	bounceball()
+	bouncepaddle()
+	moveball()
+	killball()
 end
 
 -- draw -----------------------
 
 function _draw()
-	bgdraw()
-	livesdraw()
-	scoredraw()
-	paddraw()
-	balldraw()
+	-- background
+	rectfill(0,0,128,128,3)
+
+	-- lives
+	for i=1,lives do
+		spr(001,90+i*8,4)
+	end
+
+	-- score
+	print(score,12,6,15)
+
+	-- paddle
+	rectfill(
+		padx,pady,
+		padx+padw,pady+padh,
+		15)
+	
+	-- ball
+	circfill(
+		ballx,bally,
+		ballsize,
+		15)
 end
 __gfx__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
