@@ -14,6 +14,10 @@ function new(name)
 		return self
 	end
 
+	function a:die()
+		del(actors, self)
+	end
+
 	add(actors, a)
 	return a
 end
@@ -92,6 +96,33 @@ function collidey(a)
 		a.y += a.dy
 	end
 end
+
+
+-- killzoneable ---------------
+
+function rect(x,y, w,h)
+	return {x=x,y=y, w=w,h=h}
+end
+
+function killzoneable(x,y, w,h)
+	local killzone = rect(x,y,w,h)
+	return {killzone=killzone}
+end
+
+function is_killzoneable(a)
+	return a.killzone
+end
+
+function killzone(a)
+	if is_killzoneable(a) then
+		local kz = a.killzone
+
+		if a.x < kz.x then
+			a:die()
+		end
+	end
+end
+
 
 
 -- controllable ---------------
@@ -264,6 +295,7 @@ function _init()
 	:xt(movable(0.125))
 	:xt(collideable(0.3))
 	:xt(palable())
+	:xt(killzoneable(-10))
 end
 
 function act(a)
@@ -271,6 +303,7 @@ function act(a)
 	control(a)
 	collidex(a)
 	collidey(a)
+	killzone(a)
 	animate(a)
 end
 
