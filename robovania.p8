@@ -104,24 +104,50 @@ function is_controllable(a)
 	return a.player
 end
 
-function readinput(a)
+function joyread(a)
 	a.b0 = btn(0, a.player)
 	a.b1 = btn(1, a.player)
 	a.b2 = btn(2, a.player)
 	a.b3 = btn(3, a.player)
 end
 
+function joymoving(a)
+	return a.b0 or a.b1
+		or a.b2 or a.b3
+end
+
+function joymove(a, mult)
+	mult = mult or 1
+
+	a.dx = 0
+	a.dy = 0
+
+	if (a.b0) a.dx -= a.speed*mult
+	if (a.b1) a.dx += a.speed*mult
+	if (a.b2) a.dy -= a.speed*mult
+	if (a.b3) a.dy += a.speed*mult
+end
+
 function control(a)
 	if is_controllable(a) then
-		readinput(a)
+		if btn(4, a.player) and
+				a.t > (a.dashready or 0) then
+			-- dash
+			joyread(a)
+			if not joymoving(a) then
+				a.b0 = a.flipx
+				a.b1 = not a.flipx
+			end
+			joymove(a, 3)
 
-		a.dx = 0
-		a.dy = 0
-
-		if (a.b0) a.dx -= a.speed
-		if (a.b1) a.dx += a.speed
-		if (a.b2) a.dy -= a.speed
-		if (a.b3) a.dy += a.speed
+			a.dashtime = a.t + 6
+			a.dashready = a.t + 40
+		end
+		
+		if a.t > (a.dashtime or 0) then
+			joyread(a)
+			joymove(a)
+		end
 	end
 end
 
@@ -149,11 +175,10 @@ function draw(a)
 end
 
 
--- -- animateable -------------
+-- animateable ----------------
 
 function animate(a)
-	if not (a.b0 or a.b1
-			or a.b2 or a.b3) then
+	if not joymoving(a) then
 		-- idle
 		if a.t > (a.eyeoff or 0) then
 			a.frame = 0
