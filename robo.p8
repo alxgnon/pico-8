@@ -2,6 +2,7 @@ pico-8 cartridge // http://www.pico-8.com
 version 14
 __lua__
 actors = {}
+pl = "player"
 
 function new(name)
 	local a = {name=name}
@@ -15,6 +16,7 @@ function new(name)
 	end
 
 	function a:die()
+		a.dead = true
 		del(actors, self)
 	end
 
@@ -288,14 +290,14 @@ end
 -- main -----------------------
 
 function _init()
-	new("player")
+	pl = new("player")
 	:xt(controllable())
 	:xt(drawable(33))
 	:xt(posable(3, 3))
 	:xt(movable(0.125))
 	:xt(collideable(0.3))
 	:xt(palable())
-	:xt(killzoneable(-10))
+	:xt(killzoneable(-1))
 end
 
 function act(a)
@@ -312,7 +314,15 @@ function _update()
 end
 
 function _draw()
-	cls(1)
+	cls()
+
+	-- light effect
+	if pl.t > (pl.dashready or 0)
+			and pl.x > 0.9 then
+		local q = 0.256
+		circfill(pl.x*8-q,pl.y*8-q,q*128,1)
+	end
+
 	map(0,0,0,0,16,16)
 	foreach(actors, draw)
 end
