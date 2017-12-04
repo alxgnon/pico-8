@@ -1,45 +1,62 @@
 pico-8 cartridge // http://www.pico-8.com
 version 14
 __lua__
--- globals --------------------
-
 actors = {}
-player = nil
 
+function new()
+	local a = {}
+ 
+	-- extend
+	function a:xt(o)
+		for k, v in pairs(o) do
+			self[k] = v
+		end
+		return self
+	end
 
--- actor builders -------------
-
-function gameobject(a)
-	return {
-			x = a.x or 0,
-			y = a.y or 0,
-			dx = a.dx or 0,
-			dy = a.dy or 0,
-			speed = a.speed or 0,
-			spr = a.spr or 16,
-			frame = a.frame or 0,
-			t = a.t or 0,
-			w = a.w or 0.4,
-			h = a.h or 0.4,
-	}
-end
-
-function spawn(a)
-	local a = gameobject(a)
 	add(actors, a)
 	return a
 end
 
 
--- init -----------------------
+-- timeable -------------------
 
-function _init()
-	player = spawn{x=3, y=3, spr=17,
-		speed = 0.18}
+function time(a)
+	a.t = (a.t or 0) + 1
 end
 
 
--- collision ------------------
+-- posable --------------------
+
+function posable(x, y)
+	return {x=x or 0, y=y or 0}
+end
+
+function is_posable(a)
+	return a.x and a.y
+end
+
+
+-- movable --------------------
+
+function moveable(speed, dx, dy)
+	return {
+		speed = speed or 0.25,
+		dx = dx or 0,
+		dy = dy or 0,
+	}
+end
+
+
+-- collideable ----------------
+
+function collideable(w, h)
+	return {w=w or 0.4, h=h or 0.4}
+end
+
+function is_collideable(a)
+	return a.w and a.h
+end
 
 -- is map tile solid?
 function solid(x,y)
@@ -57,7 +74,8 @@ function solidarea(x,y, w,h)
 end
 
 function collidex(a)
-	if solidarea(a.x+a.dx,a.y,
+	if is_collideable(a) and
+			solidarea(a.x+a.dx,a.y,
 			a.w,a.h) then
 
 	else
@@ -66,7 +84,8 @@ function collidex(a)
 end
 
 function collidey(a)
-	if solidarea(a.x,a.y+a.dy,
+	if is_collideable(a) and
+			solidarea(a.x,a.y+a.dy,
 			a.w,a.h) then
 
 	else
@@ -75,27 +94,64 @@ function collidey(a)
 end
 
 
--- player control -------------
+-- controllable ---------------
+
+function controllable(player)
+	return {player=player or 0}
+end
+
+function is_controllable(a)
+	return a.player
+end
+
+function readinput(a)
+	a.b0 = btn(0, a.player)
+	a.b1 = btn(1, a.player)
+	a.b2 = btn(2, a.player)
+	a.b3 = btn(3, a.player)
+end
 
 function control(a)
-	a.b0 = btn(0)
-	a.b1 = btn(1)
-	a.b2 = btn(2)
-	a.b3 = btn(3)
+	if is_controllable(a) then
+		readinput(a)
 
-	a.dx = 0
-	a.dy = 0
+		a.dx = 0
+		a.dy = 0
 
-	if (a.b0) a.dx -= a.speed
-	if (a.b1) a.dx += a.speed
-	if (a.b2) a.dy -= a.speed
-	if (a.b3) a.dy += a.speed
+		if (a.b0) a.dx -= a.speed
+		if (a.b1) a.dx += a.speed
+		if (a.b2) a.dy -= a.speed
+		if (a.b3) a.dy += a.speed
+	end
 end
 
 
--- animate --------------------
+-- drawable -------------------
 
-function animplayer(a)
+function drawable(spr, frame)
+	return {
+		spr = spr or 16,
+		frame = frame or 0,
+	}
+end
+
+function is_drawable(a)
+	return a.spr and a.frame and
+		is_posable(a)
+end
+
+function draw(a)
+	if is_drawable(a) then
+		spr(a.spr+a.frame,
+			a.x*8-4, a.y*8-4,
+			1, 1, a.flipx, a.flipy)
+	end
+end
+
+
+-- -- animateable -------------
+
+function animate(a)
 	if not (a.b0 or a.b1
 			or a.b2 or a.b3) then
 		-- idle
@@ -125,34 +181,33 @@ function animplayer(a)
 end
 
 
--- update ---------------------
+-- main -----------------------
+
+function _init()
+	new() -- player
+	:xt(controllable())
+	:xt(drawable(17))
+	:xt(posable(3, 3))
+	:xt(moveable(0.125))
+	:xt(collideable(0.3))
+end
 
 function act(a)
-	a.t += 1
+	time(a)
+	control(a)
 	collidex(a)
 	collidey(a)
+	animate(a)
 end
 
 function _update()
-	control(player)
-	animplayer(player)
 	foreach(actors, act)
-end
-
-
--- draw -----------------------
-
-function drawactor(a)
-	local sx = a.x * 8 - 4
-	local sy = a.y * 8 - 4
-	spr(a.spr+a.frame, sx,sy, 1,1,
-		a.flipx)
 end
 
 function _draw()
 	cls()
 	map(0,0,0,0,16,16)
-	foreach(actors, drawactor)
+	foreach(actors, draw)
 end
 __gfx__
 00000000111111117777777700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
@@ -163,14 +218,14 @@ __gfx__
 00000000111111117777777700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000111111117777777700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000111111117777777700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-aaaaaaaa030003000300030003000300030003000300030000000000000000000000000000000000000000000000000000000000000000000000000000000000
-a000000a033333300333333003333330033333300333333000000000000000000000000000000000000000000000000000000000000000000000000000000000
-a000000a031111100311991003119910031111100311bb1000000000000000000000000000000000000000000000000000000000000000000000000000000000
-a000000a031111100311991003111110031199100311bb1000000000000000000000000000000000000000000000000000000000000000000000000000000000
-a000000a033333300333333003333330033333300333333000000000000000000000000000000000000000000000000000000000000000000000000000000000
+aaaaaaaa030003000300030003000300030003000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+a000000a033333300333333003333330033333300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+a000000a031111100311991003119910031111100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+a000000a031111100311991003111110031199100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+a000000a033333300333333003333330033333300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 a000000a01111110011111100111111001111110bbbbbbbb00000000000000000000000000000000000000000000000000000000000000000000000000000000
-a000000a033333300333333003333330033333300333333000000000000000000000000000000000000000000000000000000000000000000000000000000000
-aaaaaaaa003333000033330000333300003333000033330000000000000000000000000000000000000000000000000000000000000000000000000000000000
+a000000a033333300333333003333330033333300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+aaaaaaaa003333000033330000333300003333000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
