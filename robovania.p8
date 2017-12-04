@@ -168,9 +168,17 @@ end
 
 function draw(a)
 	if is_drawable(a) then
+		if a.pal then
+			for c0,c1 in pairs(a.pal) do
+				pal(c0, c1)
+			end
+		end
+
 		spr(a.spr+a.frame,
 			a.x*8-4, a.y*8-4,
 			1, 1, a.flipx, a.flipy)
+
+		if (a.pal) pal()
 	end
 end
 
@@ -178,6 +186,13 @@ end
 -- animateable ----------------
 
 function animate(a)
+	if a.t <= (a.dashready or 0) then
+		a.pal = {}
+		a.pal[11] = 9
+	else
+		a.pal = nil
+	end
+
 	if not joymoving(a) then
 		-- idle
 		if a.t > (a.eyeoff or 0) then
