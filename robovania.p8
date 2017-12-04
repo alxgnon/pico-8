@@ -168,17 +168,38 @@ end
 
 function draw(a)
 	if is_drawable(a) then
-		if a.pal then
-			for c0,c1 in pairs(a.pal) do
-				pal(c0, c1)
-			end
-		end
+		palon(a)
 
 		spr(a.spr+a.frame,
 			a.x*8-4, a.y*8-4,
 			1, 1, a.flipx, a.flipy)
 
-		if (a.pal) pal()
+		paloff(a)
+	end
+end
+
+
+-- palable --------------------
+
+function palable(pal)
+	return {pal=pal or {}}
+end
+
+function is_palable(a)
+	return a.pal
+end
+
+function palon(a)
+	if is_palable(a) then
+		for c0,c1 in pairs(a.pal) do
+			pal(c0,c1)
+		end
+	end
+end
+
+function paloff(a)
+	if is_palable(a) then
+		pal()
 	end
 end
 
@@ -187,10 +208,9 @@ end
 
 function animate(a)
 	if a.t <= (a.dashready or 0) then
-		a.pal = {}
 		a.pal[11] = 9
 	else
-		a.pal = nil
+		a.pal[11] = nil
 	end
 
 	if not joymoving(a) then
@@ -230,6 +250,7 @@ function _init()
 	:xt(posable(3, 3))
 	:xt(moveable(0.125))
 	:xt(collideable(0.3))
+	:xt(palable())
 end
 
 function act(a)
