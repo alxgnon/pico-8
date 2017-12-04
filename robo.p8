@@ -1,6 +1,7 @@
 pico-8 cartridge // http://www.pico-8.com
 version 14
 __lua__
+t = 0
 actors = {}
 pl = "player"
 
@@ -310,7 +311,29 @@ function act(a)
 end
 
 function _update()
+	t += 1
 	foreach(actors, act)
+end
+
+
+-- draw -----------------------
+
+function animap(x,y, w,h)
+	for i=x, x+w do
+		for j=y, y+h do
+			local spr = mget(i,j)
+			
+			if fget(spr, 7) then	
+				if spr % 2 == 0 then
+					spr+=1
+				else
+					spr-=1
+				end
+				
+				mset(i,j, spr)
+			end
+		end
+	end
 end
 
 function _draw()
@@ -327,6 +350,10 @@ function _draw()
 		circfill(pl.x*8-q,pl.y*8-q,q*128,1)
 	end
 
+	if t % 4 == 0 then
+		animap(camx/8,camy/8,16,16)
+	end
+	
 	map(camx/8,camy/8,camx,camy,16,16)
 	foreach(actors, draw)
 end
