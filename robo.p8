@@ -130,19 +130,11 @@ end
 
 -- controllable ---------------
 
-function controllable(player)
-	return {player=player or 0}
-end
-
-function is_controllable(a)
-	return a.player
-end
-
 function joyread(a)
-	a.b0 = btn(0, a.player)
-	a.b1 = btn(1, a.player)
-	a.b2 = btn(2, a.player)
-	a.b3 = btn(3, a.player)
+	a.b0 = btn(0)
+	a.b1 = btn(1)
+	a.b2 = btn(2)
+	a.b3 = btn(3)
 end
 
 function joymoving(a)
@@ -163,32 +155,30 @@ function joymove(a, mult)
 end
 
 function control(a)
-	if is_controllable(a) then
-		if a.t > (a.dashready or 0) then
-			if btn(4, a.player) then
-				-- dash
-				joyread(a)
-				if not joymoving(a) then
-					a.b0 = a.flipx
-					a.b1 = not a.flipx
-				end
-				joymove(a, 3)
-
-				a.dashtime = a.t + 6
-				a.dashready = a.t + 40
-
-				sfx(1)
-				
-			elseif a.dashready then
-				sfx(2)
-				a.dashready = nil
-			end
-		end
-		
-		if a.t > (a.dashtime or 0) then
+	if a.t > (a.dashready or 0) then
+		if btn(4) then
+			-- dash
 			joyread(a)
-			joymove(a)
+			if not joymoving(a) then
+				a.b0 = a.flipx
+				a.b1 = not a.flipx
+			end
+			joymove(a, 3)
+
+			a.dashtime = a.t + 6
+			a.dashready = a.t + 40
+
+			sfx(1)
+			
+		elseif a.dashready then
+			sfx(2)
+			a.dashready = nil
 		end
+	end
+		
+	if a.t > (a.dashtime or 0) then
+		joyread(a)
+		joymove(a)
 	end
 end
 
@@ -292,7 +282,6 @@ end
 
 function _init()
 	pl = new("player")
-	:xt(controllable())
 	:xt(drawable(33))
 	:xt(posable(3, 3))
 	:xt(movable(0.125))
@@ -302,8 +291,6 @@ function _init()
 end
 
 function act(a)
-	time(a)
-	control(a)
 	collidex(a)
 	collidey(a)
 	killzone(a)
@@ -312,6 +299,9 @@ end
 
 function _update()
 	t += 1
+	foreach(actors, time)
+
+	control(pl)
 	foreach(actors, act)
 end
 
