@@ -19,123 +19,123 @@ camx,camy = 0,0
 -- extendable -----------------
 
 function new(name)
-	local a = {name=name}
+ local a = {name=name}
 
-	function a:xt(o)
-		for k, v in pairs(o) do
-			self[k] = v
-		end
-		return self
-	end
+ function a:xt(o)
+  for k, v in pairs(o) do
+   self[k] = v
+  end
+  return self
+ end
 
-	function a:die()
-		a.dead = true
-		del(actors, self)
-	end
+ function a:die()
+  a.dead = true
+  del(actors, self)
+ end
 
-	add(actors, a)
-	return a
+ add(actors, a)
+ return a
 end
 
 
 -- timeable -------------------
 
 function time(a)
-	a.t = (a.t or 0) + 1
+ a.t = (a.t or 0) + 1
 end
 
 
 -- posable --------------------
 
 function posable(x, y)
-	return {x=x or 0, y=y or 0}
+ return {x=x or 0, y=y or 0}
 end
 
 function is_posable(a)
-	return a.x and a.y
+ return a.x and a.y
 end
 
 
 -- movable --------------------
 
 function movable(speed, dx, dy)
-	return {
-		speed = speed or 0.25,
-		dx = dx or 0,
-		dy = dy or 0,
-	}
+ return {
+  speed = speed or 0.25,
+  dx = dx or 0,
+  dy = dy or 0,
+ }
 end
 
 
 -- collideable ----------------
 
 function collideable(w, h)
-	return {w=w or 0.4, h=h or 0.4}
+ return {w=w or 0.4, h=h or 0.4}
 end
 
 function is_collideable(a)
-	return a.w and a.h
+ return a.w and a.h
 end
 
 -- is map tile solid?
 function solid(x,y)
-	return fget(mget(x,y), 1)
+ return fget(mget(x,y), 1)
 end
 
 -- does rect overlap any solids?
 -- todo: support large actors
 function solidarea(x,y, w,h)
-	return
-		solid(x-w,y-h) or
-		solid(x+w,y-h) or
-		solid(x-w,y+h) or
-		solid(x+w,y+h)
+ return
+  solid(x-w,y-h) or
+  solid(x+w,y-h) or
+  solid(x-w,y+h) or
+  solid(x+w,y+h)
 end
 
 function collidex(a)
-	if is_collideable(a) and
-			solidarea(a.x+a.dx,a.y,
-			a.w,a.h) then
+ if is_collideable(a) and
+   solidarea(a.x+a.dx,a.y,
+   a.w,a.h) then
 
-	else
-		a.x += a.dx
-	end
+ else
+  a.x += a.dx
+ end
 end
 
 function collidey(a)
-	if is_collideable(a) and
-			solidarea(a.x,a.y+a.dy,
-			a.w,a.h) then
+ if is_collideable(a) and
+   solidarea(a.x,a.y+a.dy,
+   a.w,a.h) then
 
-	else
-		a.y += a.dy
-	end
+ else
+  a.y += a.dy
+ end
 end
 
 
 -- killzoneable ---------------
 
 function rect(x,y, w,h)
-	return {x=x,y=y, w=w,h=h}
+ return {x=x,y=y, w=w,h=h}
 end
 
 function killzoneable(x,y, w,h)
-	local killzone = rect(x,y,w,h)
-	return {killzone=killzone}
+ local killzone = rect(x,y,w,h)
+ return {killzone=killzone}
 end
 
 function is_killzoneable(a)
-	return a.killzone
+ return a.killzone
 end
 
 function killzone(a)
-	if is_killzoneable(a) then
-		local kz = a.killzone
+ if is_killzoneable(a) then
+  local kz = a.killzone
 
-		if a.x < kz.x then
-			a:die()
-		end
-	end
+  if a.x < kz.x then
+   a:die()
+  end
+ end
 end
 
 
@@ -143,169 +143,169 @@ end
 -- controllable ---------------
 
 function joyread(a)
-	a.b0 = btn(0)
-	a.b1 = btn(1)
-	a.b2 = btn(2)
-	a.b3 = btn(3)
+ a.b0 = btn(0)
+ a.b1 = btn(1)
+ a.b2 = btn(2)
+ a.b3 = btn(3)
 end
 
 function joymoving(a)
-	return a.b0 or a.b1
-		or a.b2 or a.b3
+ return a.b0 or a.b1
+  or a.b2 or a.b3
 end
 
 function joymove(a, mult)
-	mult = mult or 1
+ mult = mult or 1
 
-	a.dx = 0
-	a.dy = 0
+ a.dx = 0
+ a.dy = 0
 
-	if (a.b0) a.dx -= a.speed*mult
-	if (a.b1) a.dx += a.speed*mult
-	if (a.b2) a.dy -= a.speed*mult
-	if (a.b3) a.dy += a.speed*mult
+ if (a.b0) a.dx -= a.speed*mult
+ if (a.b1) a.dx += a.speed*mult
+ if (a.b2) a.dy -= a.speed*mult
+ if (a.b3) a.dy += a.speed*mult
 end
 
 function control(a)
-	if a.t > (a.dashready or 0) then
-		if a.dashready then
-			sfx(2)
-			a.dashready = nil
-		end
-		
-		if btn(5) then
-			if not a.atk then
-				sfx(3, 3)
-			end
-			
-			a.atk = true
-			a.dx = 0
-			a.dy = 0
-			return
-		end
-		
-		a.atk = false
-		sfx(-2, 3)
-		
-		if btn(4) then
-			sfx(1) -- dash
+ if a.t > (a.dashready or 0) then
+  if a.dashready then
+   sfx(2)
+   a.dashready = nil
+  end
+  
+  if btn(5) then
+   if not a.atk then
+    sfx(3, 3)
+   end
+   
+   a.atk = true
+   a.dx = 0
+   a.dy = 0
+   return
+  end
+  
+  a.atk = false
+  sfx(-2, 3)
+  
+  if btn(4) then
+   sfx(1) -- dash
 
-			joyread(a)
-			if not joymoving(a) then
-				a.b0 = a.flipx
-				a.b1 = not a.flipx
-			end
-			joymove(a, 3)
+   joyread(a)
+   if not joymoving(a) then
+    a.b0 = a.flipx
+    a.b1 = not a.flipx
+   end
+   joymove(a, 3)
 
-			a.dashtime = a.t + 6
-			a.dashready = a.t + 40
-			end
-	end
-		
-	if a.t > (a.dashtime or 0) then
-		joyread(a)
-		joymove(a)
-	end
+   a.dashtime = a.t + 6
+   a.dashready = a.t + 40
+   end
+ end
+  
+ if a.t > (a.dashtime or 0) then
+  joyread(a)
+  joymove(a)
+ end
 end
 
 
 -- drawable -------------------
 
 function drawable(spr, frame)
-	return {
-		spr = spr or 32,
-		frame = frame or 0,
-	}
+ return {
+  spr = spr or 32,
+  frame = frame or 0,
+ }
 end
 
 function is_drawable(a)
-	return a.spr and a.frame and
-		is_posable(a)
+ return a.spr and a.frame and
+  is_posable(a)
 end
 
 function draw(a)
-	if is_drawable(a) then
-		palon(a)
+ if is_drawable(a) then
+  palon(a)
 
-		spr(a.spr+a.frame,
-			a.x*8-4, a.y*8-4,
-			1, 1, a.flipx, a.flipy)
+  spr(a.spr+a.frame,
+   a.x*8-4, a.y*8-4,
+   1, 1, a.flipx, a.flipy)
 
-		paloff(a)
-	end
+  paloff(a)
+ end
 end
 
 
 -- palable --------------------
 
 function palable(pal)
-	return {pal=pal or {}}
+ return {pal=pal or {}}
 end
 
 function is_palable(a)
-	return a.pal
+ return a.pal
 end
 
 function palon(a)
-	if is_palable(a) then
-		for c0,c1 in pairs(a.pal) do
-			pal(c0,c1)
-		end
-	end
+ if is_palable(a) then
+  for c0,c1 in pairs(a.pal) do
+   pal(c0,c1)
+  end
+ end
 end
 
 function paloff(a)
-	if is_palable(a) then
-		pal()
-	end
+ if is_palable(a) then
+  pal()
+ end
 end
 
 
 -- animateable ----------------
 
 function animate(a)
-	if a.t <= (a.dashtime or 0) then
-		a.pal[3] = 1
-	else
-		a.pal[3] = nil
-	end
+ if a.t <= (a.dashtime or 0) then
+  a.pal[3] = 1
+ else
+  a.pal[3] = nil
+ end
 
-	if a.t <= (a.dashready or 0) then
-		a.pal[9] = 11
-	else
-		a.pal[9] = nil
-	end
-	
-	if a.atk then
-		a.frame = 4
-		return
-	end
+ if a.t <= (a.dashready or 0) then
+  a.pal[9] = 11
+ else
+  a.pal[9] = nil
+ end
+ 
+ if a.atk then
+  a.frame = 4
+  return
+ end
 
-	if not joymoving(a) then
-		-- idle
-		if a.t > (a.eyeoff or 0) then
-			a.frame = 0
-		else
-			a.frame = 1
-		end
+ if not joymoving(a) then
+  -- idle
+  if a.t > (a.eyeoff or 0) then
+   a.frame = 0
+  else
+   a.frame = 1
+  end
 
-	else
-		-- moving
-		a.eyeoff = a.t + 40
-		if a.b2 then
-			a.frame = 2
-		elseif a.b3 then
-			a.frame = 3
-		else
-			a.frame = 1
-		end
+ else
+  -- moving
+  a.eyeoff = a.t + 40
+  if a.b2 then
+   a.frame = 2
+  elseif a.b3 then
+   a.frame = 3
+  else
+   a.frame = 1
+  end
 
-		if a.b0 then
-			a.flipx = true
-		elseif a.b1 then
-			a.flipx = false
-		end
-	end
+  if a.b0 then
+   a.flipx = true
+  elseif a.b1 then
+   a.flipx = false
+  end
+ end
 end
 
 
@@ -314,19 +314,19 @@ end
 room = {x = 0, y = 0}
 
 function snap(x, grid)
-	flr(x / grid) * grid
+ flr(x / grid) * grid
 end
 
 function room.watch(pl)
-	local rx, ry =
-		max(0, snap(pl.x, 16)),
-		max(0, snap(pl.y, 16))
+ local rx, ry =
+  max(0, snap(pl.x, 16)),
+  max(0, snap(pl.y, 16))
 
-	if room.x != rx and
-			room.y != ry do
-		room.leave()
-		room.enter(rx, ry)
-	end
+ if room.x != rx and
+   room.y != ry do
+  room.leave()
+  room.enter(rx, ry)
+ end
 end
 
 function room.leave(pl)
@@ -338,117 +338,117 @@ end
 -- main -----------------------
 
 function _init()
-	pl = new("player")
-	:xt(drawable(33))
-	:xt(posable(3, 3))
-	:xt(movable(0.125))
-	:xt(collideable(0.3))
-	:xt(palable())
-	:xt(killzoneable(-1))
+ pl = new("player")
+ :xt(drawable(33))
+ :xt(posable(3, 3))
+ :xt(movable(0.125))
+ :xt(collideable(0.3))
+ :xt(palable())
+ :xt(killzoneable(-1))
 end
 
 function act(a)
-	collidex(a)
-	collidey(a)
-	killzone(a)
-	animate(a)
+ collidex(a)
+ collidey(a)
+ killzone(a)
+ animate(a)
 end
 
 function open_barriers_for(a)
-	if a.atk then
-		local ax,ay = a.x,a.y
-		
-		local open = false
-		
- 	for i=ax-2, ax+2 do
- 		for j=ay-2, ay+2 do
- 			local spr = mget(i,j)
- 			
- 			if spr == switch then
- 				mset(i,j, switch+1)
- 				open = true
- 			end
- 		end
- 	end
- 	
- 	if open then
- 		local cx,cy =
- 			max(0,flr(pl.x/16)*16),
- 			max(0,flr(pl.y/16)*16)
- 	 for i=cx, cx+15 do
- 			for j=cy, cy+15 do
- 				local spr = mget(i,j)
- 			
- 				if spr >= barrier and
- 						spr < barrier+4 then
- 					mset(i,j, 0)
- 				elseif spr == generator then
- 					mset(i,j, generator+1)
-					end
- 			end
- 		end
- 	end
+ if a.atk then
+  local ax,ay = a.x,a.y
+  
+  local open = false
+  
+  for i=ax-2, ax+2 do
+   for j=ay-2, ay+2 do
+    local spr = mget(i,j)
+    
+    if spr == switch then
+     mset(i,j, switch+1)
+     open = true
+    end
+   end
+  end
+  
+  if open then
+   local cx,cy =
+    max(0,flr(pl.x/16)*16),
+    max(0,flr(pl.y/16)*16)
+   for i=cx, cx+15 do
+    for j=cy, cy+15 do
+     local spr = mget(i,j)
+    
+     if spr >= barrier and
+       spr < barrier+4 then
+      mset(i,j, 0)
+     elseif spr == generator then
+      mset(i,j, generator+1)
+     end
+    end
+   end
+  end
  end
 end
 
 function _update()
-	t += 1
-	foreach(actors, time)
+ t += 1
+ foreach(actors, time)
 
-	control(pl)
-	foreach(actors, act)
+ control(pl)
+ foreach(actors, act)
 
-	room.watch(pl)
-	open_barriers_for(pl)
+ room.watch(pl)
+ open_barriers_for(pl)
 end
 
 
 -- draw -----------------------
 
 function animap(x,y, w,h)
-	for i=x, x+w do
-		for j=y, y+h do
-			local spr = mget(i,j)
-			
-			if fget(spr, 7) then	
-				if spr % 4 == 3 then
-					spr-=3
-				else
-					spr+=1
-				end
-				
-				mset(i,j, spr)
-			end
-		end
-	end
+ for i=x, x+w do
+  for j=y, y+h do
+   local spr = mget(i,j)
+   
+   if fget(spr, 7) then 
+    if spr % 4 == 3 then
+     spr-=3
+    else
+     spr+=1
+    end
+    
+    mset(i,j, spr)
+   end
+  end
+ end
 end
 
 function _draw()
-	cls()
+ cls()
 
-	camx = max(0,flr(pl.x/16)*128)
-	camy = max(0,flr(pl.y/16)*128)
-	camera(camx, camy)
+ camx = max(0,flr(pl.x/16)*128)
+ camy = max(0,flr(pl.y/16)*128)
+ camera(camx, camy)
 
-	-- light effect
-	if pl.t > (pl.dashready or 0)
-			and pl.x > 0.9 then
-		local q = 0.128
-		circfill(pl.x*8-q,pl.y*8-q,q*128,1)
-	
-		if pl.atk then
-			local z = (t%16+1) / 16 * 0.128
-			circ(pl.x*8-z,pl.y*8-z,z*128,11)
-		end
-	end
+ -- light effect
+ if pl.t > (pl.dashready or 0)
+   and pl.x > 0.9 then
+  local q = 0.128
+  circfill(pl.x*8-q,pl.y*8-q,q*128,1)
+ 
+  if pl.atk then
+   local z = (t%16+1) / 16 * 0.128
+   circ(pl.x*8-z,pl.y*8-z,z*128,11)
+  end
+ end
 
-	-- animap
-	if t % 4 == 0 then
-		animap(camx/8,camy/8,16,16)
-	end
-	
-	map(camx/8,camy/8,camx,camy,16,16)
-	foreach(actors, draw)
+ -- animap
+ if t % 4 == 0 then
+  animap(camx/8,camy/8,16,16)
+ end
+ 
+ map(camx/8,camy/8,camx,camy,16,16)
+ foreach(actors, draw)
 end
 __gfx__
 0000000000000000e2e22eee44444444222222224444444400000000000000000000000000000000000000000000000000000000000000000000000000000000
