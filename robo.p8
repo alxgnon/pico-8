@@ -12,6 +12,7 @@ spike = 50
 
 -- globals --------------------
 
+title = true
 t = 0
 pl = nil
 actors = {}
@@ -359,6 +360,7 @@ function smite(a)
 end
 
 function room.leave()
+ title = false
  foreach(actors, smite)
  
  for s in all(room.spawns) do
@@ -447,7 +449,7 @@ end
 function _init()
  pl = new("player")
  :xt(drawable(33))
- :xt(posable(3, 3))
+ :xt(posable(2.5, 2.5))
  :xt(movable(0.125))
  :xt(collideable(0.3))
  :xt(palable())
@@ -533,6 +535,10 @@ end
 
 function _draw()
  cls()
+
+ if title then
+  print("S E A F L U R", 40, 32, 1)
+ end
 
  light_effect()
  room.draw()
