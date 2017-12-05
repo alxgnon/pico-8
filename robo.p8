@@ -311,10 +311,10 @@ end
 
 -- room -----------------------
 
-room = {x = 0, y = 0}
+room = {}
 
 function snap(x, grid)
- flr(x / grid) * grid
+ return flr(x / grid) * grid
 end
 
 function room.watch(pl)
@@ -322,16 +322,69 @@ function room.watch(pl)
   max(0, snap(pl.x, 16)),
   max(0, snap(pl.y, 16))
 
- if room.x != rx and
-   room.y != ry do
+ if rx != room.x or
+    ry != room.y then  
   room.leave()
   room.enter(rx, ry)
  end
 end
 
-function room.leave(pl)
+function room.for_tiles(fn)
+ for i = room.x, room.x + 15 do
+  for j = room.y, room.y + 15 do
+   fn(i, j)
+  end
+ end
+end
 
-function room.enter(pl, )
+function room.leave()
+ -- todo
+end
+
+function room.enter(rx, ry)
+ room.x = rx
+ room.y = ry
+
+ room.barriers = {}
+ room.generators = {}
+ room.animated = {}
+
+ room.for_tiles(function (i, j)
+  local spr = mget(i, j)
+
+  if fget(spr, 7) then
+   add(room.animated, {i, j})
+  end
+
+  if spr >= barrier and
+     spr < barrier + 4 then
+   add(room.barriers, {i, j})
+
+  elseif spr == generator then
+   add(room.generators, {i, j})
+  end
+ end)
+
+ camera(room.x * 8, room.y * 8)
+end
+
+function room.draw()
+ if t % 4 == 0 then
+  for c in all(room.animated) do
+   local i, j = c[1], c[2]
+   local spr = mget(i, j)
+
+   if spr % 4 == 3 then
+    spr -= 3
+   else
+    spr += 1
+   end
+   
+   mset(i, j, spr)
+  end
+ end
+ 
+ map(room.x,room.y,room.x*8,room.y*8,16,16)
 end
 
 
@@ -345,6 +398,8 @@ function _init()
  :xt(collideable(0.3))
  :xt(palable())
  :xt(killzoneable(-1))
+
+ room.enter(0, 0)
 end
 
 function act(a)
@@ -354,40 +409,36 @@ function act(a)
  animate(a)
 end
 
-function open_barriers_for(a)
- if a.atk then
-  local ax,ay = a.x,a.y
+function activate_switch(pl)
+ if pl.atk then
+  local px, py = pl.x, pl.y
   
-  local open = false
-  
-  for i=ax-2, ax+2 do
-   for j=ay-2, ay+2 do
-    local spr = mget(i,j)
+  for i = px - 2, px + 2 do
+   for j = py - 2, py + 2 do
+    local spr = mget(i, j)
     
     if spr == switch then
-     mset(i,j, switch+1)
-     open = true
+     mset(i, j, switch + 1)
+     return true
     end
    end
   end
-  
-  if open then
-   local cx,cy =
-    max(0,flr(pl.x/16)*16),
-    max(0,flr(pl.y/16)*16)
-   for i=cx, cx+15 do
-    for j=cy, cy+15 do
-     local spr = mget(i,j)
-    
-     if spr >= barrier and
-       spr < barrier+4 then
-      mset(i,j, 0)
-     elseif spr == generator then
-      mset(i,j, generator+1)
-     end
-    end
+ end
+end
+
+function open_barriers()
+ for c in all(room.barriers) do
+  mset(c[1], c[2], 0)
+
+  for k, v in pairs(room.animated) do
+   if c[0] == v[0] and c[1] == v[1] then
+    room.animated[k] = nil
    end
   end
+ end
+
+ for c in all(room.generators) do
+  mset(c[1], c[2], generator + 1)
  end
 end
 
@@ -399,36 +450,17 @@ function _update()
  foreach(actors, act)
 
  room.watch(pl)
- open_barriers_for(pl)
+
+ if activate_switch(pl) then
+  open_barriers()
+ end
 end
 
 
 -- draw -----------------------
 
-function animap(x,y, w,h)
- for i=x, x+w do
-  for j=y, y+h do
-   local spr = mget(i,j)
-   
-   if fget(spr, 7) then 
-    if spr % 4 == 3 then
-     spr-=3
-    else
-     spr+=1
-    end
-    
-    mset(i,j, spr)
-   end
-  end
- end
-end
-
 function _draw()
  cls()
-
- camx = max(0,flr(pl.x/16)*128)
- camy = max(0,flr(pl.y/16)*128)
- camera(camx, camy)
 
  -- light effect
  if pl.t > (pl.dashready or 0)
@@ -442,12 +474,8 @@ function _draw()
   end
  end
 
- -- animap
- if t % 4 == 0 then
-  animap(camx/8,camy/8,16,16)
- end
- 
- map(camx/8,camy/8,camx,camy,16,16)
+ room.draw()
+
  foreach(actors, draw)
 end
 __gfx__
@@ -750,7 +778,7 @@ __sfx__
 000200002104021020210201662016620156201662015610166101661016600156000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 001000001502021040000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0008010a29630126001b610126201a6100f6201a61010620196100e6100b610096100000000000026000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+001000003135000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
