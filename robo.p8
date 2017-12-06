@@ -584,19 +584,19 @@ function gameover.draw()
 		memset(24576+r(l),r(l),r(l))
  end
 end
-
-
+-->8
+-- draw
 
 function _draw()
 	spooky = flr(rnd(666))
-	
+
 	if pl.dead then
 		gameover.draw()
 		return
 	end
- 
- cls()
 
+ cls()
+ 
  if t < title then
   print("s e a f l u r",40,32,1)
  end
@@ -605,6 +605,18 @@ function _draw()
  room.draw()
  foreach(actors, draw)
 end
+-->8
+-- two
+-->8
+-- three
+-->8
+-- four
+-->8
+-- five
+-->8
+-- six
+-->8
+-- seven
 __gfx__
 0000000000000000e2e22eee44444444222222224444444400000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000002222e22222222e22222222224244442400000000000000000000000000000000000000000000000000000000000000000000000000000000
