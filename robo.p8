@@ -149,19 +149,48 @@ pl = {
 	dx = 0, dy = 0,
 
 	killzone = rec(-1),
+	
+	eye_off = -1,
+	dash_done = -1,
+	dash_ready = -1,
 }
 
 -- player acts
-function pl:act()
-	solid_move(pl)
-	joy(pl)
-	animhero(pl)
+function pl.act(a)
+	solid_move(a)
+	joy(a)
+	a.animate(a)
 end
 
 -- player dies
-function pl:on_death()
+function pl.on_death()
 	maphax()
 end
+
+-- animate --------------------
+
+function pl.animate(a)
+	a.frame = 1
+
+	if not joy_moving(a) then
+		if a.t > a.eye_off then
+			a.frame = 0
+		end
+	else
+		if (a.b0) a.flip_x = true
+		if (a.b1) a.flip_x = false
+		
+		if (a.b2) a.frame = 2
+		if (a.b3) a.frame = 3
+		
+		a.eye_off = a.t + 40
+	end
+	
+	a.pal[3]=a.t<a.dash_done and 1
+	a.pal[9]=a.t<a.dash_ready and 11
+end
+
+-- controls -------------------
 
 -- read buttons
 function joy_read(a)
@@ -194,45 +223,37 @@ function joy_delta(a, mult)
 	if (a.b3) a.dy+=dj
 end
 
+-- epic movement skill
+function dash(a)
+	sfx"1"
+
+	if not joy_moving(a) then
+		a.b0 = a.flip_x
+		a.b1 = not a.flip_x
+	end
+	
+	joy_delta(a, 3)
+
+	a.dash_done = a.t + 6
+	a.dash_ready = a.t + 40
+end
+
 -- control player
 function joy(a)
 	joy_read(a)
-			
-	if a.t > (a.dashready or 0) then
-		if a.dashready then
-			sfx(2)
-			a.dashready = nil
-		end
-
-		if a.b5 then
-			if not a.atk then
-				sfx(3, 3)
-			end
-
-			a.atk = true
-			a.dx = 0
-			a.dy = 0
-			return
-		end
-
-		a.atk = false
-		sfx(-2, 3)
-
-		if a.b4 then
-			sfx"1" -- dash
-
-			if not joy_moving(a) then
-				a.b0 = a.flipx
-				a.b1 = not a.flipx
-			end
-			joy_delta(a, 3)
-
-			a.dashtime = a.t + 6
-			a.dashready = a.t + 40
-		end
+	
+	local dash_done=a.t>a.dash_done
+	local dash_ready=a.t>a.dash_ready 
+	
+	if a.dash_alert and dash_ready then
+		sfx(2)
+		a.dash_alert = false
 	end
 
-	if a.t > (a.dashtime or 0) then
+	if a.b4 and dash_ready then
+		a.dash_alert = true
+		dash(a)
+	elseif dash_done then
 		joy_delta(a)
 	end
 end
@@ -304,7 +325,7 @@ function draw(a)
 
 		spr(a.spr+a.frame,
 			a.x*8-4, a.y*8-4,
-			1, 1, a.flipx, a.flipy)
+			1, 1, a.flip_x, a.flip_y)
 
 		paloff(a)
 	end
@@ -324,7 +345,9 @@ end
 function palon(a)
 	if is_palable(a) then
 		for c0,c1 in pairs(a.pal) do
-			pal(c0,c1)
+			if c1 then
+				pal(c0,c1)
+			end
 		end
 	end
 end
@@ -335,59 +358,6 @@ function paloff(a)
 	end
 end
 
-
--- animate --------------------
-
-function animhero(a)
-	if a.t <= (a.dashtime or 0) then
-		a.pal[3] = 1
-	else
-		a.pal[3] = nil
-	end
-
-	if a.t <= (a.dashready or 0) then
-		a.pal[9] = 11
-	else
-		a.pal[9] = nil
-	end
-
-	if a.atk then
-		a.frame = 4
-		return
-	end
-
-	if not joy_moving(a) then
-		-- idle
-		if a.t > (a.eyeoff or 0) then
-			a.frame = 0
-		else
-			a.frame = 1
-		end
-
-	else
-		-- moving
-		a.eyeoff = a.t + 40
-		if a.b2 then
-			a.frame = 2
-		elseif a.b3 then
-			a.frame = 3
-		else
-			a.frame = 1
-		end
-
-		if a.b0 then
-			a.flipx = true
-		elseif a.b1 then
-			a.flipx = false
-		end
-	end
-end
-
-function flipflop(a)
-	if a.flipflop then
-		-- todo
-	end
-end
 
 
 -- room -----------------------
@@ -567,23 +537,6 @@ function _update()
 end
 
 
--- draw -----------------------
-
-function light_effect()
-	-- light effect
-	if pl.t > (pl.dashready or 0) and
-			pl.x > 0.9 and
-			not pl.dead then
-		local q = 0.128
-		circfill(pl.x*8-q,pl.y*8-q,q*128,1)
-
-		if pl.atk then
-			local z = (t%16+1) / 16 * 0.128
-			circ(pl.x*8-z,pl.y*8-z,z*128,11)
-		end
-	end
-end
-
 -- gameover -------------------
 
 gameover = {}
@@ -604,20 +557,32 @@ end
 
 
 -->8
--- 5: sound
+-- 5:
+-->8
+-- 6: effects
 
+-- stop all sound channels
 function mute()
 	for i = 0, 3 do
 		sfx(-1, i)
 	end
 end
--->8
--- 6: effects
 
+-- portlight ------------------
 
+-- fill circle behind player
+function portlight(a)
+	local dash_ready=a.t<a.dash_ready
+
+	if not dash_ready then
+		local x,y,q=a.x,a.y,0.128
+		circfill(x*8-q,y*8-q,q*128,1)
+	end
+end
 
 -- maphax ---------------------
 
+-- random sprite number
 function rand_spr()
 	local ks = keys(sp)
 	local i = flr(rnd(#ks)) + 1
@@ -625,6 +590,7 @@ function rand_spr()
 	return sp[ks[i]]
 end
 
+-- corrupt map tile
 function tilehax(i, j)
 	local x = rnd"666"
 
@@ -635,6 +601,7 @@ function tilehax(i, j)
  end
 end
 
+-- corrupt current room
 function maphax()
 	room.for_tiles(tilehax)
 end
@@ -682,7 +649,7 @@ function _draw()
 		print("s e a f l u r",40,32,1)
 	end
 
-	light_effect()
+	portlight(pl)
 	room.draw()
 	foreach(actors, draw)
 end
