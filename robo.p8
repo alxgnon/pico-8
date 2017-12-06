@@ -1,9 +1,83 @@
 pico-8 cartridge // http://www.pico-8.com
 version 14
 __lua__
--- 0: common
+-- 0: main
 
--- sprite constants
+function _init()
+	gamestate(game)
+end
+
+-- gamestate ------------------
+
+gs = nil
+
+-- set gamestate
+function gamestate(g)
+	gs = g
+	gs:init()
+end
+
+t = 0
+function _update()
+	t += 1
+	gs:update()
+end
+
+function _draw()
+	gs:draw()
+end
+
+-- game -----------------------
+
+game = {}
+
+function game.init()
+	add(actors, pl)
+	room.enter(0, 0)
+end
+
+function game.update()
+	foreach(actors, act)
+	room.watch(pl)
+end
+
+function game.draw()
+	cls()
+	portlight(pl)
+	room.draw()
+	foreach(actors, draw)
+end
+
+-- gameover -------------------
+
+gameover = {}
+
+function gameover.init()
+	maphax()
+	mute()
+	sfx"3"
+	sfx"4"
+end
+
+function gameover.update(g)
+	g.glitched =
+		g.glitched and rnd"66"<60 or
+		(not g.glitched) and rnd"256">249
+end
+
+function gameover.draw(g)
+	cls"13"
+	room.draw()
+	draw_sad()
+
+	if g.glitched then
+		glitch()
+	end
+end
+
+-- constants ------------------
+
+-- sprites
 sp = {
 	none = 0,
 	nowall = 1,
@@ -33,20 +107,14 @@ sp = {
 	clam = 62,
 }
 
--- flag constants
+-- flags
 flag = {
 	solid = 1,
 }
 
+-- utilities ------------------
 
--- globals
-
-t = 0
-title = 666
-
-
--- utilities
-
+-- list table keys
 function keys(a)
 	local ks = {}
 
@@ -57,40 +125,158 @@ function keys(a)
 	return ks
 end
 
-
--- actors
-
-actors = {}
-
-function kill(a)
-	a.dead = true
-	del(actors, a)
-
-	if a.on_death then
-		a:on_death()
-	end
-end
-
-function act(a)
-	a.t = (a.t or 0) + 1
-
-	killzone(a)
-
-	if a.act then
-		a:act()
-	end
-end
-
-
--- _init
-
-function _init()
-	add(actors, pl)
-
-	room.enter(0, 0)
+-- snap x to grid size
+function snap(x, grid)
+	return flr(x / grid) * grid
 end
 -->8
--- 1: physics
+-- 1: map
+
+-- room -----------------------
+
+room = {}
+
+function room.watch(pl)
+	local rx, ry =
+		max(0, snap(pl.x, 16)),
+		max(0, snap(pl.y, 16))
+
+	if rx != room.x or
+			ry != room.y then
+		room.leave()
+		room.enter(rx, ry)
+	end
+	
+	if activate_switch(pl) then
+		open_barriers()
+	end
+end
+
+function room.for_tiles(fn)
+	for i = room.x, room.x + 15 do
+		for j = room.y, room.y + 15 do
+			fn(i, j)
+		end
+	end
+end
+
+function room.leave()
+	foreach(actors, smite)
+
+	for s in all(room.spawns) do
+		mset(s.x, s.y, s.spr)
+	end
+end
+
+function room.enter(rx, ry)
+	room.x = rx
+	room.y = ry
+
+	room.spawns = {}
+	room.barriers = {}
+	room.generators = {}
+	room.animated = {}
+
+	room.for_tiles(function (i, j)
+		local spr = mget(i, j)
+
+		if fget(spr, 7) then
+			add(room.animated, {i, j})
+		end
+
+		if fget(spr, 0) then
+			mset(i,j,0)
+			add(room.spawns,{x=i,y=j,spr=spr})
+
+			spawn(i,j,spr)
+		end
+
+		if spr >= sp.barrier and
+				spr < sp.barrier + 4 then
+			add(room.barriers, {i, j})
+
+		elseif spr == sp.generator then
+			add(room.generators, {i, j})
+		end
+	end)
+
+	camera(room.x * 8, room.y * 8)
+end
+
+function room.draw()
+	if t % 4 == 0 then
+		for c in all(room.animated) do
+			local i, j = c[1], c[2]
+			local spr = mget(i, j)
+
+			if spr % 4 == 3 then
+				spr -= 3
+			else
+				spr += 1
+			end
+
+			mset(i, j, spr)
+		end
+	end
+
+	map(room.x,room.y,room.x*8,room.y*8,16,16)
+end
+
+function spawn(x,y,spr)
+	if spr == sp.fish then
+		--new("fish")
+		--:xt(drawable(sp.fish))
+		--:xt(posable(x, y))
+		--:xt(movable(0.3,0.1,0.1))
+		--:xt({evil=true})
+		--:xt({flipflop=true})
+		--:xt({swim=true})
+
+	elseif spr == sp.spike then
+		--new("spike")
+		--:xt(drawable(sp.spike))
+		--:xt(posable(x+0.5, y+0.5))
+		--:xt(movable(0.3,0,0.3))
+		--:xt({evil=true})
+		--:xt({surprisefall=true})
+	end
+end
+
+
+function activate_switch(pl)
+	if pl.atk then
+		local px, py = pl.x, pl.y
+
+		for i = px - 2, px + 2 do
+			for j = py - 2, py + 2 do
+				local spr = mget(i, j)
+
+				if spr == sp.switch then
+					mset(i, j, sp.switch + 1)
+					return true
+				end
+			end
+		end
+	end
+end
+
+function open_barriers()
+	for c in all(room.barriers) do
+		mset(c[1], c[2], 0)
+
+		for k, v in pairs(room.animated) do
+			if c[0] == v[0] and c[1] == v[1] then
+				room.animated[k] = nil
+			end
+		end
+	end
+
+	for c in all(room.generators) do
+		mset(c[1], c[2], sp.generator + 1)
+	end
+end
+-->8
+-- 2: physics
 
 -- new vector
 function vec(x,y)
@@ -133,7 +319,39 @@ function solid_move(a)
 	if (not y) a.y += a.dy
 end
 -->8
--- 2: player
+-- 3: actors
+
+actors = {}
+
+-- behaviour for all actors
+function act(a)
+	a.t = (a.t or 0) + 1
+
+	killzone(a)
+
+	if a.act then
+		a:act()
+	end
+end
+
+-- ends life
+function kill(a)
+	a.dead = true
+	del(actors, a)
+
+	if a.on_death then
+		a:on_death()
+	end
+end
+
+-- smites evil
+function smite(a)
+	if a.evil then
+		kill(a)
+	end
+end
+-->8
+-- 4: player
 
 pl = {
 	t = 0,
@@ -149,7 +367,7 @@ pl = {
 	dx = 0, dy = 0,
 
 	killzone = rec(-1),
-	
+
 	eye_off = -1,
 	dash_done = -1,
 	dash_ready = -1,
@@ -164,7 +382,7 @@ end
 
 -- player dies
 function pl.on_death()
-	maphax()
+	gamestate(gameover)
 end
 
 -- animate --------------------
@@ -179,13 +397,13 @@ function pl.animate(a)
 	else
 		if (a.b0) a.flip_x = true
 		if (a.b1) a.flip_x = false
-		
+
 		if (a.b2) a.frame = 2
 		if (a.b3) a.frame = 3
-		
+
 		a.eye_off = a.t + 40
 	end
-	
+
 	a.pal[3]=a.t<a.dash_done and 1
 	a.pal[9]=a.t<a.dash_ready and 11
 end
@@ -231,7 +449,7 @@ function dash(a)
 		a.b0 = a.flip_x
 		a.b1 = not a.flip_x
 	end
-	
+
 	joy_delta(a, 3)
 
 	a.dash_done = a.t + 6
@@ -241,10 +459,10 @@ end
 -- control player
 function joy(a)
 	joy_read(a)
-	
+
 	local dash_done=a.t>a.dash_done
-	local dash_ready=a.t>a.dash_ready 
-	
+	local dash_ready=a.t>a.dash_ready
+
 	if a.dash_alert and dash_ready then
 		sfx(2)
 		a.dash_alert = false
@@ -258,9 +476,7 @@ function joy(a)
 	end
 end
 -->8
--- 3:
--->8
--- 4: dump
+-- 5: dump
 
 
 -- extendable -----------------
@@ -360,204 +576,7 @@ end
 
 
 
--- room -----------------------
 
-room = {}
-
-function snap(x, grid)
-	return flr(x / grid) * grid
-end
-
-function room.watch(pl)
-	local rx, ry =
-		max(0, snap(pl.x, 16)),
-		max(0, snap(pl.y, 16))
-
-	if rx != room.x or
-			ry != room.y then
-		room.leave()
-		room.enter(rx, ry)
-	end
-end
-
-function room.for_tiles(fn)
-	for i = room.x, room.x + 15 do
-		for j = room.y, room.y + 15 do
-			fn(i, j)
-		end
-	end
-end
-
-function smite(a)
-	if a.evil then
-		kill(a)
-	end
-end
-
-function room.leave()
-	foreach(actors, smite)
-
-	for s in all(room.spawns) do
-		mset(s.x, s.y, s.spr)
-	end
-end
-
-function room.enter(rx, ry)
-	room.x = rx
-	room.y = ry
-
-	room.spawns = {}
-	room.barriers = {}
-	room.generators = {}
-	room.animated = {}
-
-	room.for_tiles(function (i, j)
-		local spr = mget(i, j)
-
-		if fget(spr, 7) then
-			add(room.animated, {i, j})
-		end
-
-		if fget(spr, 0) then
-			mset(i,j,0)
-			add(room.spawns,{x=i,y=j,spr=spr})
-
-			spawn(i,j,spr)
-		end
-
-		if spr >= sp.barrier and
-				spr < sp.barrier + 4 then
-			add(room.barriers, {i, j})
-
-		elseif spr == sp.generator then
-			add(room.generators, {i, j})
-		end
-	end)
-
-	camera(room.x * 8, room.y * 8)
-end
-
-function room.draw()
-	if t % 4 == 0 then
-		for c in all(room.animated) do
-			local i, j = c[1], c[2]
-			local spr = mget(i, j)
-
-			if spr % 4 == 3 then
-				spr -= 3
-			else
-				spr += 1
-			end
-
-			mset(i, j, spr)
-		end
-	end
-
-	map(room.x,room.y,room.x*8,room.y*8,16,16)
-end
-
-function spawn(x,y,spr)
-	if spr == sp.fish then
-		--new("fish")
-		--:xt(drawable(sp.fish))
-		--:xt(posable(x, y))
-		--:xt(movable(0.3,0.1,0.1))
-		--:xt({evil=true})
-		--:xt({flipflop=true})
-		--:xt({swim=true})
-
-	elseif spr == sp.spike then
-		--new("spike")
-		--:xt(drawable(sp.spike))
-		--:xt(posable(x+0.5, y+0.5))
-		--:xt(movable(0.3,0,0.3))
-		--:xt({evil=true})
-		--:xt({surprisefall=true})
-	end
-end
-
-
--- main -----------------------
-
-function activate_switch(pl)
-	if pl.atk then
-		local px, py = pl.x, pl.y
-
-		for i = px - 2, px + 2 do
-			for j = py - 2, py + 2 do
-				local spr = mget(i, j)
-
-				if spr == sp.switch then
-					mset(i, j, sp.switch + 1)
-					return true
-				end
-			end
-		end
-	end
-end
-
-function open_barriers()
-	for c in all(room.barriers) do
-		mset(c[1], c[2], 0)
-
-		for k, v in pairs(room.animated) do
-			if c[0] == v[0] and c[1] == v[1] then
-				room.animated[k] = nil
-			end
-		end
-	end
-
-	for c in all(room.generators) do
-		mset(c[1], c[2], sp.generator + 1)
-	end
-end
-
-function _update()
-	if pl.dead then
-		gameover.update()
-		return
-	end
-
-	t += 1
-
-	foreach(actors, act)
-
-	room.watch(pl)
-
-	if activate_switch(pl) then
-		kill(pl)
-		open_barriers()
-	end
-
-	if title == 666 then
-		if joy_active(pl) then
-			title = t + 4
-		end
-	end
-end
-
-
--- gameover -------------------
-
-gameover = {}
-
-function gameover.update()
-	if not gameover.played then
-		mute()
-		sfx"3"
-		sfx"4"
-		gameover.played = true
-	end
-
-	local g = gameover.glitched
-	gameover.glitched =
-		g and rnd"66" < 60 or
-		(not g) and rnd"256" > 249
-end
-
-
--->8
--- 5:
 -->8
 -- 6: effects
 
@@ -586,7 +605,7 @@ end
 function rand_spr()
 	local ks = keys(sp)
 	local i = flr(rnd(#ks)) + 1
-	
+
 	return sp[ks[i]]
 end
 
@@ -605,19 +624,19 @@ end
 function maphax()
 	room.for_tiles(tilehax)
 end
+
+-- glitch ---------------------
+
+-- corrupt screen data
+function glitch()
+	local r,l=rnd,4096
+	memset(24576+r(l),r(l),r(l))
+end
 -->8
 -- 7: draw
 
-
--- gameover -------------------
-
-
-
-function gameover.draw()
-	cls"13"
-	
-	room.draw()
-	
+-- draw gameover face
+function draw_sad()
 	local x_x = "\x97  \x97"
 	local ___ = "\x98\x98\x98"
 
@@ -627,31 +646,6 @@ function gameover.draw()
 
 	print(x_x, sadx, sady, 0)
 	print(___, sadx, sady + 16, 0)
-
-	if gameover.glitched then
-		local r,l=rnd,4096
-		memset(24576+r(l),r(l),r(l))
-	end
-end
-
-
--- main -----------------------
-
-function _draw()
-	if pl.dead then
-		gameover.draw()
-		return
-	end
-
-	cls()
-
-	if t < title then
-		print("s e a f l u r",40,32,1)
-	end
-
-	portlight(pl)
-	room.draw()
-	foreach(actors, draw)
 end
 __gfx__
 0000000000000000e2e22eee4444444422222222444444440000000000000000000000000000000000000000000000000000000000000000eeeeeeee00000000
