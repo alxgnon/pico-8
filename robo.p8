@@ -142,26 +142,99 @@ pl = {
 	frame = 0,
 	pal = {},
 
-	x = 2.5,
-	y = 2.5,
-	w = 0.3,
-	h = 0.4,
+	x = 2.5, y = 2.5,
+	w = 0.3, h = 0.4,
 
 	speed = 0.125,
-	dx = 0,
-	dy = 0,
+	dx = 0, dy = 0,
 
 	killzone = rec(-1),
 }
 
-
+-- player acts
 function pl:act()
 	solid_move(pl)
+	joy(pl)
+	animhero(pl)
 end
 
-
+-- player dies
 function pl:on_death()
 	maphax()
+end
+
+-- read buttons
+function joy_read(a)
+	a.b0=btn"0"
+	a.b1=btn"1"
+	a.b2=btn"2"
+	a.b3=btn"3"
+	a.b4=btn"4"
+	a.b5=btn"5"
+end
+
+-- are directions pressed
+function joy_moving(a)
+	return a.b0 or a.b1 or a.b2 or a.b3
+end
+
+-- are any buttons pressed
+function joy_active(a)
+	return joy_moving or a.b4 or a.b5
+end
+
+-- set movement vector
+function joy_delta(a, mult)
+	local dj = a.speed*(mult or 1)
+
+	a.dx,a.dy=0,0
+	if (a.b0) a.dx-=dj
+	if (a.b1) a.dx+=dj
+	if (a.b2) a.dy-=dj
+	if (a.b3) a.dy+=dj
+end
+
+-- control player
+function joy(a)
+	joy_read(a)
+			
+	if a.t > (a.dashready or 0) then
+		if a.dashready then
+			sfx(2)
+			a.dashready = nil
+		end
+
+		if a.b5 then
+			if not a.atk then
+				sfx(3, 3)
+			end
+
+			a.atk = true
+			a.dx = 0
+			a.dy = 0
+			return
+		end
+
+		a.atk = false
+		sfx(-2, 3)
+
+		if a.b4 then
+			sfx"1" -- dash
+
+			if not joy_moving(a) then
+				a.b0 = a.flipx
+				a.b1 = not a.flipx
+			end
+			joy_delta(a, 3)
+
+			a.dashtime = a.t + 6
+			a.dashready = a.t + 40
+		end
+	end
+
+	if a.t > (a.dashtime or 0) then
+		joy_delta(a)
+	end
 end
 -->8
 -- 3:
@@ -208,73 +281,6 @@ function killzone(a)
 		if a.x < kz.x then
 			kill(a)
 		end
-	end
-end
-
-
--- controllable ---------------
-
-function joyread(a)
-	a.b0 = btn"0"
-	a.b1 = btn"1"
-	a.b2 = btn"2"
-	a.b3 = btn"3"
-end
-
-function joymoving(a)
-	return a.b0 or a.b1
-		or a.b2 or a.b3
-end
-
-function joymove(a, mult)
-	local dj = a.speed * (mult or 1)
-
-	a.dx, a.dy = 0, 0
-	if (a.b0) a.dx -= dj
-	if (a.b1) a.dx += dj
-	if (a.b2) a.dy -= dj
-	if (a.b3) a.dy += dj
-end
-
-function control(a)
-	if a.t > (a.dashready or 0) then
-		if a.dashready then
-			sfx(2)
-			a.dashready = nil
-		end
-
-		if btn(5) then
-			if not a.atk then
-				sfx(3, 3)
-			end
-
-			a.atk = true
-			a.dx = 0
-			a.dy = 0
-			return
-		end
-
-		a.atk = false
-		sfx(-2, 3)
-
-		if btn"4" then
-			sfx"1" -- dash
-
-			joyread(a)
-			if not joymoving(a) then
-				a.b0 = a.flipx
-				a.b1 = not a.flipx
-			end
-			joymove(a, 3)
-
-			a.dashtime = a.t + 6
-			a.dashready = a.t + 40
-		end
-	end
-
-	if a.t > (a.dashtime or 0) then
-		joyread(a)
-		joymove(a)
 	end
 end
 
@@ -350,7 +356,7 @@ function animhero(a)
 		return
 	end
 
-	if not joymoving(a) then
+	if not joy_moving(a) then
 		-- idle
 		if a.t > (a.eyeoff or 0) then
 			a.frame = 0
@@ -544,9 +550,6 @@ function _update()
 
 	t += 1
 
-	control(pl)
-	animhero(pl)
-
 	foreach(actors, act)
 
 	room.watch(pl)
@@ -557,8 +560,7 @@ function _update()
 	end
 
 	if title == 666 then
-		if joymoving(pl) or
-				btn"4" or btn"5" then
+		if joy_active(pl) then
 			title = t + 4
 		end
 	end
