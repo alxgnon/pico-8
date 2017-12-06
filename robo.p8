@@ -1,22 +1,103 @@
 pico-8 cartridge // http://www.pico-8.com
 version 14
 __lua__
--- constants ------------------
+-- 0: common
 
-switch = 40
-generator = 42
-barrier = 44
-fish = 48
-spike = 50
+-- sprite constants
+
+sp = {
+	robo = 33,
+	switch = 40,
+	generator = 42,
+	barrier = 44,
+	fish = 48,
+	spike = 50,
+}
 
 
--- globals --------------------
+-- globals
 
-title = 666
 t = 0
-pl = nil
+title = 666
+
+
+-- utilities
+
+function new_rect(x,y,w,h)
+	return {x=x,y=y,w=w,h=h}
+end
+
+
+-- actors
+
 actors = {}
-camx,camy = 0,0
+
+function kill(a)
+	a.dead = true
+	del(actors, a)
+	
+	if a.on_death then
+		a:on_death()
+	end
+end
+
+function act(a)
+	a.t = (a.t or 0) + 1
+	
+	collidex(a)
+ collidey(a)
+ killzone(a)
+ flipflop(a)
+ surprisefall(a)
+	
+	if a.act then
+		a:act()
+	end
+end
+
+
+-- _init
+
+function _init()
+ add(actors, pl)
+
+ room.enter(0, 0)
+end
+-->8
+-- 1: player
+
+pl = {
+	t = 0,
+
+	spr = sp.robo,
+	frame = 0,
+	pal = {},
+
+	x = 2.5,
+	y = 2.5,
+	w = 0.3,
+	h = 0.4,
+
+	speed = 0.125,
+	dx = 0,
+	dy = 0,
+	
+	killzone = new_rect(-1),
+}
+
+
+function pl:act()
+end
+
+
+function pl:on_death()
+end
+-->8
+-- 2:
+-->8
+-- 3:
+-->8
+-- 4: dump
 
 
 -- extendable -----------------
@@ -35,20 +116,8 @@ function new(name)
  	return extend(self, o)
  end
 
- function a:die()
-  a.dead = true
-  del(actors, self)
- end
-
  add(actors, a)
  return a
-end
-
-
--- timeable -------------------
-
-function time(a)
- a.t = (a.t or 0) + 1
 end
 
 
@@ -130,12 +199,8 @@ end
 
 -- killzoneable ---------------
 
-function rect(x,y, w,h)
- return {x=x,y=y, w=w,h=h}
-end
-
 function killzoneable(x,y, w,h)
- local killzone = rect(x,y,w,h)
+ local killzone = new_rect(x,y,w,h)
  return {killzone=killzone}
 end
 
@@ -148,7 +213,7 @@ function killzone(a)
   local kz = a.killzone
 
   if a.x < kz.x then
-   a:die()
+   kill(a)
   end
  end
 end
@@ -359,7 +424,7 @@ end
 
 function smite(a)
 	if a.evil then
-		a:die()
+		kill(a)
 	end
 end
 
@@ -395,11 +460,11 @@ function room.enter(rx, ry)
   	spawn(i,j,spr)
   end
 
-  if spr >= barrier and
-     spr < barrier + 4 then
+  if spr >= sp.barrier and
+     spr < sp.barrier + 4 then
    add(room.barriers, {i, j})
 
-  elseif spr == generator then
+  elseif spr == sp.generator then
    add(room.generators, {i, j})
   end
  end)
@@ -427,18 +492,18 @@ function room.draw()
 end
 
 function spawn(x,y,spr)
-	if spr == fish then
+	if spr == sp.fish then
 		new("fish")
-		:xt(drawable(fish))
+		:xt(drawable(sp.fish))
 		:xt(posable(x, y))
  	:xt(movable(0.3,0.1,0.1))
  	:xt({evil=true})
  	:xt({flipflop=true})
   :xt({swim=true})
  	
-	elseif spr == spike then
+	elseif spr == sp.spike then
 		new("spike")
-		:xt(drawable(spike))
+		:xt(drawable(sp.spike))
 		:xt(posable(x+0.5, y+0.5))
 		:xt(movable(0.3,0,0.3))
 		:xt({evil=true})
@@ -449,26 +514,6 @@ end
 
 -- main -----------------------
 
-function _init()
- pl = new("player")
- :xt(drawable(33))
- :xt(posable(2.5, 2.5))
- :xt(movable(0.125))
- :xt(collideable(0.3))
- :xt(palable())
- :xt(killzoneable(-1))
-
- room.enter(0, 0)
-end
-
-function act(a)
- collidex(a)
- collidey(a)
- killzone(a)
- flipflop(a)
- surprisefall(a)
-end
-
 function activate_switch(pl)
  if pl.atk then
   local px, py = pl.x, pl.y
@@ -477,8 +522,8 @@ function activate_switch(pl)
    for j = py - 2, py + 2 do
     local spr = mget(i, j)
     
-    if spr == switch then
-     mset(i, j, switch + 1)
+    if spr == sp.switch then
+     mset(i, j, sp.switch + 1)
      return true
     end
    end
@@ -498,7 +543,7 @@ function open_barriers()
  end
 
  for c in all(room.generators) do
-  mset(c[1], c[2], generator + 1)
+  mset(c[1], c[2], sp.generator + 1)
  end
 end
 
@@ -509,7 +554,6 @@ function _update()
 	end
 
  t += 1
- foreach(actors, time)
 
  control(pl)
  animhero(pl)
@@ -573,6 +617,17 @@ function gameover.update()
  	(not g) and rnd(256) > 249
 end
 
+
+-->8
+-- 5:
+-->8
+-- 6:
+-->8
+-- 7: draw
+
+
+-- gameover -------------------
+
 function gameover.draw()
  cls(13)
  print("—  —",50,53,15)
@@ -584,12 +639,11 @@ function gameover.draw()
 		memset(24576+r(l),r(l),r(l))
  end
 end
--->8
--- draw
+
+
+-- main -----------------------
 
 function _draw()
-	spooky = flr(rnd(666))
-
 	if pl.dead then
 		gameover.draw()
 		return
@@ -605,18 +659,6 @@ function _draw()
  room.draw()
  foreach(actors, draw)
 end
--->8
--- two
--->8
--- three
--->8
--- four
--->8
--- five
--->8
--- six
--->8
--- seven
 __gfx__
 0000000000000000e2e22eee44444444222222224444444400000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000002222e22222222e22222222224244442400000000000000000000000000000000000000000000000000000000000000000000000000000000
