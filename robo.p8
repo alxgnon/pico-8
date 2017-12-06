@@ -12,23 +12,27 @@ spike = 50
 
 -- globals --------------------
 
-title = true
+title = 666
 t = 0
 pl = nil
 actors = {}
 camx,camy = 0,0
-gameover = false
+
 
 -- extendable -----------------
+
+function extend(a, b)
+ for k, v in pairs(b) do
+  a[k] = v
+ end
+ return a
+end
 
 function new(name)
  local a = {name=name}
 
  function a:xt(o)
-  for k, v in pairs(o) do
-   self[k] = v
-  end
-  return self
+ 	return extend(self, o)
  end
 
  function a:die()
@@ -360,7 +364,6 @@ function smite(a)
 end
 
 function room.leave()
- title = false
  foreach(actors, smite)
  
  for s in all(room.spawns) do
@@ -501,10 +504,7 @@ end
 
 function _update()
 	if pl.dead then
-		if not gameover then
-			gameover = true
-			sfx(4)
-		end
+		gameover.update()
 		return
 	end
 
@@ -520,6 +520,13 @@ function _update()
 
  if activate_switch(pl) then
   open_barriers()
+ end
+ 
+ if title == 666 then
+ 	if joymoving(pl) or
+ 	   btn(4) or btn(5) then
+  	title = t + 4
+  end
  end
 end
 
@@ -541,23 +548,56 @@ function light_effect()
  end
 end
 
-function dr_gameover()
-	cls(13)
-	print("—  —",50,53,15)
-	print("  –",50,65,15)
+-- grid -----------------------
+
+
+function grid()
+	return {}
 end
+
+
+
+-- gameover -------------------
+
+gameover = {}
+
+function gameover.update()
+	if not gameover.played then
+  sfx(4)
+  gameover.played = true
+ end
+ 
+ local g = gameover.glitched
+ gameover.glitched =
+ 	g and rnd(66) < 60 or
+ 	(not g) and rnd(256) > 249
+end
+
+function gameover.draw()
+ cls(13)
+ print("—  —",50,53,15)
+ -- todo get positions right
+ print("  –",50,65,15)
+
+ if gameover.glitched then
+  local r,l=rnd,4096
+		memset(24576+r(l),r(l),r(l))
+ end
+end
+
+
 
 function _draw()
 	spooky = flr(rnd(666))
 	
 	if pl.dead then
-		dr_gameover()
+		gameover.draw()
 		return
 	end
  
  cls()
 
- if title then
+ if t < title then
   print("s e a f l u r",40,32,1)
  end
 
@@ -865,7 +905,7 @@ __sfx__
 000200002104021020210201662016620156201662015610166101661016600156000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 001000001502021040000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0008010a29630126001b610126201a6100f6201a61010620196100e6100b610096100000000000026000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-012a0000000000000018050180301c0501c0301f0501f030240502403024030240302402024010240002400024000240000000000000000000000000000000000000000000000000000000000000000000000000
+002a0000000000000018050180301c0501c0301f0501f030240502403024030240302402024010240002400024000240000000000000000000000000000000000000000000000000000000000000000000000000
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
