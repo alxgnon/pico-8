@@ -35,7 +35,7 @@ actors = {}
 function kill(a)
 	a.dead = true
 	del(actors, a)
-	
+
 	if a.on_death then
 		a:on_death()
 	end
@@ -43,13 +43,13 @@ end
 
 function act(a)
 	a.t = (a.t or 0) + 1
-	
+
 	collidex(a)
- collidey(a)
- killzone(a)
- flipflop(a)
- surprisefall(a)
-	
+	collidey(a)
+	killzone(a)
+	flipflop(a)
+	surprisefall(a)
+
 	if a.act then
 		a:act()
 	end
@@ -59,9 +59,9 @@ end
 -- _init
 
 function _init()
- add(actors, pl)
+	add(actors, pl)
 
- room.enter(0, 0)
+	room.enter(0, 0)
 end
 -->8
 -- 1: player
@@ -81,7 +81,7 @@ pl = {
 	speed = 0.125,
 	dx = 0,
 	dy = 0,
-	
+
 	killzone = new_rect(-1),
 }
 
@@ -103,288 +103,288 @@ end
 -- extendable -----------------
 
 function extend(a, b)
- for k, v in pairs(b) do
-  a[k] = v
- end
- return a
+	for k, v in pairs(b) do
+		a[k] = v
+	end
+	return a
 end
 
 function new(name)
- local a = {name=name}
+	local a = {name=name}
 
- function a:xt(o)
- 	return extend(self, o)
- end
+	function a:xt(o)
+		return extend(self, o)
+	end
 
- add(actors, a)
- return a
+	add(actors, a)
+	return a
 end
 
 
 -- posable --------------------
 
 function posable(x, y)
- return {x=x or 0, y=y or 0}
+	return {x=x or 0, y=y or 0}
 end
 
 function is_posable(a)
- return a.x and a.y
+	return a.x and a.y
 end
 
 
 -- movable --------------------
 
 function movable(speed, dx, dy)
- return {
-  speed = speed or 0.25,
-  dx = dx or 0,
-  dy = dy or 0,
- }
+	return {
+		speed = speed or 0.25,
+		dx = dx or 0,
+		dy = dy or 0,
+	}
 end
 
 function swim()
- -- todo
+	-- todo
 end
 
 function surprisefall()
- -- todo
+	-- todo
 end
 
 
 -- collideable ----------------
 
 function collideable(w, h)
- return {w=w or 0.4, h=h or 0.4}
+	return {w=w or 0.4, h=h or 0.4}
 end
 
 function is_collideable(a)
- return a.w and a.h
+	return a.w and a.h
 end
 
 -- is map tile solid?
 function solid(x,y)
- return fget(mget(x,y), 1)
+	return fget(mget(x,y), 1)
 end
 
 -- does rect overlap any solids?
 -- todo: support large actors
 function solidarea(x,y, w,h)
- return
-  solid(x-w,y-h) or
-  solid(x+w,y-h) or
-  solid(x-w,y+h) or
-  solid(x+w,y+h)
+	return
+		solid(x-w,y-h) or
+		solid(x+w,y-h) or
+		solid(x-w,y+h) or
+		solid(x+w,y+h)
 end
 
 function collidex(a)
- if is_collideable(a) and
-   solidarea(a.x+a.dx,a.y,
-   a.w,a.h) then
+	if is_collideable(a) and
+			solidarea(a.x+a.dx,a.y,
+			a.w,a.h) then
 
- else
-  a.x += a.dx
- end
+	else
+		a.x += a.dx
+	end
 end
 
 function collidey(a)
- if is_collideable(a) and
-   solidarea(a.x,a.y+a.dy,
-   a.w,a.h) then
+	if is_collideable(a) and
+			solidarea(a.x,a.y+a.dy,
+			a.w,a.h) then
 
- else
-  a.y += a.dy
- end
+	else
+		a.y += a.dy
+	end
 end
 
 
 -- killzoneable ---------------
 
 function killzoneable(x,y, w,h)
- local killzone = new_rect(x,y,w,h)
- return {killzone=killzone}
+	local killzone = new_rect(x,y,w,h)
+	return {killzone=killzone}
 end
 
 function is_killzoneable(a)
- return a.killzone
+	return a.killzone
 end
 
 function killzone(a)
- if is_killzoneable(a) then
-  local kz = a.killzone
+	if is_killzoneable(a) then
+		local kz = a.killzone
 
-  if a.x < kz.x then
-   kill(a)
-  end
- end
+		if a.x < kz.x then
+			kill(a)
+		end
+	end
 end
 
 
 -- controllable ---------------
 
 function joyread(a)
- a.b0 = btn(0)
- a.b1 = btn(1)
- a.b2 = btn(2)
- a.b3 = btn(3)
+	a.b0 = btn(0)
+	a.b1 = btn(1)
+	a.b2 = btn(2)
+	a.b3 = btn(3)
 end
 
 function joymoving(a)
- return a.b0 or a.b1
-     or a.b2 or a.b3
+	return a.b0 or a.b1
+		or a.b2 or a.b3
 end
 
 function joymove(a, mult)
- mult = mult or 1
+	mult = mult or 1
 
- a.dx = 0
- a.dy = 0
+	a.dx = 0
+	a.dy = 0
 
- if (a.b0) a.dx -= a.speed*mult
- if (a.b1) a.dx += a.speed*mult
- if (a.b2) a.dy -= a.speed*mult
- if (a.b3) a.dy += a.speed*mult
+	if (a.b0) a.dx -= a.speed*mult
+	if (a.b1) a.dx += a.speed*mult
+	if (a.b2) a.dy -= a.speed*mult
+	if (a.b3) a.dy += a.speed*mult
 end
 
 function control(a)
- if a.t > (a.dashready or 0) then
-  if a.dashready then
-   sfx(2)
-   a.dashready = nil
-  end
-  
-  if btn(5) then
-   if not a.atk then
-    sfx(3, 3)
-   end
-   
-   a.atk = true
-   a.dx = 0
-   a.dy = 0
-   return
-  end
-  
-  a.atk = false
-  sfx(-2, 3)
-  
-  if btn(4) then
-   sfx(1) -- dash
+	if a.t > (a.dashready or 0) then
+		if a.dashready then
+			sfx(2)
+			a.dashready = nil
+		end
 
-   joyread(a)
-   if not joymoving(a) then
-    a.b0 = a.flipx
-    a.b1 = not a.flipx
-   end
-   joymove(a, 3)
+		if btn(5) then
+			if not a.atk then
+				sfx(3, 3)
+			end
 
-   a.dashtime = a.t + 6
-   a.dashready = a.t + 40
-   end
- end
-  
- if a.t > (a.dashtime or 0) then
-  joyread(a)
-  joymove(a)
- end
+			a.atk = true
+			a.dx = 0
+			a.dy = 0
+			return
+		end
+
+		a.atk = false
+		sfx(-2, 3)
+
+		if btn(4) then
+			sfx(1) -- dash
+
+			joyread(a)
+			if not joymoving(a) then
+				a.b0 = a.flipx
+				a.b1 = not a.flipx
+			end
+			joymove(a, 3)
+
+			a.dashtime = a.t + 6
+			a.dashready = a.t + 40
+		end
+	end
+
+	if a.t > (a.dashtime or 0) then
+		joyread(a)
+		joymove(a)
+	end
 end
 
 
 -- drawable -------------------
 
 function drawable(spr, frame)
- return {
-  spr = spr or 32,
-  frame = frame or 0,
- }
+	return {
+		spr = spr or 32,
+		frame = frame or 0,
+	}
 end
 
 function is_drawable(a)
- return a.spr and a.frame and
-  is_posable(a)
+	return a.spr and a.frame and
+		is_posable(a)
 end
 
 function draw(a)
- if is_drawable(a) then
-  palon(a)
+	if is_drawable(a) then
+		palon(a)
 
-  spr(a.spr+a.frame,
-   a.x*8-4, a.y*8-4,
-   1, 1, a.flipx, a.flipy)
+		spr(a.spr+a.frame,
+			a.x*8-4, a.y*8-4,
+			1, 1, a.flipx, a.flipy)
 
-  paloff(a)
- end
+		paloff(a)
+	end
 end
 
 
 -- palable --------------------
 
 function palable(pal)
- return {pal=pal or {}}
+	return {pal=pal or {}}
 end
 
 function is_palable(a)
- return a.pal
+	return a.pal
 end
 
 function palon(a)
- if is_palable(a) then
-  for c0,c1 in pairs(a.pal) do
-   pal(c0,c1)
-  end
- end
+	if is_palable(a) then
+		for c0,c1 in pairs(a.pal) do
+			pal(c0,c1)
+		end
+	end
 end
 
 function paloff(a)
- if is_palable(a) then
-  pal()
- end
+	if is_palable(a) then
+		pal()
+	end
 end
 
 
 -- animate --------------------
 
 function animhero(a)
- if a.t <= (a.dashtime or 0) then
-  a.pal[3] = 1
- else
-  a.pal[3] = nil
- end
+	if a.t <= (a.dashtime or 0) then
+		a.pal[3] = 1
+	else
+		a.pal[3] = nil
+	end
 
- if a.t <= (a.dashready or 0) then
-  a.pal[9] = 11
- else
-  a.pal[9] = nil
- end
- 
- if a.atk then
-  a.frame = 4
-  return
- end
+	if a.t <= (a.dashready or 0) then
+		a.pal[9] = 11
+	else
+		a.pal[9] = nil
+	end
 
- if not joymoving(a) then
-  -- idle
-  if a.t > (a.eyeoff or 0) then
-   a.frame = 0
-  else
-   a.frame = 1
-  end
+	if a.atk then
+		a.frame = 4
+		return
+	end
 
- else
-  -- moving
-  a.eyeoff = a.t + 40
-  if a.b2 then
-   a.frame = 2
-  elseif a.b3 then
-   a.frame = 3
-  else
-   a.frame = 1
-  end
+	if not joymoving(a) then
+		-- idle
+		if a.t > (a.eyeoff or 0) then
+			a.frame = 0
+		else
+			a.frame = 1
+		end
 
-  if a.b0 then
-   a.flipx = true
-  elseif a.b1 then
-   a.flipx = false
-  end
- end
+	else
+		-- moving
+		a.eyeoff = a.t + 40
+		if a.b2 then
+			a.frame = 2
+		elseif a.b3 then
+			a.frame = 3
+		else
+			a.frame = 1
+		end
+
+		if a.b0 then
+			a.flipx = true
+		elseif a.b1 then
+			a.flipx = false
+		end
+	end
 end
 
 function flipflop(a)
@@ -399,27 +399,27 @@ end
 room = {}
 
 function snap(x, grid)
- return flr(x / grid) * grid
+	return flr(x / grid) * grid
 end
 
 function room.watch(pl)
- local rx, ry =
-  max(0, snap(pl.x, 16)),
-  max(0, snap(pl.y, 16))
+	local rx, ry =
+		max(0, snap(pl.x, 16)),
+		max(0, snap(pl.y, 16))
 
- if rx != room.x or
-    ry != room.y then  
-  room.leave()
-  room.enter(rx, ry)
- end
+	if rx != room.x or
+			ry != room.y then
+		room.leave()
+		room.enter(rx, ry)
+	end
 end
 
 function room.for_tiles(fn)
- for i = room.x, room.x + 15 do
-  for j = room.y, room.y + 15 do
-   fn(i, j)
-  end
- end
+	for i = room.x, room.x + 15 do
+		for j = room.y, room.y + 15 do
+			fn(i, j)
+		end
+	end
 end
 
 function smite(a)
@@ -429,66 +429,65 @@ function smite(a)
 end
 
 function room.leave()
- foreach(actors, smite)
- 
- for s in all(room.spawns) do
- 	mset(s.x, s.y, s.spr)
- end
+	foreach(actors, smite)
+
+	for s in all(room.spawns) do
+		mset(s.x, s.y, s.spr)
+	end
 end
 
 function room.enter(rx, ry)
- room.x = rx
- room.y = ry
- 
- room.spawns = {}
- room.barriers = {}
- room.generators = {}
- room.animated = {}
+	room.x = rx
+	room.y = ry
 
- room.for_tiles(function (i, j)
-  local spr = mget(i, j)
+	room.spawns = {}
+	room.barriers = {}
+	room.generators = {}
+	room.animated = {}
 
-  if fget(spr, 7) then
-   add(room.animated, {i, j})
-  end
-  
-  if fget(spr, 0) then
-  	mset(i,j,0)
-  	add(room.spawns,
-       {x=i,y=j,spr=spr})
-  	
-  	spawn(i,j,spr)
-  end
+	room.for_tiles(function (i, j)
+		local spr = mget(i, j)
 
-  if spr >= sp.barrier and
-     spr < sp.barrier + 4 then
-   add(room.barriers, {i, j})
+		if fget(spr, 7) then
+			add(room.animated, {i, j})
+		end
 
-  elseif spr == sp.generator then
-   add(room.generators, {i, j})
-  end
- end)
+		if fget(spr, 0) then
+			mset(i,j,0)
+			add(room.spawns,{x=i,y=j,spr=spr})
 
- camera(room.x * 8, room.y * 8)
+			spawn(i,j,spr)
+		end
+
+		if spr >= sp.barrier and
+				spr < sp.barrier + 4 then
+			add(room.barriers, {i, j})
+
+		elseif spr == sp.generator then
+			add(room.generators, {i, j})
+		end
+	end)
+
+	camera(room.x * 8, room.y * 8)
 end
 
 function room.draw()
- if t % 4 == 0 then
-  for c in all(room.animated) do
-   local i, j = c[1], c[2]
-   local spr = mget(i, j)
+	if t % 4 == 0 then
+		for c in all(room.animated) do
+			local i, j = c[1], c[2]
+			local spr = mget(i, j)
 
-   if spr % 4 == 3 then
-    spr -= 3
-   else
-    spr += 1
-   end
-   
-   mset(i, j, spr)
-  end
- end
- 
- map(room.x,room.y,room.x*8,room.y*8,16,16)
+			if spr % 4 == 3 then
+				spr -= 3
+			else
+				spr += 1
+			end
+
+			mset(i, j, spr)
+		end
+	end
+
+	map(room.x,room.y,room.x*8,room.y*8,16,16)
 end
 
 function spawn(x,y,spr)
@@ -496,18 +495,18 @@ function spawn(x,y,spr)
 		new("fish")
 		:xt(drawable(sp.fish))
 		:xt(posable(x, y))
- 	:xt(movable(0.3,0.1,0.1))
- 	:xt({evil=true})
- 	:xt({flipflop=true})
-  :xt({swim=true})
- 	
+		:xt(movable(0.3,0.1,0.1))
+		:xt({evil=true})
+		:xt({flipflop=true})
+		:xt({swim=true})
+
 	elseif spr == sp.spike then
 		new("spike")
 		:xt(drawable(sp.spike))
 		:xt(posable(x+0.5, y+0.5))
 		:xt(movable(0.3,0,0.3))
 		:xt({evil=true})
-  :xt({surprisefall=true})
+		:xt({surprisefall=true})
 	end
 end
 
@@ -515,36 +514,36 @@ end
 -- main -----------------------
 
 function activate_switch(pl)
- if pl.atk then
-  local px, py = pl.x, pl.y
-  
-  for i = px - 2, px + 2 do
-   for j = py - 2, py + 2 do
-    local spr = mget(i, j)
-    
-    if spr == sp.switch then
-     mset(i, j, sp.switch + 1)
-     return true
-    end
-   end
-  end
- end
+	if pl.atk then
+		local px, py = pl.x, pl.y
+
+		for i = px - 2, px + 2 do
+			for j = py - 2, py + 2 do
+				local spr = mget(i, j)
+
+				if spr == sp.switch then
+					mset(i, j, sp.switch + 1)
+					return true
+				end
+			end
+		end
+	end
 end
 
 function open_barriers()
- for c in all(room.barriers) do
-  mset(c[1], c[2], 0)
+	for c in all(room.barriers) do
+		mset(c[1], c[2], 0)
 
-  for k, v in pairs(room.animated) do
-   if c[0] == v[0] and c[1] == v[1] then
-    room.animated[k] = nil
-   end
-  end
- end
+		for k, v in pairs(room.animated) do
+			if c[0] == v[0] and c[1] == v[1] then
+				room.animated[k] = nil
+			end
+		end
+	end
 
- for c in all(room.generators) do
-  mset(c[1], c[2], sp.generator + 1)
- end
+	for c in all(room.generators) do
+		mset(c[1], c[2], sp.generator + 1)
+	end
 end
 
 function _update()
@@ -553,43 +552,43 @@ function _update()
 		return
 	end
 
- t += 1
+	t += 1
 
- control(pl)
- animhero(pl)
- 
- foreach(actors, act)
+	control(pl)
+	animhero(pl)
 
- room.watch(pl)
+	foreach(actors, act)
 
- if activate_switch(pl) then
-  open_barriers()
- end
- 
- if title == 666 then
- 	if joymoving(pl) or
- 	   btn(4) or btn(5) then
-  	title = t + 4
-  end
- end
+	room.watch(pl)
+
+	if activate_switch(pl) then
+		open_barriers()
+	end
+
+	if title == 666 then
+		if joymoving(pl) or
+				btn(4) or btn(5) then
+			title = t + 4
+		end
+	end
 end
 
 
 -- draw -----------------------
 
 function light_effect()
- -- light effect
- if pl.t > (pl.dashready or 0) and
-    pl.x > 0.9 and
-    not pl.dead then
-  local q = 0.128
-  circfill(pl.x*8-q,pl.y*8-q,q*128,1)
- 
-  if pl.atk then
-   local z = (t%16+1) / 16 * 0.128
-   circ(pl.x*8-z,pl.y*8-z,z*128,11)
-  end
- end
+	-- light effect
+	if pl.t > (pl.dashready or 0) and
+			pl.x > 0.9 and
+			not pl.dead then
+		local q = 0.128
+		circfill(pl.x*8-q,pl.y*8-q,q*128,1)
+
+		if pl.atk then
+			local z = (t%16+1) / 16 * 0.128
+			circ(pl.x*8-z,pl.y*8-z,z*128,11)
+		end
+	end
 end
 
 -- grid -----------------------
@@ -607,14 +606,14 @@ gameover = {}
 
 function gameover.update()
 	if not gameover.played then
-  sfx(4)
-  gameover.played = true
- end
- 
- local g = gameover.glitched
- gameover.glitched =
- 	g and rnd(66) < 60 or
- 	(not g) and rnd(256) > 249
+		sfx(4)
+		gameover.played = true
+	end
+
+	local g = gameover.glitched
+	gameover.glitched =
+		g and rnd(66) < 60 or
+		(not g) and rnd(256) > 249
 end
 
 
@@ -629,15 +628,15 @@ end
 -- gameover -------------------
 
 function gameover.draw()
- cls(13)
- print("—  —",50,53,15)
- -- todo get positions right
- print("  –",50,65,15)
+	cls(13)
+	print("ï¿½  ï¿½",50,53,15)
+	-- todo get positions right
+	print("  ï¿½",50,65,15)
 
- if gameover.glitched then
-  local r,l=rnd,4096
+	if gameover.glitched then
+		local r,l=rnd,4096
 		memset(24576+r(l),r(l),r(l))
- end
+	end
 end
 
 
@@ -649,15 +648,15 @@ function _draw()
 		return
 	end
 
- cls()
- 
- if t < title then
-  print("s e a f l u r",40,32,1)
- end
+	cls()
 
- light_effect()
- room.draw()
- foreach(actors, draw)
+	if t < title then
+		print("s e a f l u r",40,32,1)
+	end
+
+	light_effect()
+	room.draw()
+	foreach(actors, draw)
 end
 __gfx__
 0000000000000000e2e22eee44444444222222224444444400000000000000000000000000000000000000000000000000000000000000000000000000000000
