@@ -629,9 +629,9 @@ end
 
 function gameover.draw()
 	cls(13)
-	print("�  �",50,53,15)
+	print("\x97  \x97",50,53,15)
 	-- todo get positions right
-	print("  �",50,65,15)
+	print("  \x96",50,65,15)
 
 	if gameover.glitched then
 		local r,l=rnd,4096
