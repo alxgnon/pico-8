@@ -4,41 +4,38 @@ __lua__
 -- 0: common
 
 -- sprite constants
-
 sp = {
 	none = 0,
 	nowall = 1,
-	
 	rock = 2,
 	soil = 3,
 	bedrock = 4,
 	dirt = 5,
-	
 	pinkbug = 14,
 	bubble = 15,
-	
 	grave = 16,
 	weed = 18,
 	dank = 19,
 	tite = 20,
 	mite = 21,
-
 	sparkle = 24,
 	lea = 29,
 	sigma = 30,
 	lambda = 31,
-	
 	debug = 32,
 	robo = 33,
-	
 	switch = 40,
 	generator = 42,
 	barrier = 44,
-	
 	fish = 48,
 	spike = 50,
 	fetus = 60,
 	clam = 62,
+}
+
+-- flag constants
+flag = {
+	solid = 1,
 }
 
 
@@ -60,10 +57,6 @@ function keys(a)
 	return ks
 end
 
-function new_rect(x,y,w,h)
-	return {x=x,y=y,w=w,h=h}
-end
-
 
 -- actors
 
@@ -81,11 +74,7 @@ end
 function act(a)
 	a.t = (a.t or 0) + 1
 
-	collidex(a)
-	collidey(a)
 	killzone(a)
-	flipflop(a)
-	surprisefall(a)
 
 	if a.act then
 		a:act()
@@ -101,7 +90,50 @@ function _init()
 	room.enter(0, 0)
 end
 -->8
--- 1: player
+-- 1: physics
+
+-- new vector
+function vec(x,y)
+	return {x=x,y=y}
+end
+
+-- new rectangle
+function rec(x,y,w,h)
+	return {x=x,y=y,w=w,h=h}
+end
+
+-- is map tile solid?
+function solid(x,y)
+	return fget(mget(x,y),flag.solid)
+end
+
+-- does rect overlap any solids?
+-- todo: support large actors
+function solid_area(x,y,w,h)
+	return
+		solid(x-w,y-h) or
+		solid(x+w,y-h) or
+		solid(x-w,y+h) or
+		solid(x+w,y+h)
+end
+
+-- check moving actors on solids
+function solid_collide(a)
+	local x,y,dx,dy,w,h=a.x,a.y,a.dx,a.dy,a.w,a.h
+	return
+		solid_area(x+dx,y,w,h),
+		solid_area(x,y+dy,w,h)
+end
+
+-- move me considering solids
+function solid_move(a)
+	local x,y = solid_collide(a)
+
+	if (not x) a.x += a.dx
+	if (not y) a.y += a.dy
+end
+-->8
+-- 2: player
 
 pl = {
 	t = 0,
@@ -119,19 +151,18 @@ pl = {
 	dx = 0,
 	dy = 0,
 
-	killzone = new_rect(-1),
+	killzone = rec(-1),
 }
 
 
 function pl:act()
+	solid_move(pl)
 end
 
 
 function pl:on_death()
 	maphax()
 end
--->8
--- 2:
 -->8
 -- 3:
 -->8
@@ -156,82 +187,6 @@ function new(name)
 
 	add(actors, a)
 	return a
-end
-
-
--- posable --------------------
-
-function posable(x, y)
-	return {x=x or 0, y=y or 0}
-end
-
-function is_posable(a)
-	return a.x and a.y
-end
-
-
--- movable --------------------
-
-function movable(speed, dx, dy)
-	return {
-		speed = speed or 0.25,
-		dx = dx or 0,
-		dy = dy or 0,
-	}
-end
-
-function swim()
-	-- todo
-end
-
-function surprisefall()
-	-- todo
-end
-
-
--- collideable ----------------
-
-function collideable(w, h)
-	return {w=w or 0.4, h=h or 0.4}
-end
-
-function is_collideable(a)
-	return a.w and a.h
-end
-
--- is map tile solid?
-function solid(x,y)
-	return fget(mget(x,y), 1)
-end
-
--- does rect overlap any solids?
--- todo: support large actors
-function solidarea(x,y, w,h)
-	return
-		solid(x-w,y-h) or
-		solid(x+w,y-h) or
-		solid(x-w,y+h) or
-		solid(x+w,y+h)
-end
-
-function collidex(a)
-	if is_collideable(a) and
-			solidarea(a.x+a.dx,a.y,
-			a.w,a.h) then
-
-	else
-		a.x += a.dx
-	end
-end
-
-function collidey(a)
-	if is_collideable(a) and
-			solidarea(a.x,a.y+a.dy,
-			a.w,a.h) then
-
-	else
-		a.y += a.dy
-	end
 end
 
 
@@ -334,8 +289,7 @@ function drawable(spr, frame)
 end
 
 function is_drawable(a)
-	return a.spr and a.frame and
-		is_posable(a)
+	return a.spr and a.frame
 end
 
 function draw(a)
@@ -528,21 +482,21 @@ end
 
 function spawn(x,y,spr)
 	if spr == sp.fish then
-		new("fish")
-		:xt(drawable(sp.fish))
-		:xt(posable(x, y))
-		:xt(movable(0.3,0.1,0.1))
-		:xt({evil=true})
-		:xt({flipflop=true})
-		:xt({swim=true})
+		--new("fish")
+		--:xt(drawable(sp.fish))
+		--:xt(posable(x, y))
+		--:xt(movable(0.3,0.1,0.1))
+		--:xt({evil=true})
+		--:xt({flipflop=true})
+		--:xt({swim=true})
 
 	elseif spr == sp.spike then
-		new("spike")
-		:xt(drawable(sp.spike))
-		:xt(posable(x+0.5, y+0.5))
-		:xt(movable(0.3,0,0.3))
-		:xt({evil=true})
-		:xt({surprisefall=true})
+		--new("spike")
+		--:xt(drawable(sp.spike))
+		--:xt(posable(x+0.5, y+0.5))
+		--:xt(movable(0.3,0,0.3))
+		--:xt({evil=true})
+		--:xt({surprisefall=true})
 	end
 end
 
@@ -627,15 +581,6 @@ function light_effect()
 		end
 	end
 end
-
--- grid -----------------------
-
-
-function grid()
-	return {}
-end
-
-
 
 -- gameover -------------------
 
