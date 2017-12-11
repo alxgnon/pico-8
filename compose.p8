@@ -1,8 +1,19 @@
 pico-8 cartridge // http://www.pico-8.com
 version 14
 __lua__
+-- do_nothing -----------------
+-- does absolutely nothing
+
 function do_nothing()
 end
+
+
+-- sp -------------------------
+-- holds sprite constants
+
+sp = {
+	object = 64,
+}
 
 
 -- equals ---------------------
@@ -68,16 +79,44 @@ end
 
 
 -- room -----------------------
--- acts for a room in the map
+-- acts a room in the map
 
-local function room_draw(a)
+local function draw_room(a)
 	map(a.x,a.y,a.x*8,a.y*8,16,16)
 end
 
 function room(b)
 	local a = {
 		x = 0, y = 0,
-		draw = room_draw,
+		init = do_nothing,
+		update = do_nothing,
+		draw = draw_room,
+	}
+	return merge(a, b)
+end
+
+
+-- object ---------------------
+-- acts a posable object
+
+local function get_corner(a)
+	return a.x*8-4, a.y*8-4
+end
+
+local function draw_object(a)
+	local f = a.frame or 0
+	local x, y = get_corner(a)
+	spr(a.sprite + f, x, y, 1, 1,
+			a.flip_x, a.flip_y)
+end
+
+function object(b)
+	local a = {
+		x = 0, y = 0,
+		sprite = sp.object,
+		init = do_nothing,
+		update = do_nothing,
+		draw = draw_object,
 	}
 	return merge(a, b)
 end
@@ -86,7 +125,7 @@ end
 -- test -----------------------
 -- runs the test suite
 
-local function test_init(s)
+local function init_test(s)
 	test_equals()
 	test_merge()
 	s:done()
@@ -95,7 +134,7 @@ end
 function test(b)
 	local a = {
 		done = do_nothing,
-		init = test_init,
+		init = init_test,
 		update = do_nothing,
 		draw = do_nothing,
 	}
@@ -106,23 +145,23 @@ end
 -- game -----------------------
 -- handles the game state
 
-local function game_init(s)
+local function init_game(s)
 	s.room = room()
 end
 
-local function game_update(s)
+local function update_game(s)
 end
 
-local function game_draw(s)
+local function draw_game(s)
 	cls()
 	s.room:draw()
 end
 
 function game(b)
 	local s = {
-		init = game_init,
-		update = game_update,
-		draw = game_draw,
+		init = init_game,
+		update = update_game,
+		draw = draw_game,
 	}
 	return merge(s, b)
 end
@@ -142,7 +181,7 @@ function play_test()
 end
 
 function _init()
- play_test()
+	play_test()
 end
 
 function _update()
