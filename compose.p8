@@ -1,13 +1,6 @@
 pico-8 cartridge // http://www.pico-8.com
 version 14
 __lua__
--- do_nothing -----------------
--- does absolutely nothing
-
-function do_nothing()
-end
-
-
 -- sp -------------------------
 -- holds sprite constants
 
@@ -16,43 +9,10 @@ sp = {
 }
 
 
--- equals ---------------------
--- compares tables by value
+-- do_nothing -----------------
+-- does absolutely nothing
 
-function equals(a, b)
-	if (a == b) return true
-	local typ = type(a)
-	if (typ != type(b)) return false
-	if (typ != "table") return false
-
-	local keyset = {}
-
-	for k, av in pairs(a) do
-		local bv = b[k]
-		if bv == nil or not equals(bv, av) then
-			return false
-		end
-		keyset[k] = true
-	end
-
-	for k, _ in pairs(b) do
-		if (not keyset[k]) return false
-	end
-	return true
-end
-
-function test_equals()
-	local a = {x={z=0}}
-	local b = {x={z=0}}
-	local c = {x={z=1}}
-	local d = {y={z=0}}
-	local e = {x={z=0},y={x=0}}
-
-	assert(equals(a, a))
-	assert(equals(a, b))
-	assert(not equals(a, c))
-	assert(not equals(a, d))
-	assert(not equals(a, e))
+function do_nothing()
 end
 
 
@@ -66,15 +26,6 @@ function merge(a, b)
 		end
 	end
 	return a
-end
-
-function test_merge()
-	local a = {x=0,y=0}
-	local b = {y=1,z=0}
-	local c = {x=0,y=1,z=0}
-
-	assert(equals(merge(a, nil), a))
-	assert(equals(merge(a, b), c))
 end
 
 
@@ -122,26 +73,6 @@ function object(b)
 end
 
 
--- test -----------------------
--- runs the test suite
-
-local function init_test(s)
-	test_equals()
-	test_merge()
-	s:done()
-end
-
-function test(b)
-	local a = {
-		done = do_nothing,
-		init = init_test,
-		update = do_nothing,
-		draw = do_nothing,
-	}
-	return merge(a, b)
-end
-
-
 -- game -----------------------
 -- handles the game state
 
@@ -167,21 +98,13 @@ function game(b)
 end
 
 
--- main -----------------------
+-- state ----------------------
 -- ties callbacks to game state
 
-function play_game()
-	state = game()
-	state:init()
-end
-
-function play_test()
-	state = test{done = play_game}
-	state:init()
-end
+state = game()
 
 function _init()
-	play_test()
+	state:init()
 end
 
 function _update()
