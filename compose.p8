@@ -29,6 +29,25 @@ function merge(a, b)
 end
 
 
+-- scene ----------------------
+-- handles actors
+
+local function draw_scene(s)
+	for a in all(s.actors) do
+		a:draw()
+	end
+end
+
+function scene(o)
+	local s = {
+		init = do_nothing,
+		update = do_nothing,
+		draw = draw_scene,
+	}
+	return merge(s, o)
+end
+
+
 -- room -----------------------
 -- acts a room in the map
 
@@ -36,14 +55,14 @@ local function draw_room(a)
 	map(a.x,a.y,a.x*8,a.y*8,16,16)
 end
 
-function room(b)
+function room(o)
 	local a = {
 		x = 0, y = 0,
 		init = do_nothing,
 		update = do_nothing,
 		draw = draw_room,
 	}
-	return merge(a, b)
+	return merge(a, o)
 end
 
 
@@ -61,7 +80,7 @@ local function draw_object(a)
 			a.flip_x, a.flip_y)
 end
 
-function object(b)
+function object(o)
 	local a = {
 		x = 0, y = 0,
 		sprite = sp.object,
@@ -69,32 +88,34 @@ function object(b)
 		update = do_nothing,
 		draw = draw_object,
 	}
-	return merge(a, b)
+	return merge(a, o)
 end
 
 
 -- game -----------------------
 -- handles the game state
 
-local function init_game(s)
-	s.room = room()
+local function init_game(g)
+	g.room = room()
+	g.object = object{x=2,y=2}
 end
 
-local function update_game(s)
+local function update_game(g)
 end
 
-local function draw_game(s)
+local function draw_game(g)
 	cls()
-	s.room:draw()
+	g.room:draw()
+	g.object:draw()
 end
 
-function game(b)
-	local s = {
+function game(o)
+	local g = {
 		init = init_game,
 		update = update_game,
 		draw = draw_game,
 	}
-	return merge(s, b)
+	return merge(g, o)
 end
 
 
