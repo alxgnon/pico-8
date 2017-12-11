@@ -1,9 +1,54 @@
 pico-8 cartridge // http://www.pico-8.com
 version 14
 __lua__
------------ common ------------
+-- equals ---------------------
+-- compares tables by value
 
+function equals(a, b)
+	if (a == b) return true
+	local typ = type(a)
+	if (typ != type(b)) return false
+	if (typ != "table") return false
+
+	local keyset = {}
+
+	for k, av in pairs(a) do
+		local bv = b[k]
+		if bv == nil or not equals(bv, av) then
+			return false
+		end
+		keyset[k] = true
+	end
+
+	for k, _ in pairs(b) do
+		if (not keyset[k]) return false
+	end
+	return true
+end
+
+function test_equals()
+	local a = {x={z=0}}
+	local b = {x={z=0}}
+	local c = {x={z=1}}
+	local d = {y={z=0}}
+	local e = {x={z=0},y={x=0}}
+
+	assert(equals(a, a),
+			"equals itself")
+	assert(equals(a, b),
+			"equals identical table")
+	assert(not equals(a, c),
+			"not equals same key")
+	assert(not equals(a, d),
+			"not equals diff key")
+	assert(not equals(a, e),
+			"not equals extra key")
+end
+
+
+-- merge ----------------------
 -- merges tables b into a
+
 function merge(a, b)
 	if b then
  	for k, v in pairs(b) do
@@ -13,45 +58,56 @@ function merge(a, b)
 	return a
 end
 
------------- actor ------------
+function test_merge()
+	local a = {x=0,y=0}
+	local b = {y=1,z=0}
+	local c = {x=0,y=1,z=0}
 
-actor = {}
-do
+	assert(equals(merge(a, nil), a),
+			"merge ingores nil")
+	assert(equals(merge(a, b), c),
+			"merge applies b to a")
+end
 
--------------------- actor.room
+
+-- room -----------------------
+-- acts for a room in the map
 
 local
 function room_draw(a)
 	map(a.x,a.y,a.x*8,a.y*8,16,16)
 end
 
--- builds room with defaults
-function actor.room(options)
-	local defaults = {
+function room(b)
+	local a = {
 		x = 0, y = 0,
 		draw = room_draw,
 	}
-	return merge(defaults, options)
+	return merge(a, b)
 end
 
-end ---------------------------
------------- main -------------
 
-do
+-- main -----------------------
+-- ties callbacks to gamestate
 
-local room = nil
- 
+gamestate = nil
+
+function test()
+	test_equals()
+	test_merge()
+end
+
 function _init()
-	room = actor.room()
+	test()
+	gamestate = {}
+	gamestate.room = room()
 end
 
 function _update()
 end
 
 function _draw()
-	room:draw()
-end
-
+	gamestate.room:draw()
 end
 __gfx__
 00000000991199110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
