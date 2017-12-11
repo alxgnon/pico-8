@@ -1,6 +1,10 @@
 pico-8 cartridge // http://www.pico-8.com
 version 14
 __lua__
+function do_nothing()
+end
+
+
 -- equals ---------------------
 -- compares tables by value
 
@@ -33,16 +37,11 @@ function test_equals()
 	local d = {y={z=0}}
 	local e = {x={z=0},y={x=0}}
 
-	assert(equals(a, a),
-			"equals itself")
-	assert(equals(a, b),
-			"equals identical table")
-	assert(not equals(a, c),
-			"not equals same key")
-	assert(not equals(a, d),
-			"not equals diff key")
-	assert(not equals(a, e),
-			"not equals extra key")
+	assert(equals(a, a))
+	assert(equals(a, b))
+	assert(not equals(a, c))
+	assert(not equals(a, d))
+	assert(not equals(a, e))
 end
 
 
@@ -51,10 +50,10 @@ end
 
 function merge(a, b)
 	if b then
- 	for k, v in pairs(b) do
- 		a[k] = v
- 	end
- end
+		for k, v in pairs(b) do
+			a[k] = v
+		end
+	end
 	return a
 end
 
@@ -63,18 +62,15 @@ function test_merge()
 	local b = {y=1,z=0}
 	local c = {x=0,y=1,z=0}
 
-	assert(equals(merge(a, nil), a),
-			"merge ingores nil")
-	assert(equals(merge(a, b), c),
-			"merge applies b to a")
+	assert(equals(merge(a, nil), a))
+	assert(equals(merge(a, b), c))
 end
 
 
 -- room -----------------------
 -- acts for a room in the map
 
-local
-function room_draw(a)
+local function room_draw(a)
 	map(a.x,a.y,a.x*8,a.y*8,16,16)
 end
 
@@ -87,27 +83,74 @@ function room(b)
 end
 
 
--- main -----------------------
--- ties callbacks to gamestate
+-- test -----------------------
+-- runs the test suite
 
-gamestate = nil
-
-function test()
+local function test_init(s)
 	test_equals()
 	test_merge()
+	s:done()
+end
+
+function test(b)
+	local a = {
+		done = do_nothing,
+		init = test_init,
+		update = do_nothing,
+		draw = do_nothing,
+	}
+	return merge(a, b)
+end
+
+
+-- game -----------------------
+-- handles the game state
+
+local function game_init(s)
+	s.room = room()
+end
+
+local function game_update(s)
+end
+
+local function game_draw(s)
+	cls()
+	s.room:draw()
+end
+
+function game(b)
+	local s = {
+		init = game_init,
+		update = game_update,
+		draw = game_draw,
+	}
+	return merge(s, b)
+end
+
+
+-- main -----------------------
+-- ties callbacks to game state
+
+function play_game()
+	state = game()
+	state:init()
+end
+
+function play_test()
+	state = test{done = play_game}
+	state:init()
 end
 
 function _init()
-	test()
-	gamestate = {}
-	gamestate.room = room()
+ play_test()
 end
 
 function _update()
+	state:update()
 end
 
 function _draw()
-	gamestate.room:draw()
+	state:draw()
 end
 __gfx__
 00000000991199110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
