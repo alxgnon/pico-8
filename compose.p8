@@ -109,13 +109,36 @@ function object(o)
 end
 
 
+-- ctl ------------------------
+-- updates object with buttons
+
+function update_ctl(a)
+	a.left,a.right=btn"0",btn"1"
+	a.up,a.down=btn"2",btn"3"
+	a.bo,a.bx=btn"4",btn"5"
+end
+
+function ctl(a)
+	local update = a.update
+
+	a.update = function (a)
+		update_ctl(a)
+		update(a)
+	end
+	return a
+end
+
+
 -- game -----------------------
 -- handles the game state
 
 function init_game(g)
 	g.scene = scene()
 	g.scene:add(room())
-	g.scene:add(object{x=2,y=2})
+	
+	g.pl = object{x=2,y=2}
+	g.pl = ctl(g.pl)
+	g.scene:add(g.pl)
 end
 
 function update_game(g)
