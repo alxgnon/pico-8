@@ -36,7 +36,7 @@ function new_card(sprite, name)
 		x = 96, y = 0,
 		faceup = false,
 	}
-
+	
 	function card:flip()
 		self.faceup = not self.faceup
 	end
@@ -48,10 +48,10 @@ function new_card(sprite, name)
  			hand.y > card.y and
  			hand.y < card.y + 28
 	end
-
+	
 	function card:draw()
  	local x,y = self.x,self.y
-
+ 
  	if self.faceup then
  		spr(0,x,y,4,1)
   	spr(16,x,y+8,1,3)
@@ -62,7 +62,7 @@ function new_card(sprite, name)
  		spr(64,x,y,4,4)
  	end
 	end
-
+	
 	return card
 end
 -->8
@@ -91,7 +91,7 @@ end
 function deck:top()
 	for i=#self,1,-1 do
 		local card = self[i]
-
+		
 		if card:hover() then
 			return card
 		end
@@ -105,6 +105,58 @@ hand = {
 	closed = 129,
 }
 
+function hand:move()
+	local dx,dy = 0,0
+	if (btn"0") dx -= 2
+	if (btn"1") dx += 2
+	if (btn"2") dy -= 2
+	if (btn"3") dy += 2
+
+	self.x += dx
+	self.y += dy
+	
+	if self.card then
+		self.card.x += dx
+		self.card.y += dy
+	end
+end
+
+function hand:grab()
+	if not btn"4" then
+		self.hold4 = false
+	else
+		if (self.hold4) return
+		self.hold4 = true
+
+		if self.card then
+			add(deck, self.card)
+			self.card = nil
+		else
+			local top = deck:top()
+			if top then
+				del(deck, top)
+				self.card = top
+			end
+		end
+	end
+end
+
+function hand:flip()
+	if not btn"5" then
+		self.hold5 = false
+	else
+		if (self.hold5) return
+		self.hold5 = true
+
+		if self.card then
+			self.card:flip()
+		else
+			local top = deck:top()
+			if (top) top:flip()
+		end
+	end
+end
+
 function hand:draw()
 	if self.card then
 		self.card:draw()
@@ -113,66 +165,23 @@ function hand:draw()
 		spr(self.open,self.x,self.y)
 	end
 end
+
 -->8
-function _update()
-	local dx,dy = 0,0
-	if (btn"0") dx -= 2
-	if (btn"1") dx += 2
-	if (btn"2") dy -= 2
-	if (btn"3") dy += 2
-
-	hand.x += dx
-	hand.y += dy
-
-	if hand.card then
-		hand.card.x += dx
-		hand.card.y += dy
-	end
-
-	if btn"4" then
-		if (hold4) return
-		hold4 = true
-
-		if hand.card then
-			add(deck, hand.card)
-			hand.card = nil
-		else
-			local top = deck:top()
-			if top then
-				del(deck, top)
-				hand.card = top
-			end
-		end
-	else
-		hold4 = false
-	end
-
-	if btn"5" then
-		if (hold5) return
-		hold5 = true
-
-		if hand.card then
-			hand.card:flip()
-		else
-			local top = deck:top()
-			if top then
-				top:flip()
-			end
-		end
-	else
-		hold5 = false
-	end
-end
-
 function _init()
 	deck:shuffle()
+end
+
+function _update()
+	hand:move()
+	hand:grab()
+	hand:flip()
 end
 
 function get_tip()
 	if hand.card and hand.card.faceup then
 	 return hand.card.name
 	end
-
+	
 	local top = deck:top()
 	if top and top.faceup then
 		return top.name
@@ -194,9 +203,9 @@ function _draw()
 	end
 
 	hand:draw()
-
+	
 	local tip = get_tip()
-	if (tip) draw_tip(tip)
+ if (tip) draw_tip(tip)
 end
 __gfx__
 00000000000000000000000000000000111111111111111111111111111111111111111111111111111111111111111111117111111171111111111111111111
