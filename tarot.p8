@@ -37,8 +37,9 @@ function new_card(sprite, name)
 		name = name,
 		x = 96, y = 0,
 		faceup = false,
+		inversed = false,
 	}
-	
+
 	function card:flip()
 		self.faceup = not self.faceup
 	end
@@ -126,8 +127,7 @@ end
 function hand:grab()
 	if not btn"4" then
 		self.hold4 = false
-	else
-		if (self.hold4) return
+	elseif not self.hold4 then
 		self.hold4 = true
 
 		if self.card then
@@ -146,8 +146,7 @@ end
 function hand:flip()
 	if not btn"5" then
 		self.hold5 = false
-	else
-		if (self.hold5) return
+	elseif not self.hold5 then
 		self.hold5 = true
 
 		if self.card then
