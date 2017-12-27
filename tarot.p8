@@ -136,19 +136,8 @@ end
 function _draw()
 	cls(0)
 	map(0,0,0,0,16,16)
-
-	for card in all(deck) do
-		draw_card(card)
-	end
-
-	if hand.card then
-		draw_card(hand.card)
-		spr(closed, hand.x, hand.y)
-	else
-		spr(open, hand.x, hand.y)
-	end
 	
-	if hand.card and hand.card.f then
+		if hand.card and hand.card.f then
 	 print(hand.card.def, 0, 123, 7)
 	else
  	for i=#deck,1,-1 do
@@ -163,6 +152,17 @@ function _draw()
  			break
  		end
  	end
+	end
+
+	for card in all(deck) do
+		draw_card(card)
+	end
+
+	if hand.card then
+		draw_card(hand.card)
+		spr(closed, hand.x, hand.y)
+	else
+		spr(open, hand.x, hand.y)
 	end
 end
 __gfx__
