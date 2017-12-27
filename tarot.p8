@@ -35,7 +35,7 @@ function new_card(sprite, name)
 	local card = {
 		sprite = sprite,
 		name = name,
-		x = 96, y = 0,
+		x = 0, y = 0,
 		faceup = false,
 		inversed = false,
 	}
@@ -99,11 +99,17 @@ function deck:shuffle()
 		end
 	end
 
+	local offset = 1
+	
 	while #limbo > 0 do
 		local i = rnd(#limbo)
  	local card = limbo[flr(i+1)]
  	del(limbo, card)
  	add(self, card)
+ 	
+ 	card.x = 96 + flr(offset)
+ 	card.y = 2 + flr(offset)
+ 	offset -= 0.2
 	end
 end
 
