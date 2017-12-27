@@ -44,6 +44,10 @@ function new_card(sprite, name)
 		self.faceup = not self.faceup
 	end
 
+	function card:inverse()
+		self.inversed = not self.inversed
+	end
+
 	function card:hover()
 	 return
 	 		hand.x > card.x and
@@ -51,21 +55,29 @@ function new_card(sprite, name)
  			hand.y > card.y and
  			hand.y < card.y + 28
 	end
-	
+
 	function card:draw()
  	local x,y = self.x,self.y
- 
- 	if self.faceup then
+
+ 	if self.inversed and self.faceup then
+ 		spr(48,x,y+4,4,1,-1,-1)
+  	spr(19,x,y+4,1,3,-1,-1)
+  	spr(16,x+24,y+4,1,3,-1,-1)
+  	spr(0,x,y+28,4,1,-1,-1)
+ 		spr(self.sprite,x+8,y+12,2,2,-1,-1)
+ 	elseif self.faceup then
  		spr(0,x,y,4,1)
   	spr(16,x,y+8,1,3)
   	spr(19,x+24,y+8,1,3)
   	spr(48,x,y+24,4,1)
  		spr(self.sprite,x+8,y+8,2,2)
+ 	elseif self.inversed then
+ 		spr(64,x,y+4,4,4,-1,-1)
  	else
  		spr(64,x,y,4,4)
  	end
 	end
-	
+
 	return card
 end
 -->8
@@ -81,6 +93,10 @@ function deck:shuffle()
 	for card in all(self) do
 		del(self, card)
 		add(limbo, card)
+
+		if rnd"666" > 633 then
+			card:inverse()
+		end
 	end
 
 	while #limbo > 0 do
@@ -94,7 +110,7 @@ end
 function deck:top()
 	for i=#self,1,-1 do
 		local card = self[i]
-		
+
 		if card:hover() then
 			return card
 		end
@@ -117,7 +133,7 @@ function hand:move()
 
 	self.x += dx
 	self.y += dy
-	
+
 	if self.card then
 		self.card.x += dx
 		self.card.y += dy
@@ -182,7 +198,7 @@ function get_tip()
 	if hand.card and hand.card.faceup then
 	 return hand.card.name
 	end
-	
+
 	local top = deck:top()
 	if top and top.faceup then
 		return top.name
@@ -204,7 +220,7 @@ function _draw()
 	end
 
 	hand:draw()
-	
+
 	local tip = get_tip()
  if (tip) draw_tip(tip)
 end
