@@ -5,24 +5,28 @@ cards={
 {017,"the fool"},
 {160,"the sun"},
 {162,"the moon"},
+
 {004,"a disk of wealth"},
 {006,"two disks of change"},
 {008,"three disks of work"},
 {010,"four disks of power"},
 {012,"five disks of worry"},
 {014,"six disks of success"},
+
 {068,"a sword of decision"},
 {070,"two swords of peace"},
 {072,"three swords of sorrow"},
 {074,"four swords of rest"},
 {076,"five swords of cruelty"},
 {078,"six swords of fellowship"},
+
 {132,"a cup of love"},
 {134,"two cups of union"},
 {136,"three cups of sharing"},
 {138,"four cups of choice"},
 {140,"five cups of regret"},
 {142,"six cups of pleasure"},
+
 {196,"a wand of fire"},
 --{198,"two wands"},
 --{200,"three wands"},
@@ -102,13 +106,13 @@ function deck:shuffle()
 	end
 
 	local offset = 1
-	
+
 	while #limbo > 0 do
 		local i = rnd(#limbo)
  	local card = limbo[flr(i+1)]
  	del(limbo, card)
  	add(self, card)
- 	
+
  	card.x = 96 + flr(offset)
  	card.y = 2 + flr(offset)
  	offset -= 0.2
@@ -198,7 +202,7 @@ function hand:draw()
 		local cx,cy = self.card.x,self.card.y
 		rect(cx+6,cy+6,cx+28,cy+31,1)
 		rect(cx+6,cy+6,cx+27,cy+32,1)
-			
+
 		self.card:draw()
 		spr(self.closed,self.x,self.y)
 	else
