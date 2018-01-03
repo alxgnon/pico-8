@@ -16,11 +16,6 @@ const = {
 
 -- gameloop init
 function _init()
-	sys:spawn{
-		room = {},
-		x = 0, y = 0,
-	}
-
 	-- player
 	player = {
 		sprite = const.nobody,
@@ -30,6 +25,12 @@ function _init()
 		buttons = {},
 	}
 	sys:spawn(player)
+
+	sys:spawn{
+		x = 0, y = 0,
+		camera = player,
+		map = true,
+	}
 end
 
 -- gameloop update
@@ -161,24 +162,34 @@ sys:add {
 	end,
 }
 
--- draws map tiles
+-- camera follows the actor
 sys:add {
-	name = "room",
+	name = "camera",
 
 	match = function (a)
-		return a.room and a.x and a.y
+		return a.camera and a.x and a.y
 	end,
 
 	update = function (a)
-		if player then
-			a.x = snap(player.x, 16)
-			a.y = snap(player.y, 16)
-		end
+		a.x = snap(a.camera.x, 16)
+		a.y = snap(a.camera.y, 16)
+	end,
+
+	draw = function (a)
+		camera(a.x * 8, a.y * 8)
+	end,
+}
+
+-- draws map tiles
+sys:add {
+	name = "map",
+
+	match = function (a)
+		return a.map and a.x and a.y
 	end,
 
 	draw = function (a)
 		local x, y = a.x * 8, a.y * 8
-		camera(x, y)
 		map(a.x, a.y, x, y, 16, 16)
 	end,
 }
