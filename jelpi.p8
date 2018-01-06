@@ -620,24 +620,9 @@ function draw_actor(pl)
 end
 
 function _draw()
+	cls(12)
 
-	-- sky
-	camera (0, 0)
-	rectfill (0,0,127,127,12)
-	--for y=1,7 do
-	-- rect(0,63-y*2.5,127,63-y*2.5,6) end
-
-	-- background
-
--- sspr(88,0,8,8,0,0,128,128)
-
-	-- sky gradient
-	if (false) then
-	for y=0,127 do
-		col=sget(88,(y+(y%4)*6) / 16)
-		line(0,y,127,y,col)
-	end
-	end
+	camera(0,0)
 
 	-- clouds behind mountains
 	local x = t / 8
@@ -659,7 +644,7 @@ function _draw()
 	cam_x = mid(0,player.x*8-64,1024-128)
 
 	cam_y = 0
-	camera (cam_x,cam_y)
+	camera(cam_x,cam_y)
 	pal(12,0)
 	mapdraw (0,0,0,0,128,64,1)
 	pal()
