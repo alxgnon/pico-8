@@ -11,7 +11,6 @@ __lua__
 -- top-solid ground
 -- better duping
 
-corrupt_mode = false
 max_actors = 128
 
 music(0, 0, 3)
@@ -563,12 +562,6 @@ function _update()
  move_spawns(player.x, player.y)
 
  outgame_logic()
- 
- if (corrupt_mode) then
-  for i=1,5 do
-   poke(rnd(0x8000),rnd(0x100))
-  end
- end
  
 	t=t+1
 end
