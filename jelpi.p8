@@ -11,6 +11,19 @@ __lua__
 -- top-solid ground
 -- better duping
 
+
+sound = {
+	gameover = 00,
+	jump = 03,
+	gem = 04,
+	broke = 05,
+	charge = 06,
+	thump = 07,
+	super = 08,
+	kill = 09,
+	die = 11,
+}
+
 max_actors = 128
 
 function make_actor(k,x,y,d)
@@ -156,8 +169,8 @@ function move_player(pl)
 
     del(actor,pl)
 
-    sfx(11)
-    sfx(0)
+    sfx(sound.die)
+    sfx(sound.gameover)
 
   return
  end
@@ -182,7 +195,7 @@ function move_player(pl)
 --		solid(pl.x,pl.y)) then
   pl.standing) then
 		pl.dy = -0.7
-  sfx(3)
+  sfx(sound.jump)
  end
 
  -- charge
@@ -197,7 +210,7 @@ function move_player(pl)
    pl.dy = pl.dy - 0.2
   end
 
-  sfx(6)
+  sfx(sound.charge)
 
  end
 
@@ -308,7 +321,7 @@ function move_actor(pl)
     val = mget(x1, pl.y-0.5,0)
     if (fget(val,4)) then
      clear_cel(x1,pl.y-0.5)
-     sfx(5)
+     sfx(sound.broke)
      broke_block = true
 
      -- make debris
@@ -328,7 +341,7 @@ function move_actor(pl)
 
     else
      if (abs(pl.dx) > 0.2) then
-      sfx(7) -- thump
+      sfx(sound.thump)
      end
     end
 
@@ -437,13 +450,13 @@ function collide_event(a1, a2)
     a1.dx = a1.dx * 2
     --a1.dy = a1.dy-0.1
    -- a1.standing = false
-    sfx(8)
+    sfx(sound.super)
    end
 
    -- gem
    if (a2.frame==80) then
     a1.score = a1.score + 1
-    sfx(4)
+    sfx(sound.gem)
    end
 
    del(actor,a2)
@@ -473,7 +486,7 @@ function collide_event(a1, a2)
 
     -- kill monster
     -- to do: in move_monster
-    sfx(9)
+    sfx(sound.kill)
     del(actor,a2)
 
    else
@@ -675,15 +688,6 @@ function _draw()
   print(stat(1))
  end
 end
-
-
-
-
-
-
-
-
-
 __gfx__
 00000000000000004444444433b333b30000000000000000effffff7d66667d666666667d6666667cccccccccccccccc2000000025522552cc5ccccc20000000
 000000000000000044444444333333330000000000eeee002effff7f5d66765d666666765d666676ccccccccccccccc55200000052255225c55555cc50000000
