@@ -13,9 +13,6 @@ __lua__
 
 max_actors = 128
 
-music(0, 0, 3)
-
-
 function make_actor(k,x,y,d)
 	local a = {}
 	a.kind = k
@@ -54,7 +51,7 @@ function make_player(x, y, d)
  pl.bounce = 0
  pl.delay  = 0
  pl.pal    = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}
- 
+
  return pl
 end
 
@@ -63,7 +60,7 @@ function _init()
 
  actor = {}
  sparkle = {}
- 
+
  -- spawn player
  for y=0,63 do for x=0,127 do
   if (mget(x,y) == 48) then
@@ -71,7 +68,7 @@ function _init()
   end
  end end
  t = 0
- 
+
  death_t = 0
 end
 
@@ -101,7 +98,7 @@ function move_spawns(x0, y0)
    m = nil
 
    -- pickup
-   if (fget(val, 5)) then    
+   if (fget(val, 5)) then
     m = make_actor(2,x+0.5,y+1,1)
     m.f0 = val
     m.frame = val
@@ -116,7 +113,7 @@ function move_spawns(x0, y0)
     m.f0=val
     m.frame=val
    end
-   
+
    -- clear cel if spawned something
    if (m ~= nil) then
     clear_cel(x,y)
@@ -130,7 +127,7 @@ end
 function solid (x, y)
 	if (x < 0 or x >= 128 ) then
 		return true end
-				
+
 	val = mget(x, y)
 	return fget(val, 1)
 end
@@ -151,17 +148,16 @@ function move_player(pl)
       pl.x, pl.y-0.6, 96, 0)
      s.dx = cos(i/32)/2
      s.dy = sin(i/32)/2
-     s.max_t = 30 
+     s.max_t = 30
      s.ddy = 0.01
      s.frame=96+rnd(3)
      s.col = 7
     end
-    
+
     del(actor,pl)
-    
-    sfx(16)
-    music(-1)
-    sfx(5)
+
+    sfx(11)
+    sfx(0)
 
   return
  end
@@ -171,22 +167,22 @@ function move_player(pl)
  if (pl.charge > 10) then
   accel = 0.08
  end
- 
+
  if (not pl.standing) then
   accel = accel / 2
  end
-  
+
  -- player control
-	if (btn(0,b)) then 
+	if (btn(0,b)) then
 			pl.dx = pl.dx - accel; pl.d=-1 end
-	if (btn(1,b)) then 
+	if (btn(1,b)) then
 		pl.dx = pl.dx + accel; pl.d=1 end
 
-	if ((btn(4,b) or btn(2,b)) and 
---		solid(pl.x,pl.y)) then 
+	if ((btn(4,b) or btn(2,b)) and
+--		solid(pl.x,pl.y)) then
   pl.standing) then
 		pl.dy = -0.7
-  sfx(8)
+  sfx(3)
  end
 
  -- charge
@@ -194,30 +190,30 @@ function move_player(pl)
  if (btn(5,b) and pl.charge == 0
  and pl.delay == 0) then
   pl.charge = 15
-  
+
   pl.dx = pl.dx + pl.d * 0.4
-  
+
   if (not pl.standing) then
    pl.dy = pl.dy - 0.2
-  end 
- 
-  sfx(11)
- 
+  end
+
+  sfx(6)
+
  end
- 
+
  -- charging
- 
+
 	if (pl.charge > 0 or
 	    pl.super  > 0) then
 	 pl.frame = 53
-	 
+
 	 if (abs(pl.dx) > 0.4 or
 	     abs(pl.dy) > 0.2
 	 ) then
-	 
+
 	 for i=1,3 do
 	  local s = make_sparkle(
-	   pl.x+pl.dx*i/3, 
+	   pl.x+pl.dx*i/3,
 	   pl.y+pl.dy*i/3 - 0.3,
 	   96+rnd(3), (pl.t*3+i)%9+7)
 	  if (rnd(2) < 1) then
@@ -229,8 +225,8 @@ function move_player(pl)
 	  s.y = s.y + rnd(0.6)-0.3
   end
   end
-	end 
-	
+	end
+
 	pl.charge = max(0, pl.charge-1)
  if (pl.charge > 0) then
   pl.delay = 10
@@ -239,22 +235,22 @@ function move_player(pl)
  end
 
  pl.super = max(0, pl.super-1)
- 
- -- frame	
+
+ -- frame
 
  if (pl.standing) then
 	 pl.f0 = (pl.f0+abs(pl.dx)*2+4) % 4
  else
-	 pl.f0 = (pl.f0+abs(pl.dx)/2+4) % 4 
+	 pl.f0 = (pl.f0+abs(pl.dx)/2+4) % 4
  end
- 
- if (abs(pl.dx) < 0.1) 
+
+ if (abs(pl.dx) < 0.1)
  then
   pl.frame=48 pl.f0=0
  else
 	 pl.frame = 49+flr(pl.f0)
 	end
-	
+
 end
 
 function move_monster(m)
@@ -277,7 +273,7 @@ function move_actor(pl)
  if (pl.kind == 1) then
   move_player(pl)
  end
- 
+
  if (pl.kind == 2) then
   move_pickup(pl)
  end
@@ -287,65 +283,65 @@ function move_actor(pl)
  end
 
  pl.standing=false
- 
- -- x movement 
-	
+
+ -- x movement
+
  x1 = pl.x + pl.dx +
       sgn(pl.dx) * 0.3
-      
+
  local broke_block = false
 
  if(not solid(x1,pl.y-0.5)) then
-		pl.x = pl.x + pl.dx  
+		pl.x = pl.x + pl.dx
 	else -- hit wall
-		
+
 	 -- search for contact point
 	 while (not solid(pl.x + sgn(pl.dx)*0.3, pl.y-0.5)) do
 	  pl.x = pl.x + sgn(pl.dx) * 0.1
 	 end
 
-  -- if charging, break block	
+  -- if charging, break block
 	 if (pl.charge ~= nil) then
-	 
-   if (pl.charge > 0 or 
+
+   if (pl.charge > 0 or
        pl.super  > 0) then
     val = mget(x1, pl.y-0.5,0)
     if (fget(val,4)) then
      clear_cel(x1,pl.y-0.5)
-     sfx(10)
+     sfx(5)
      broke_block = true
-     
+
      -- make debris
-     
+
      for by=0,1 do
       for bx=0,1 do
        s=make_sparkle(
-       0.25+flr(x1) + bx*0.5, 
+       0.25+flr(x1) + bx*0.5,
        0.25+flr(pl.y-0.5) + by*0.5,
        22, 0)
        s.dx = (bx-0.5)/4
        s.dy = (by-0.5)/4
-       s.max_t = 30 
+       s.max_t = 30
        s.ddy = 0.02
       end
      end
-     
+
     else
      if (abs(pl.dx) > 0.2) then
-      sfx(12) -- thump
+      sfx(7) -- thump
      end
     end
-    
+
     -- bumping kills charge
     if (pl.charge < 20) then
      pl.charge = 0
     end
-    
+
    end
 	 end
 
-  -- bounce	
-  if (pl.super == 0 or 
+  -- bounce
+  if (pl.super == 0 or
       not broke_block) then
    pl.dx = pl.dx * -0.5
   end
@@ -356,17 +352,17 @@ function move_actor(pl)
   end
 
 	end
-	
+
  -- y movement
 
  if (pl.dy < 0) then
   -- going up
-  
+
   if (solid(pl.x-0.2, pl.y+pl.dy-1) or
    solid(pl.x+0.2, pl.y+pl.dy-1))
   then
    pl.dy=0
-   
+
    -- search up for collision point
    while ( not (
    solid(pl.x-0.2, pl.y-1) or
@@ -386,15 +382,15 @@ function move_actor(pl)
    solid(pl.x+0.2, pl.y+pl.dy)) then
 
 	  -- bounce
-   if (pl.bounce > 0 and 
-       pl.dy > 0.2) 
+   if (pl.bounce > 0 and
+       pl.dy > 0.2)
    then
     pl.dy = pl.dy * -pl.bounce
    else
- 
+
     pl.standing=true
     pl.dy = 0
-    
+
    end
 
    --snap down
@@ -403,15 +399,15 @@ function move_actor(pl)
      solid(pl.x+0.2,pl.y)
      ))
     do pl.y = pl.y + 0.05 end
-  
+
    --pop up even if bouncing
    while(solid(pl.x-0.2,pl.y-0.1)) do
     pl.y = pl.y - 0.05 end
    while(solid(pl.x+0.2,pl.y-0.1)) do
     pl.y = pl.y - 0.05 end
-    
+
   else
-   pl.y = pl.y + pl.dy  
+   pl.y = pl.y + pl.dy
   end
 
  end
@@ -441,45 +437,45 @@ function collide_event(a1, a2)
     a1.dx = a1.dx * 2
     --a1.dy = a1.dy-0.1
    -- a1.standing = false
-    sfx(13)
+    sfx(8)
    end
 
    -- gem
    if (a2.frame==80) then
     a1.score = a1.score + 1
-    sfx(9)
+    sfx(4)
    end
 
    del(actor,a2)
 
   end
-  
+
   -- charge or dupe monster
-  
+
   if(a2.kind==3) then -- monster
-   if(a1.charge > 0 or 
+   if(a1.charge > 0 or
       a1.super  > 0 or
      (a1.y-a1.dy) < a2.y-0.7) then
     -- slow down player
     a1.dx = a1.dx * 0.7
     a1.dy = a1.dy * -0.7-- - 0.2
-    
+
     -- explode
     for i=1,16 do
      s=make_sparkle(
       a2.x, a2.y-0.5, 96+rnd(3), 7)
      s.dx = s.dx + rnd(0.4)-0.2
      s.dy = s.dy + rnd(0.4)-0.2
-     s.max_t = 30 
+     s.max_t = 30
      s.ddy = 0.01
-     
+
     end
-    
+
     -- kill monster
     -- to do: in move_monster
-    sfx(14)
+    sfx(9)
     del(actor,a2)
-    
+
    else
 
     -- player death
@@ -488,7 +484,7 @@ function collide_event(a1, a2)
 
    end
   end
-   
+
  end
 end
 
@@ -496,7 +492,7 @@ function move_sparkle(sp)
  if (sp.t > sp.max_t) then
   del(sparkle,sp)
  end
- 
+
  sp.x = sp.x + sp.dx
  sp.y = sp.y + sp.dy
  sp.dy= sp.dy+ sp.ddy
@@ -527,15 +523,13 @@ function outgame_logic()
 
  if (death_t > 0) then
   death_t = death_t + 1
-  if (death_t > 30 and 
+  if (death_t > 30 and
    btn(4) or btn(5))
-  then 
-    music(-1)
+  then
     sfx(-1)
-    sfx(0)
     dpal={0,1,1, 2,1,13,6,
           4,4,9,3, 13,1,13,14}
-          
+
     -- palette fade
     for i=0,40 do
      for j=1,15 do
@@ -547,7 +541,7 @@ function outgame_logic()
      end
      flip()
     end
-    
+
     -- restart cart end of slice
     run()
    end
@@ -556,18 +550,18 @@ end
 
 function _update()
 
-	foreach(actor, move_actor)		
+	foreach(actor, move_actor)
 	foreach(sparkle, move_sparkle)
  collisions()
  move_spawns(player.x, player.y)
 
  outgame_logic()
- 
+
 	t=t+1
 end
 
 function draw_sparkle(s)
- 
+
  if (s.col > 0) then
   for i=1,15 do
    pal(i,s.col)
@@ -587,9 +581,9 @@ function draw_actor(pl)
   end
  end
 
- if (pl.charge ~= nil and 
+ if (pl.charge ~= nil and
      pl.charge > 0) then
- 
+
   for i=2,15 do
    pal(i,7+((pl.t/2) % 8))
   end
@@ -597,19 +591,19 @@ function draw_actor(pl)
 
  end
 
- if (pl.super ~= nil and 
+ if (pl.super ~= nil and
      pl.super > 0) then
- 
+
   for i=2,15 do
    pal(i,6+((pl.t/2) % 2))
   end
 
  end
 
-	spr(pl.frame, 
-  pl.x*8-4, pl.y*8-8, 
+	spr(pl.frame,
+  pl.x*8-4, pl.y*8-8,
   1, 1, pl.d < 0)
-  
+
  pal()
 end
 
@@ -617,14 +611,14 @@ function _draw()
 
  -- sky
 	camera (0, 0)
-	rectfill (0,0,127,127,12) 
+	rectfill (0,0,127,127,12)
  --for y=1,7 do
  -- rect(0,63-y*2.5,127,63-y*2.5,6) end
 
  -- background
- 
+
 -- sspr(88,0,8,8,0,0,128,128)
- 
+
  -- sky gradient
  if (false) then
  for y=0,127 do
@@ -640,40 +634,40 @@ function _draw()
  mapdraw(16, 32, -x, y, 16, 16, 0)
  mapdraw(16, 32, 128-x, y, 16, 16, 0)
 
- 
+
  local bgcol = 13 -- mountains
  pal(5,bgcol) pal(2,bgcol)
- pal(13,6) -- highlights 
+ pal(13,6) -- highlights
  y = 0
  mapdraw (0, 32, 0, y, 16, 16, 0)
 	pal()
- 
- 
+
+
  -- map and actors
 	cam_x = mid(0,player.x*8-64,1024-128)
- 
+
  cam_y = 0
 	camera (cam_x,cam_y)
- pal(12,0)	
+ pal(12,0)
 	mapdraw (0,0,0,0,128,64,1)
  pal()
  foreach(sparkle, draw_sparkle)
 	foreach(actor, draw_actor)
-	
+
  -- forground map
 --	mapdraw (0,0,0,0,128,64,2)
 
  -- player score
  camera(0,0)
  color(7)
- 
+
  if (death_t > 60) then
   print("press button to restart",
    18-1,10-0,8+(t/4)%2)
   print("press button to restart",
    18,10,7)
  end
- 
+
  if (false) then
   cursor(0,2)
   print("actors:"..count(actor))
@@ -965,11 +959,6 @@ __map__
 2222020202020202020202020202022222222222020202020202020202202323212222202323232323232323232323232321220202020222222202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202
 2323212222222222222222222222202323232323212222020202022220232323232323232323232323232323232323232323232122222023232321222222222202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202
 __sfx__
-01030000185701c5701f57024570185701c5701f57024560185601c5601f56024560185501c5501f550245501a5501d5501f540245401a5301d5301f530235301a5301d5301f5301a5201d510215102451023515
-01100000240452400528000280452b0450c005280450000529042240162d04500005307553c5252d000130052b0451f006260352b026260420c0052404500005230450c00521045230461f0450c0051c0421c025
-01100000187451a7001c7001c7451d745187001c7451f7001a745247001d7451d70021745277002470023745217451f7001d7001d7451a7451b7001c7451f7001a745227001c7451b70018745187001f7451f700
-01100000305453c52500600006003e625006000c30318600355250050000600006003e625006000060018600295263251529515006003e625006000060018600305250050018600006003e625246040060000600
-01100000004750c47518475004750a475004750a4750c475004750a4750c475004750a4750c4751147513475004750c4750a475004750a475004750a4750c475004750c47516475004751647518475114750c475
 01100000180721a0751b0721f0721e0751f0751e0721f075270752607724075200721f0751b0771a0751b07518072180621805218042180350000000000000000000000000000000000000000000000000000000
 011000000c37518375243751f3751b3721a372193711b372183721837217371163511533114311133001830214302143021830218302003000030000300003000030000300003000030000300003000030000300
 011000000c37300300003000030000300003000030000300003000030000300003000030000300003000030000300003000030000300003000030000300003000030000300003000030000300003000030000300
@@ -982,69 +971,3 @@ __sfx__
 000200002b071270711b07118071100710b0710607104071040610606103061040510305101041010310102101011040110000000000000000000000000000000000000000000000000000000000000000000000
 010200002e17029170171731a171231631d16111143141610c1230a11107110001000010000100001000010000100001000010000100001000010000100001000010000100001000010000100001000010000100
 01040000185702257024570225701f5701d5701f5701d57018570165701857016570135701157013570115700c5700d570135701457018560195501f550205302453024520225202452022510245102251024500
-__music__
-01 01434144
-00 02434144
-00 01034244
-02 02034244
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-00 41414144
-
