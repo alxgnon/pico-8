@@ -5,11 +5,10 @@ __lua__
 -- by zep
 
 -- to do:
--- levels and monsters
--- title / restart logic
--- block loot
+-- monster loot
 -- top-solid ground
--- better duping
+-- variable jump height
+-- shooting
 
 
 sound = {
