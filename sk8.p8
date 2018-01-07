@@ -44,6 +44,11 @@ function deli(tbl, v)
 		del(tbl, v)
 	end
 end
+
+-- get corner from sprite origin
+function get_corner(a)
+	return a.x*8-4, a.y*8-8
+end
 -->8
 -- manages component systems
 sys = {
@@ -54,7 +59,7 @@ sys = {
 
 -- add a component system
 function sys:add(s)
-	s.actors = {}
+	s.as = {}
 	add(self.systems, s)
 
 	if s.update then
@@ -71,7 +76,7 @@ end
 -- update all systems
 function sys:update()
 	for s in all(self.updates) do
-		for a in all(s.actors) do
+		for a in all(s.as) do
 			s.update(a)
 		end
 	end
@@ -80,8 +85,8 @@ end
 -- draw all systems
 function sys:draw()
 	for s in all(self.draws) do
-		for i = #s.actors, 1, -1 do
-			local a = s.actors[i]
+		for i = #s.as, 1, -1 do
+			local a = s.as[i]
 			s.draw(a)
 		end
 	end
@@ -91,7 +96,7 @@ end
 function sys:spawn(a)
 	for s in all(self.systems) do
 		if s.match(a) then
-			addi(s.actors, a)
+			addi(s.as, a)
 		end
 	end
 end
@@ -99,17 +104,11 @@ end
 -- remove actor from all systems
 function sys:kill(a)
 	for s in all(self.systems) do
-		deli(s.actors, a)
+		deli(s.as, a)
 	end
 end
 -->8
-function draw_actor(pl)
-	spr(pl.frame,
-		pl.x*8-4, pl.y*8-8,
-		1, 1, pl.d < 0)
-end
-
--- kills actors when hp <= 0
+-- kills when hp <= 0
 hitpoints = sys:add {
 	match = function (a)
 		return a.hp
@@ -120,6 +119,19 @@ hitpoints = sys:add {
 			if (a.on_death) a:on_death()
 			sys:kill(a)
 		end
+	end,
+}
+
+-- draws sprites
+sprites = sys:add {
+	match = function (a)
+		return a.frame and a.x and a.y
+	end,
+	
+	draw = function (a)
+		local x, y = get_corner(a)
+		spr(a.frame, x, y, 1, 1,
+				a.flipx, a.flipy)
 	end,
 }
 -->8
@@ -255,9 +267,9 @@ function move_player(pl)
 
 	-- player control
 	if (btn(0,b)) then
-			pl.dx = pl.dx - accel; pl.d=-1 end
+			pl.dx = pl.dx - accel; pl.flipx=true end
 	if (btn(1,b)) then
-		pl.dx = pl.dx + accel; pl.d=1 end
+		pl.dx = pl.dx + accel; pl.flipx=false end
 
 	if ((btn(4,b) or btn(2,b)) and
 --		solid(pl.x,pl.y)) then
@@ -325,12 +337,6 @@ function move_actor(pl)
 		end
 
 			pl.dx = pl.dx * -0.5
-
-		if (pl.kind == 3) then
-			pl.d = pl.d * -1
-			pl.dx=0
-		end
-
 	end
 
 	-- y movement
@@ -542,7 +548,8 @@ function _draw()
 	mapdraw(0,0,0,0,128,64,1)
 	pal()
 	foreach(sparkle, draw_sparkle)
-	foreach(actor, draw_actor)
+
+	sys:draw()
 end
 __gfx__
 00000000111111115555555566666666111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
