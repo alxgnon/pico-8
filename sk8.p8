@@ -108,6 +108,20 @@ function draw_actor(pl)
 		pl.x*8-4, pl.y*8-8,
 		1, 1, pl.d < 0)
 end
+
+-- kills actors when hp <= 0
+hitpoints = sys:add {
+	match = function (a)
+		return a.hp
+	end,
+	
+	update = function (a)
+		if a.hp <= 0 then
+			if (a.on_death) a:on_death()
+			sys:kill(a)
+		end
+	end,
+}
 -->8
 function make_actor(k,x,y,d)
 	local a = {}
@@ -141,6 +155,26 @@ function make_player(x, y, d)
 	pl = make_actor(1, x, y, d)
 	pl.score  = 0
 	pl.bounce = 0
+	pl.hp = 1
+
+	function pl.on_death(a)
+		death_t = 1
+
+		for i=1,32 do
+			s=make_sparkle(
+				pl.x, pl.y-0.6, 96, 0)
+			s.dx = cos(i/32)/2
+			s.dy = sin(i/32)/2
+			s.max_t = 30
+			s.ddy = 0.01
+			s.frame=sp.dust+rnd(3)
+			s.col = 7
+		end
+
+		sfx(sound.die)
+	end
+	
+	sys:spawn(pl)
 
 	return pl
 end
@@ -213,28 +247,6 @@ function move_pickup(a)
 end
 
 function move_player(pl)
-
-	if (pl.life == 0) then
-				death_t = 1
-				for i=1,32 do
-					s=make_sparkle(
-						pl.x, pl.y-0.6, 96, 0)
-					s.dx = cos(i/32)/2
-					s.dy = sin(i/32)/2
-					s.max_t = 30
-					s.ddy = 0.01
-					s.frame=sp.dust+rnd(3)
-					s.col = 7
-				end
-
-				del(actor,pl)
-
-				sfx(sound.die)
-
-		return
-	end
-
-
 	accel = 0.05
 
 	if (not pl.standing) then
@@ -503,6 +515,7 @@ end
 
 
 function _update()
+	sys:update()
 
 	foreach(actor, move_actor)
 	foreach(sparkle, move_sparkle)
