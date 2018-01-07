@@ -5,7 +5,6 @@ __lua__
 -- work in progress
 
 -- to do:
--- walking y offset
 -- no rejump
 -- up doesn't jump pls
 -- monster loot
@@ -47,7 +46,8 @@ end
 
 -- get corner from sprite origin
 function get_corner(a)
-	return a.x*8-4, a.y*8-8
+	local oy = a.oy or 0
+	return a.x*8-4, (a.y+oy)*8-8
 end
 -->8
 -- manages component systems
@@ -113,7 +113,7 @@ hitpoints = sys:add {
 	match = function (a)
 		return a.hp
 	end,
-	
+
 	update = function (a)
 		if a.hp <= 0 then
 			if (a.on_death) a:on_death()
@@ -127,7 +127,7 @@ sprites = sys:add {
 	match = function (a)
 		return a.frame and a.x and a.y
 	end,
-	
+
 	draw = function (a)
 		local x, y = get_corner(a)
 		spr(a.frame, x, y, 1, 1,
@@ -185,7 +185,7 @@ function make_player(x, y, d)
 
 		sfx(sound.die)
 	end
-	
+
 	sys:spawn(pl)
 
 	return pl
@@ -280,19 +280,25 @@ function move_player(pl)
 
 	-- frame
 
-	if (pl.standing) then
+	if pl.standing then
 		pl.f0 = (pl.f0+abs(pl.dx)*2+4) % 4
 	else
 		pl.f0 = (pl.f0+abs(pl.dx)/2+4) % 4
 	end
 
-	if (abs(pl.dx) < 0.1)
-	then
+	if abs(pl.dx) < 0.1 then
 		pl.frame=sp.plyr pl.f0=0
 	else
 		pl.frame =	sp.plyr+1+flr(pl.f0)
 	end
 
+	-- offset
+
+	if pl.f0 >= 1 and pl.f0 < 3 then
+		pl.oy = -0.125
+	else
+		pl.oy = 0
+	end
 end
 
 --function move_monster(m)
