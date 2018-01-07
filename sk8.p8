@@ -28,6 +28,87 @@ sp = {
 	dust = 096,
 }
 
+-- indexed add
+function addi(tbl, v)
+	if not tbl[v] then
+		local i = #tbl + 1
+		tbl[v] = i
+		tbl[i] = v
+	end
+end
+
+-- indexed delete
+function deli(tbl, v)
+	if tbl[v] then
+		tbl[v] = nil
+		del(tbl, v)
+	end
+end
+-->8
+-- manages component systems
+sys = {
+	systems = {},
+	updates = {},
+	draws = {},
+}
+
+-- add a component system
+function sys:add(s)
+	s.actors = {}
+	add(self.systems, s)
+
+	if s.update then
+		add(self.updates, s)
+	end
+
+	if s.draw then
+		add(self.draws, s)
+	end
+
+	return s
+end
+
+-- update all systems
+function sys:update()
+	for s in all(self.updates) do
+		for a in all(s.actors) do
+			s.update(a)
+		end
+	end
+end
+
+-- draw all systems
+function sys:draw()
+	for s in all(self.draws) do
+		for i = #s.actors, 1, -1 do
+			local a = s.actors[i]
+			s.draw(a)
+		end
+	end
+end
+
+-- add actor to matching systems
+function sys:spawn(a)
+	for s in all(self.systems) do
+		if s.match(a) then
+			addi(s.actors, a)
+		end
+	end
+end
+
+-- remove actor from all systems
+function sys:kill(a)
+	for s in all(self.systems) do
+		deli(s.actors, a)
+	end
+end
+-->8
+function draw_actor(pl)
+	spr(pl.frame,
+		pl.x*8-4, pl.y*8-8,
+		1, 1, pl.d < 0)
+end
+-->8
 function make_actor(k,x,y,d)
 	local a = {}
 	a.kind = k
@@ -62,23 +143,6 @@ function make_player(x, y, d)
 	pl.bounce = 0
 
 	return pl
-end
-
--- called at start by pico-8
-function _init()
-
-	actor = {}
-	sparkle = {}
-
-	-- spawn player
-	for y=0,63 do for x=0,127 do
-		if (mget(x,y) == sp.plyr) then
-			player = make_player(x,y+1,1)
-		end
-	end end
-	t = 0
-
-	death_t = 0
 end
 
 -- clear_cel using neighbour val
@@ -408,18 +472,6 @@ function outgame_logic()
 	end
 end
 
-function _update()
-
-	foreach(actor, move_actor)
-	foreach(sparkle, move_sparkle)
-	collisions()
-	move_spawns(player.x, player.y)
-
-	outgame_logic()
-
-	t=t+1
-end
-
 function draw_sparkle(s)
 
 	if (s.col > 0) then
@@ -432,12 +484,36 @@ function draw_sparkle(s)
 
 	pal()
 end
+-->8
+function _init()
 
-function draw_actor(pl)
-	spr(pl.frame,
-		pl.x*8-4, pl.y*8-8,
-		1, 1, pl.d < 0)
+	actor = {}
+	sparkle = {}
+
+	-- spawn player
+	for y=0,63 do for x=0,127 do
+		if (mget(x,y) == sp.plyr) then
+			player = make_player(x,y+1,1)
+		end
+	end end
+	t = 0
+
+	death_t = 0
 end
+
+
+function _update()
+
+	foreach(actor, move_actor)
+	foreach(sparkle, move_sparkle)
+	collisions()
+	move_spawns(player.x, player.y)
+
+	outgame_logic()
+
+	t=t+1
+end
+
 
 function _draw()
 	cls(13)
