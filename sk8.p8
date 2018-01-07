@@ -13,12 +13,12 @@ __lua__
 
 -- sound effects
 sound = {
-	jump = 00,
+	jump = 00
 }
 
 -- sprites
 sp = {
-	plyr = 064,
+	player = 064
 }
 
 -- indexed add
@@ -48,7 +48,7 @@ end
 sys = {
 	systems = {},
 	updates = {},
-	draws = {},
+	draws = {}
 }
 
 -- add a component system
@@ -102,6 +102,20 @@ function sys:kill(a)
 	end
 end
 -->8
+-- listens to player input
+controls = sys:add {
+	match = function (a)
+		return a.control
+	end,
+
+	update = function (a)
+		a:control({
+			l=btn"0", r=btn"1", u=btn"2",
+			d=btn"3", o=btn"4", x=btn"5"
+		})
+	end
+}
+
 -- draws sprites
 sprites = sys:add {
 	match = function (a)
@@ -112,7 +126,7 @@ sprites = sys:add {
 		local x, y = get_corner(a)
 		spr(a.frame, x, y, 1, 1,
 				a.flipx, a.flipy)
-	end,
+	end
 }
 -->8
 function make_actor(k,x,y,d)
@@ -132,6 +146,7 @@ end
 function make_player(x, y, d)
 	pl = make_actor(1, x, y, d)
 	pl.bounce = 0
+	pl.control = move_player
 
 	sys:spawn(pl)
 
@@ -205,22 +220,25 @@ function move_pickup(a)
 -- end
 end
 
-function move_player(pl)
-	accel = 0.05
+function move_player(pl, b)
+	local accel = 0.05
 
-	if (not pl.standing) then
-		accel = accel / 2
+	if not pl.standing then
+		accel /= 2
 	end
 
 	-- player control
-	if (btn(0,b)) then
-			pl.dx = pl.dx - accel; pl.flipx=true end
-	if (btn(1,b)) then
-		pl.dx = pl.dx + accel; pl.flipx=false end
+	if b.l then
+		pl.dx = pl.dx - accel
+		pl.flipx = true
+	end
 
-	if ((btn(4,b) or btn(2,b)) and
---		solid(pl.x,pl.y)) then
-		pl.standing) then
+	if b.r then
+		pl.dx = pl.dx + accel
+		pl.flipx = false
+	end
+
+	if b.o and pl.standing then
 		pl.dy = -0.7
 		sfx(sound.jump)
 	end
@@ -235,9 +253,9 @@ function move_player(pl)
 
 	if (abs(pl.dx) < 0.1)
 	then
-		pl.frame=sp.plyr pl.f0=0
+		pl.frame=sp.player pl.f0=0
 	else
-		pl.frame =	sp.plyr+1+flr(pl.f0)
+		pl.frame =	sp.player+1+flr(pl.f0)
 	end
 
 	-- offset
@@ -265,10 +283,6 @@ end
 function move_actor(pl)
 
 	-- to do: replace with callbacks
-
-	if (pl.kind == 1) then
-		move_player(pl)
-	end
 
 	if (pl.kind == 2) then
 		move_pickup(pl)
@@ -393,7 +407,7 @@ function _init()
 
 	-- spawn player
 	for y=0,63 do for x=0,127 do
-		if (mget(x,y) == sp.plyr) then
+		if (mget(x,y) == sp.player) then
 			player = make_player(x,y+1,1)
 		end
 	end end
