@@ -1,8 +1,8 @@
 pico-8 cartridge // http://www.pico-8.com
 version 15
 __lua__
--- the adventures of jelpi
--- by zep
+-- pico sk8
+-- work in progress
 
 -- to do:
 -- walking y offset
@@ -28,8 +28,6 @@ sp = {
 	dust = 096,
 }
 
-max_actors = 128
-
 function make_actor(k,x,y,d)
 	local a = {}
 	a.kind = k
@@ -41,9 +39,7 @@ function make_actor(k,x,y,d)
 	a.frame = 1  a.f0 = 0
 	a.t=0
 	a.standing = false
-	if (count(actor) < max_actors) then
-		add(actor, a)
-	end
+	add(actor, a)
 	return a
 end
 
