@@ -366,34 +366,29 @@ end
 -->8
 ---------------- game loop ----
 
--- indexes the map
-function mindex(fns)
-	local index = {}
+-- map index matchers
+imap = {
+	player = function (tile)
+		return tile == sp.player
+	end
+}
 
-	for key, fn in pairs(fns) do
-		index[key] = {}
+-- populate map index
+for key, fn in pairs(imap) do
+	imap[key] = {}
 
-		for y = 0, 63 do
-			for x = 0, 127 do
-				if fn(x, y) then
-					add(index[key],{x=x,y=y+1})
-				end
+	for y = 0, 63 do
+		for x = 0, 127 do
+			if fn(mget(x,y)) then
+				add(imap[key],{x=x,y=y+1})
 			end
 		end
 	end
-
-	return index
 end
 
 
 function _init()
-	local index = mindex {
-		players = function (x,y)
-			return mget(x,y) == sp.player
-		end
-	}
-
-	pl = player(index.players[1])
+	pl = player(imap.player[1])
 	sys:spawn(pl)
 end
 
