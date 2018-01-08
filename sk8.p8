@@ -160,6 +160,17 @@ focus = sys:add {
 	end
 }
 
+-- animates sprites
+animates = sys:add {
+	match = function (a)
+		return a.animate
+	end,
+
+	draw = function (a)
+		a:animate()
+	end
+}
+
 -- get corner from sprite origin
 function get_corner(a)
 	local oy = a.oy or 0
@@ -203,6 +214,7 @@ function object(a,flip)
 		}
 end
 
+-- control player
 function control_player(a, b)
 	local accel = 0.025
 	if (a.standing) accel *= 2
@@ -221,10 +233,9 @@ function control_player(a, b)
 		a.dy = -0.7
 		sfx(sound.jump)
 	end
-
-	animate_player(a)
 end
 
+-- animate player
 function animate_player(a)
 	a.oy = 0
 
@@ -252,6 +263,7 @@ function player(a,flip)
 		object(a,flip),
 		{ bounce = 0
 		, control = control_player
+		, animate = animate_player
 		, focus = true
 		})
 end
