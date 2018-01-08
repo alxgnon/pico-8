@@ -376,7 +376,7 @@ function mindex(fns)
 		for y = 0, 63 do
 			for x = 0, 127 do
 				if fn(x, y) then
-					add(index[key], {x=x,y=y})
+					add(index[key],{x=x,y=y+1})
 				end
 			end
 		end
