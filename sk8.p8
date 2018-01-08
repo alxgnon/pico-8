@@ -24,10 +24,10 @@ sp =
 { player = 064
 }
 -->8
------------------- the sys ----
+------------------- system ----
 
 -- manages component systems
-sys = 
+sys =
 { systems = {}
 , updates = {}
 , draws   = {}
@@ -101,7 +101,7 @@ function sys:kill(a)
 	end
 end
 -->8
------------------- systems ----
+--------------- components ----
 
 -- listens to controller input
 controls = sys:add {
@@ -118,12 +118,39 @@ controls = sys:add {
 	end
 }
 
+-- check if actors are colliding
+function are_colliding(a, b)
+	if (a==b) return
+	local dx = a.x - b.x
+	local dy = a.y - b.y
+	if abs(dx) < a.w+b.w then
+		if abs(dy) < a.h+b.h then
+			return true
+		end
+	end
+end
+
+-- collides with other actors
+collides = sys:add {
+	match = function (a)
+		return a.collide
+	end,
+
+	update = function (a)
+		for b in all(sprites.as) do
+			if are_colliding(a, b) then
+				a:collide(b)
+			end
+		end
+	end
+}
+
 -- focus actor with camera
 focus = sys:add {
 	match = function (a)
 		return a.focus
 	end,
-	
+
 	draw = function (a)
 		if a.focus then
 			local camx =
@@ -152,96 +179,43 @@ sprites = sys:add {
 	end
 }
 -->8
--------------------- jelpi ----
+----------------- entities ----
 
-function make_actor(k,x,y,d)
-	local a = {}
-	a.kind = k
-	a.x=x a.y=y a.dx=0 a.dy=0
-	a.ddy = 0.06 -- gravity
-	a.w=0.3 a.h=0.5 -- half-width
-	a.d=d a.bounce=0.8
-	a.frame = 1  a.f0 = 0
-	a.t=0
-	a.standing = false
-	add(actor, a)
+-- merges tables b into a
+function merge(a, b)
+	if b then
+		for k, v in pairs(b) do
+			a[k] = v
+		end
+	end
 	return a
 end
 
-function make_player(x, y, d)
-	pl = make_actor(1, x, y, d)
-	pl.bounce = 0
-	pl.control = move_player
-	pl.focus = true
-
-	sys:spawn(pl)
-
-	return pl
+-- game object with physics
+function object(a,flipx)
+	return
+		{ x=a.x,y=a.y,flipx=flipx
+		, dx=0, dy=0
+		, ddy=0.06 -- gravity
+		, w=0.3, h=0.5 -- half-width
+		, bounce=0.8
+		, frame=1, f0=0
+		, standing=false
+		}
 end
 
--- clear_cel using neighbour val
--- prefer empty, then non-ground
--- then left neighbour
-function clear_cel(x, y)
-	val0 = mget(x-1,y)
-	val1 = mget(x+1,y)
-	if (val0 == 0 or val1 == 0) then
-		mset(x,y,0)
-	elseif (not fget(val1,1)) then
-		mset(x,y,val1)
-	else
-		mset(x,y,val0)
-	end
+-- the player character
+function player(a,flipx)
+	return merge(
+		object(a,flipx),
+		{ bounce = 0
+		, control = move_player
+		, focus = true
+		})
 end
 
 
-function move_spawns(x0, y0)
-
-	-- spawn stuff close to x0,y0
-
-	for y=0,32 do
-		for x=x0-10,x0+10 do
-			val = mget(x,y)
-			m = nil
-
-			-- pickup
-			if (fget(val, 5)) then
-				m = make_actor(2,x+0.5,y+1,1)
-				m.f0 = val
-				m.frame = val
-				if (fget(val,4)) then
-					m.ddy = 0 -- zero gravity
-				end
-			end
-
-			-- monster
-			if (fget(val, 3)) then
-				m = make_actor(3,x+0.5,y+1,-1)
-				m.f0=val
-				m.frame=val
-			end
-
-			-- clear cel if spawned something
-			if (m ~= nil) then
-				clear_cel(x,y)
-			end
-		end
-	end
-
-end
-
--- test if a point is solid
-function solid (x, y)
-	if (x < 0 or x >= 128 ) then
-		return true end
-
-	val = mget(x, y)
-	return fget(val, 1)
-end
-
-function move_pickup(a)
-	a.frame = a.f0
-end
+-------------------- jelpi ----
 
 function move_player(pl, b)
 	local accel = 0.05
@@ -290,22 +264,21 @@ function move_player(pl, b)
 	end
 end
 
+-- test if a point is solid
+function solid(x, y)
+	return x < 0 or x >= 128 or
+			fget(mget(x, y), 1)
+end
+
+-- object physics
 function move_actor(pl)
-
-	-- to do: replace with callbacks
-
-	if (pl.kind == 2) then
-		move_pickup(pl)
-	end
-
 	pl.standing=false
 
 	-- x movement
+do
+	local x = pl.x + pl.dx + sgn(pl.dx) * 0.3
 
-	x1 = pl.x + pl.dx +
-						sgn(pl.dx) * 0.3
-
-	if(not solid(x1,pl.y-0.5)) then
+	if(not solid(x,pl.y-0.5)) then
 		pl.x = pl.x + pl.dx
 	else -- hit wall
 
@@ -316,12 +289,13 @@ function move_actor(pl)
 
 			pl.dx = pl.dx * -0.5
 	end
+end
 
 	-- y movement
-
 	if (pl.dy < 0) then
 		-- going up
 
+do
 		if (solid(pl.x-0.2, pl.y+pl.dy-1) or
 			solid(pl.x+0.2, pl.y+pl.dy-1))
 		then
@@ -338,9 +312,9 @@ function move_actor(pl)
 		else
 			pl.y = pl.y + pl.dy
 		end
-
+end
 	else
-
+do
 		-- going down
 		if (solid(pl.x-0.2, pl.y+pl.dy) or
 			solid(pl.x+0.2, pl.y+pl.dy)) then
@@ -354,7 +328,6 @@ function move_actor(pl)
 
 				pl.standing=true
 				pl.dy = 0
-
 			end
 
 			--snap down
@@ -369,68 +342,65 @@ function move_actor(pl)
 				pl.y = pl.y - 0.05 end
 			while(solid(pl.x+0.2,pl.y-0.1)) do
 				pl.y = pl.y - 0.05 end
-
 		else
 			pl.y = pl.y + pl.dy
 		end
-
+end
 	end
 
-
+do
 	-- gravity and friction
 	pl.dy = pl.dy + pl.ddy
 	pl.dy = pl.dy * 0.95
+end
 
+do
 	-- x friction
 	if (pl.standing) then
 		pl.dx = pl.dx * 0.8
 	else
 		pl.dx = pl.dx * 0.9
 	end
-
-	-- counters
-	pl.t = pl.t + 1
 end
-
-function collide(a1, a2)
-	if (a1==a2) then return end
-	local dx = a1.x - a2.x
-	local dy = a1.y - a2.y
-	if (abs(dx) < a1.w+a2.w) then
-		if (abs(dy) < a1.h+a2.h) then
-			-- sup
-		end
-	end
-end
-
-function collisions()
-
-	for a1 in all(actor) do
-		collide(player,a1)
-	end
-
 end
 -->8
 ---------------- game loop ----
 
-function _init()
-	actor = {}
+-- indexes the map
+function mindex(fns)
+	local index = {}
 
-	-- spawn player
-	for y=0,63 do for x=0,127 do
-		if (mget(x,y) == sp.player) then
-			player = make_player(x,y+1,1)
+	for key, fn in pairs(fns) do
+		index[key] = {}
+
+		for y = 0, 63 do
+			for x = 0, 127 do
+				if fn(x, y) then
+					add(index[key], {x=x,y=y})
+				end
+			end
 		end
-	end end
+	end
+
+	return index
+end
+
+
+function _init()
+	local index = mindex {
+		players = function (x,y)
+			return mget(x,y) == sp.player
+		end
+	}
+
+	pl = player(index.players[1])
+	sys:spawn(pl)
 end
 
 
 function _update()
 	sys:update()
-
-	foreach(actor, move_actor)
-	collisions()
-	move_spawns(player.x, player.y)
+	move_actor(pl)
 end
 
 
