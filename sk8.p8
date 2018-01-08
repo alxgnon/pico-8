@@ -11,44 +11,26 @@ __lua__
 -- top-solid ground
 -- variable jump height
 
+
+---------------- constants ----
+
 -- sound effects
-sound = {
-	jump = 00
+sound =
+{ jump = 00
 }
 
 -- sprites
-sp = {
-	player = 064
+sp =
+{ player = 064
 }
-
--- indexed add
-function addi(tbl, v)
-	if not tbl[v] then
-		local i = #tbl + 1
-		tbl[v] = i
-		tbl[i] = v
-	end
-end
-
--- indexed delete
-function deli(tbl, v)
-	if tbl[v] then
-		tbl[v] = nil
-		del(tbl, v)
-	end
-end
-
--- get corner from sprite origin
-function get_corner(a)
-	local oy = a.oy or 0
-	return a.x*8-4, (a.y+oy)*8-8
-end
 -->8
+------------------ the sys ----
+
 -- manages component systems
-sys = {
-	systems = {},
-	updates = {},
-	draws = {}
+sys = 
+{ systems = {}
+, updates = {}
+, draws   = {}
 }
 
 -- add a component system
@@ -86,12 +68,29 @@ function sys:draw()
 	end
 end
 
+-- indexed add
+function addi(tbl, v)
+	if not tbl[v] then
+		local i = #tbl + 1
+		tbl[v] = i
+		tbl[i] = v
+	end
+end
+
 -- add actor to matching systems
 function sys:spawn(a)
 	for s in all(self.systems) do
 		if s.match(a) then
 			addi(s.as, a)
 		end
+	end
+end
+
+-- indexed delete
+function deli(tbl, v)
+	if tbl[v] then
+		tbl[v] = nil
+		del(tbl, v)
 	end
 end
 
@@ -102,6 +101,8 @@ function sys:kill(a)
 	end
 end
 -->8
+------------------ systems ----
+
 -- listens to controller input
 controls = sys:add {
 	match = function (a)
@@ -109,9 +110,10 @@ controls = sys:add {
 	end,
 
 	update = function (a)
-		a:control({
-			l=btn"0", r=btn"1", u=btn"2",
-			d=btn"3", o=btn"4", x=btn"5"
+		a:control(
+		{ l=btn"0", r=btn"1"
+		, u=btn"2", d=btn"3"
+		, o=btn"4", x=btn"5"
 		})
 	end
 }
@@ -131,6 +133,12 @@ focus = sys:add {
 	end
 }
 
+-- get corner from sprite origin
+function get_corner(a)
+	local oy = a.oy or 0
+	return a.x*8-4, (a.y+oy)*8-8
+end
+
 -- draws sprites
 sprites = sys:add {
 	match = function (a)
@@ -144,6 +152,8 @@ sprites = sys:add {
 	end
 }
 -->8
+-------------------- jelpi ----
+
 function make_actor(k,x,y,d)
 	local a = {}
 	a.kind = k
@@ -231,9 +241,6 @@ end
 
 function move_pickup(a)
 	a.frame = a.f0
--- if (flr((t/4) % 2) == 0) then
---  a.frame = a.f0+1
--- end
 end
 
 function move_player(pl, b)
@@ -282,19 +289,6 @@ function move_player(pl, b)
 		pl.oy = 0
 	end
 end
-
---function move_monster(m)
---	m.dx = m.dx + m.d * 0.02
-
---	m.f0 = (m.f0+abs(m.dx)*3+4) % 4
---	m.frame = sp.goom + flr(m.f0)
-
---	if (false and m.standing and rnd(100) < 1)
---	then
---		m.dy = -1
---	end
-
--- end
 
 function move_actor(pl)
 
@@ -417,8 +411,9 @@ function collisions()
 
 end
 -->8
-function _init()
+---------------- game loop ----
 
+function _init()
 	actor = {}
 
 	-- spawn player
@@ -427,7 +422,6 @@ function _init()
 			player = make_player(x,y+1,1)
 		end
 	end end
-	t = 0
 end
 
 
@@ -437,8 +431,6 @@ function _update()
 	foreach(actor, move_actor)
 	collisions()
 	move_spawns(player.x, player.y)
-
-	t=t+1
 end
 
 
