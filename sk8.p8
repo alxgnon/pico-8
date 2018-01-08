@@ -102,7 +102,7 @@ function sys:kill(a)
 	end
 end
 -->8
--- listens to player input
+-- listens to controller input
 controls = sys:add {
 	match = function (a)
 		return a.control
@@ -113,6 +113,21 @@ controls = sys:add {
 			l=btn"0", r=btn"1", u=btn"2",
 			d=btn"3", o=btn"4", x=btn"5"
 		})
+	end
+}
+
+-- focus actor with camera
+focus = sys:add {
+	match = function (a)
+		return a.focus
+	end,
+	
+	draw = function (a)
+		if a.focus then
+			local camx =
+					mid(0,a.x*8-64,1024-128)
+			camera(camx,0)
+		end
 	end
 }
 
@@ -147,6 +162,7 @@ function make_player(x, y, d)
 	pl = make_actor(1, x, y, d)
 	pl.bounce = 0
 	pl.control = move_player
+	pl.focus = true
 
 	sys:spawn(pl)
 
@@ -428,14 +444,7 @@ end
 
 function _draw()
 	cls(13)
-
-	-- map and actors
-	cam_x = mid(0,player.x*8-64,1024-128)
-
-	cam_y = 0
-	camera(cam_x,cam_y)
 	mapdraw(0,0,0,0,128,64,1)
-
 	sys:draw()
 end
 __gfx__
