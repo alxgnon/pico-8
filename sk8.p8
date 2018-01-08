@@ -118,6 +118,18 @@ controls = sys:add {
 	end
 }
 
+-- applies gravity
+gravities = sys:add {
+	match = function (a)
+		return a.ddy
+	end,
+
+	update = function (a)
+		a.dy += a.ddy
+		a.dy *= 0.95
+	end
+}
+
 -- check if actors are colliding
 function are_colliding(a, b)
 	if (a==b) return
@@ -352,11 +364,7 @@ do
 end
 	end
 
-do
-	-- gravity and friction
-	pl.dy = pl.dy + pl.ddy
-	pl.dy = pl.dy * 0.95
-end
+-- gravities
 
 do
 	-- x friction
