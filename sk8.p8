@@ -226,60 +226,6 @@ function object(a,flip)
 		}
 end
 
--- control player
-function control_player(a, b)
-	local accel = 0.025
-	if (a.standing) accel *= 2
-
-	if b.l then
-		a.dx -= accel
-		a.flip = true
-	end
-
-	if b.r then
-		a.dx += accel
-		a.flip = false
-	end
-
-	if b.o and a.standing then
-		a.dy = -0.7
-		sfx(sound.jump)
-	end
-end
-
--- animate player
-function animate_player(a)
-	a.oy = 0
-
-	if abs(a.dx) < 0.1 then
-		a.f0 = 0
-		a.frame = sp.player
-		return
-	end
-
-	local f1 = a.standing and
-			abs(a.dx) * 2 or
-			abs(a.dx) / 2
-
-	a.f0 = (a.f0 + f1 + 4) % 4
-	a.frame =	sp.player+1+flr(a.f0)
-
-	if a.f0 >= 1 and a.f0 < 3 then
-		a.oy = -0.125
-	end
-end
-
--- the player character
-function player(a,flip)
-	return merge(
-		object(a,flip),
-		{ bounce = 0
-		, control = control_player
-		, animate = animate_player
-		, focus = true
-		})
-end
-
 -- test if a point is solid
 function solid(x, y)
 	return x < 0 or x >= 128 or
@@ -376,6 +322,59 @@ do
 end
 end
 -->8
+------------------- player ----
+
+function control_player(a, b)
+	local accel = 0.025
+	if (a.standing) accel *= 2
+
+	if b.l then
+		a.dx -= accel
+		a.flip = true
+	end
+
+	if b.r then
+		a.dx += accel
+		a.flip = false
+	end
+
+	if b.o and a.standing then
+		a.dy = -0.7
+		sfx(sound.jump)
+	end
+end
+
+function animate_player(a)
+	a.oy = 0
+
+	if abs(a.dx) < 0.1 then
+		a.f0 = 0
+		a.frame = sp.player
+		return
+	end
+
+	local f1 = a.standing and
+			abs(a.dx) * 2 or
+			abs(a.dx) / 2
+
+	a.f0 = (a.f0 + f1 + 4) % 4
+	a.frame =	sp.player+1+flr(a.f0)
+
+	if a.f0 >= 1 and a.f0 < 3 then
+		a.oy = -0.125
+	end
+end
+
+function player(a,flip)
+	return merge(
+		object(a,flip),
+		{ bounce = 0
+		, control = control_player
+		, animate = animate_player
+		, focus = true
+		})
+end
+-->8
 ---------------- game loop ----
 
 -- map index matchers
@@ -398,18 +397,15 @@ for key, fn in pairs(imap) do
 	end
 end
 
-
 function _init()
 	pl = player(imap.player[1])
 	sys:spawn(pl)
 end
 
-
 function _update()
 	sys:update()
 	move_actor(pl)
 end
-
 
 function _draw()
 	cls(13)
