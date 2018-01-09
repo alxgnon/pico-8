@@ -5,7 +5,6 @@ __lua__
 -- work in progress
 
 -- to do:
--- no rejump
 -- skateboard
 -- top-solid ground
 -- variable jump height
@@ -346,9 +345,15 @@ function control_player(a, b)
 		a.flipx = false
 	end
 
-	if b.o and a.standing then
-		a.dy = -0.7
-		sfx(sound.jump)
+	if not b.o then
+		a.jumping = false
+	elseif not a.jumping then
+		a.jumping = true
+
+		if a.standing then
+			a.dy = -0.7
+			sfx(sound.jump)
+		end
 	end
 end
 
