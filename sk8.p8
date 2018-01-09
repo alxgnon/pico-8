@@ -5,9 +5,8 @@ __lua__
 -- work in progress
 
 -- to do:
--- refactor into systems
 -- no rejump
--- up doesn't jump pls
+-- skateboard
 -- top-solid ground
 -- variable jump height
 
@@ -132,9 +131,9 @@ sideways = sys:add {
 
 	update = function (a)
 		local dx3 = sgn(a.dx) * 0.3
-		local x = a.x + a.dx + dx3
+		local x0 = a.x + a.dx + dx3
 
-		if not solid(x,a.y-0.5) then
+		if not solid(x0,a.y-0.5) then
 			a.x += a.dx
 			return
 		end
@@ -144,6 +143,71 @@ sideways = sys:add {
 		end
 
 		a.dx *= -0.5
+	end
+}
+
+-- applies upwards y movement
+upwards = sys:add {
+	match = function (a)
+		return a.dy
+	end,
+
+	update = function (a)
+		if (a.dy >= 0) return
+		local xl,xr=a.x-0.2,a.x+0.2
+		local y0 = a.y + a.dy - 1
+
+		if not (solid(xl,y0) or
+				solid(xr,y0)) then
+			a.y += a.dy
+			return
+		end
+
+		a.dy = 0
+
+		while not (solid(xl,a.y-1) or
+				solid(xr,a.y-1)) do
+			a.y -= 0.01
+		end
+	end
+}
+
+-- applies downwards y movement
+downwards = sys:add {
+	match = function (a)
+		return a.dy
+	end,
+
+	update = function (a)
+		a.standing = false
+		if (a.dy < 0) return
+		local xl,xr=a.x-0.2,a.x+0.2
+		local y0 = a.y + a.dy
+
+		if not (solid(xl,y0) or
+				solid(xr,y0)) then
+			a.y += a.dy
+			return
+		end
+
+		if a.bounce > 0 and a.dy > 0.2 then
+			a.dy *= -pl.bounce
+		else
+			a.standing = true
+			a.dy = 0
+		end
+
+		while not (solid(xl,a.y) or
+				solid(xr,a.y)) do
+			a.y += 0.05
+		end
+
+		while solid(xl,a.y-0.1) do
+			a.y-=0.05
+		end
+		while	solid(xr,a.y-0.1) do
+			a.y-=0.05
+		end
 	end
 }
 
@@ -265,71 +329,6 @@ function object(a,flipx)
 		, standing=false
 		}
 end
-
--- object physics
-function move_actor(pl)
-	pl.standing=false
-
-	-- y movement
-	if (pl.dy < 0) then
-		-- going up
-
-do
-		if (solid(pl.x-0.2, pl.y+pl.dy-1) or
-			solid(pl.x+0.2, pl.y+pl.dy-1))
-		then
-			pl.dy=0
-
-			-- search up for collision point
-			while ( not (
-			solid(pl.x-0.2, pl.y-1) or
-			solid(pl.x+0.2, pl.y-1)))
-			do
-				pl.y = pl.y - 0.01
-			end
-
-		else
-			pl.y = pl.y + pl.dy
-		end
-end
-	else
-do
-		-- going down
-		if (solid(pl.x-0.2, pl.y+pl.dy) or
-			solid(pl.x+0.2, pl.y+pl.dy)) then
-
-			-- bounce
-			if (pl.bounce > 0 and
-							pl.dy > 0.2)
-			then
-				pl.dy = pl.dy * -pl.bounce
-			else
-
-				pl.standing=true
-				pl.dy = 0
-			end
-
-			--snap down
-			while (not (
-					solid(pl.x-0.2,pl.y) or
-					solid(pl.x+0.2,pl.y)
-					))
-				do pl.y = pl.y + 0.05 end
-
-			--pop up even if bouncing
-			while(solid(pl.x-0.2,pl.y-0.1)) do
-				pl.y = pl.y - 0.05 end
-			while(solid(pl.x+0.2,pl.y-0.1)) do
-				pl.y = pl.y - 0.05 end
-		else
-			pl.y = pl.y + pl.dy
-		end
-end
-	end
-
--- gravities
--- friction
-end
 -->8
 ------------------- player ----
 
@@ -407,13 +406,12 @@ for key, fn in pairs(imap) do
 end
 
 function _init()
-	pl = player(imap.player[1])
+	local pl = player(imap.player[1])
 	sys:spawn(pl)
 end
 
 function _update()
 	sys:update()
-	move_actor(pl)
 end
 
 function _draw()
