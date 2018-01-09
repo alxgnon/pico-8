@@ -257,6 +257,7 @@ collides = sys:add {
 	end,
 
 	update = function (a)
+		a.contact = nil
 		for b in all(sprites.as) do
 			if are_colliding(a, b) then
 				a:collide(b)
@@ -268,16 +269,33 @@ collides = sys:add {
 -- yeehaw
 riders = sys:add {
 	match = function (a)
-		return a.riding ~= nil
+		return a.ride ~= nil
 	end,
 
 	update = function (a)
-		if a.riding then
-			local br = a.riding
-			a.x += (br.x-a.x)*0.4
-			a.y = br.y-0.25
-			a.dx = br.dx
-			a.dy = br.dy
+		if a.ride then
+			local b = a.ride
+			a.x += (b.x-a.x)*0.3
+			a.y = b.y-0.25
+			a.dx = b.dx
+			a.dy = b.dy
+		end
+	end
+}
+
+-- grabbers
+grabbers = sys:add {
+	match = function (a)
+		return a.grab ~= nil
+	end,
+
+	update = function (a)
+		if a.grab then
+			local b = a.grab
+			b.x = a.x + (a.flipx and -0.75 or 0.75)
+			b.y = a.y - 0.25
+			b.dx = 0
+			b.dy = 0
 		end
 	end
 }
@@ -340,6 +358,15 @@ end
 
 ------------------- board ----
 
+function animate_board(a)
+	a.frame = sp.board
+
+	if pl.grab == a then
+		a.flipx = pl.flipx
+		a.frame = sp.board - 1
+	end
+end
+
 function board(a)
 	return merge(
 		object(a),
@@ -347,6 +374,7 @@ function board(a)
 		, frame = sp.board
 		, fric = 0.98
 		, h = 0.25
+		, animate = animate_board
 		})
 end
 -->8
@@ -367,13 +395,27 @@ function ground_control(a, btn)
 	end
 
 	if not btn.o then
-		a.jumping = false
-	elseif not a.jumping then
-		a.jumping = true
+		a.holdo = false
+	elseif not a.holdo then
+		a.holdo = true
 
 		if a.standing then
 			a.dy = -0.7
 			sfx(sound.jump)
+		end
+	end
+
+	if not btn.x then
+		a.holdx = false
+	elseif not a.holdx then
+		a.holdx = true
+
+		if a.grab then
+			a.ride = a.grab
+			a.ride.dx = a.dx * 1.2
+			a.grab = nil
+		elseif a.contact then
+			a.grab = a.contact
 		end
 	end
 end
@@ -382,7 +424,7 @@ function board_control(a, btn)
 end
 
 function control_player(a, btn)
-	if a.riding then
+	if a.ride then
 		board_control(a, btn)
 	else
 		ground_control(a, btn)
@@ -392,7 +434,7 @@ end
 function animate_player(a)
 	a.oy = 0
 
-	if abs(a.dx) < 0.1 or a.riding then
+	if abs(a.dx) < 0.1 or a.ride then
 		a.f0 = 0
 		a.frame = sp.player
 		return
@@ -411,17 +453,15 @@ function animate_player(a)
 end
 
 function collide_player(a, b)
-	if not (a.standing or a.riding) then
-		b.dx = a.dx
-		a.riding = b
-	end
+	a.contact = b
 end
 
 function player(a,flipx)
 	return merge(
 		object(a,flipx),
 		{ bounce = 0
-		, riding = false
+		, ride = false
+		, grab = false
 		, control = control_player
 		, animate = animate_player
 		, collide = collide_player
