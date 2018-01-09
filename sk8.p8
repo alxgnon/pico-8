@@ -197,7 +197,7 @@ sprites = sys:add {
 
 	draw = function (a)
 		local x, y = get_corner(a)
-		spr(a.frame,x,y,1,1,a.flip)
+		spr(a.frame,x,y,1,1,a.flipx)
 	end
 }
 -->8
@@ -214,9 +214,9 @@ function merge(a, b)
 end
 
 -- game object with physics
-function object(a,flip)
+function object(a,flipx)
 	return
-		{ x=a.x,y=a.y,flip=flip
+		{ x=a.x,y=a.y,flipx=flipx
 		, dx=0, dy=0
 		, ddy=0.06 -- gravity
 		, w=0.3, h=0.5 -- half-width
@@ -330,12 +330,12 @@ function control_player(a, b)
 
 	if b.l then
 		a.dx -= accel
-		a.flip = true
+		a.flipx = true
 	end
 
 	if b.r then
 		a.dx += accel
-		a.flip = false
+		a.flipx = false
 	end
 
 	if b.o and a.standing then
@@ -365,9 +365,9 @@ function animate_player(a)
 	end
 end
 
-function player(a,flip)
+function player(a,flipx)
 	return merge(
-		object(a,flip),
+		object(a,flipx),
 		{ bounce = 0
 		, control = control_player
 		, animate = animate_player
