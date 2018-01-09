@@ -5,7 +5,6 @@ __lua__
 -- work in progress
 
 -- to do:
--- skateboard
 -- top-solid ground
 -- variable jump height
 
@@ -421,6 +420,12 @@ function ground_control(a, btn)
 end
 
 function board_control(a, btn)
+	if not btn.x then
+		a.holdx = false
+	elseif not a.holdx then
+		a.holdx = true
+		a.ride = false
+	end
 end
 
 function control_player(a, btn)
