@@ -130,6 +130,18 @@ gravities = sys:add {
 	end
 }
 
+-- applies x friction
+frictions = sys:add {
+	match = function (a)
+		return a.dx
+	end,
+
+	update = function (a)
+		a.dx *=
+				(a.standing and 0.8 or 0.9)
+	end
+}
+
 -- check if actors are colliding
 function are_colliding(a, b)
 	if (a==b) return
@@ -311,15 +323,7 @@ end
 	end
 
 -- gravities
-
-do
-	-- x friction
-	if (pl.standing) then
-		pl.dx = pl.dx * 0.8
-	else
-		pl.dx = pl.dx * 0.9
-	end
-end
+-- friction
 end
 -->8
 ------------------- player ----
