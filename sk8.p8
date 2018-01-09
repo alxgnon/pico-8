@@ -427,6 +427,15 @@ function ground_control(a, btn)
 end
 
 function board_control(a, btn)
+	if not btn.o then
+		a.holdo = false
+	elseif not a.holdo then
+		a.holdo = true
+		if a.ride.standing then
+			a.ride.dx += sgn(a.dx) * 0.2
+		end
+	end
+
 	if not btn.x then
 		a.holdx = false
 	elseif not a.holdx then
@@ -449,6 +458,10 @@ function animate_player(a)
 	if abs(a.dx) < 0.1 or a.ride then
 		a.f0 = 0
 		a.frame = sp.player
+
+		if a.ride then
+			a.flipx = a.ride.dx < 0
+		end
 		return
 	end
 
