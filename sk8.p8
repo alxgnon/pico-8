@@ -118,6 +118,35 @@ controls = sys:add {
 	end
 }
 
+-- test if a point is solid
+function solid(x, y)
+	return x < 0 or x >= 128 or
+			fget(mget(x, y), 1)
+end
+
+-- applies x movement
+sideways = sys:add {
+	match = function (a)
+		return a.dx
+	end,
+
+	update = function (a)
+		local dx3 = sgn(a.dx) * 0.3
+		local x = a.x + a.dx + dx3
+
+		if not solid(x,a.y-0.5) then
+			a.x += a.dx
+			return
+		end
+
+		while not solid(a.x+dx3,a.y-0.5) do
+			a.x += sgn(a.dx) * 0.1
+		end
+
+		a.dx *= -0.5
+	end
+}
+
 -- applies gravity
 gravities = sys:add {
 	match = function (a)
@@ -137,8 +166,7 @@ frictions = sys:add {
 	end,
 
 	update = function (a)
-		a.dx *=
-				(a.standing and 0.8 or 0.9)
+		a.dx *= (a.standing and 0.8 or 0.9)
 	end
 }
 
@@ -238,32 +266,9 @@ function object(a,flipx)
 		}
 end
 
--- test if a point is solid
-function solid(x, y)
-	return x < 0 or x >= 128 or
-			fget(mget(x, y), 1)
-end
-
 -- object physics
 function move_actor(pl)
 	pl.standing=false
-
-	-- x movement
-do
-	local x = pl.x + pl.dx + sgn(pl.dx) * 0.3
-
-	if(not solid(x,pl.y-0.5)) then
-		pl.x = pl.x + pl.dx
-	else -- hit wall
-
-		-- search for contact point
-		while (not solid(pl.x + sgn(pl.dx)*0.3, pl.y-0.5)) do
-			pl.x = pl.x + sgn(pl.dx) * 0.1
-		end
-
-			pl.dx = pl.dx * -0.5
-	end
-end
 
 	-- y movement
 	if (pl.dy < 0) then
