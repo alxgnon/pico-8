@@ -5,6 +5,7 @@ __lua__
 -- work in progress
 
 -- to do:
+-- after landing recovery time
 -- top-solid ground
 -- variable jump height
 
@@ -161,7 +162,7 @@ sideways = sys:add {
 
 		if pl.ride == a then
 			pl.ride = nil
-			
+
 			local dx = abs(a.dx)
 			if dx > 0.1 then
 				pl.timer.oops = dx * 140
@@ -204,17 +205,33 @@ downwards = sys:add {
 	end,
 
 	update = function (a)
-		a.standing = false
 		if (pl.grab == a) return
-		if (a.dy < 0) return
+		if a.dy < 0 then
+			a.standing = false
+			return
+		end
 		local xl,xr=a.x-0.2,a.x+0.2
 		local y0 = a.y + a.dy
 
 		if not (solid(xl,y0) or
 				solid(xr,y0)) then
 			a.y += a.dy
+			a.standing = false
 			return
 		end
+
+		if not a.standing and
+				pl.ride == a and
+				pl.timer.land <= 0 then
+			pl.ride = nil
+
+			local dy = abs(a.dy)
+			if dy > 0.1 then
+				pl.timer.oops = dy * 140
+			end
+		end
+
+		a.standing = false
 
 		if a.bounce > 0 and a.dy > 0.2 then
 			a.dy *= -pl.bounce
@@ -444,6 +461,7 @@ function ground_control(a, btn)
 			a.ride = a.grab
 			a.ride.dx = a.dx * 1.2
 			a.grab = nil
+			a.timer.land = 5
 		elseif a.contact then
 			a.grab = a.contact
 		end
@@ -457,6 +475,8 @@ function board_control(a, btn)
 		a.holdo = true
 		if a.ride.standing then
 			a.ride.dx += sgn(a.dx) * 0.2
+		else
+			a.timer.land = 5
 		end
 	end
 
@@ -470,7 +490,7 @@ end
 
 function control_player(a, btn)
 	if (a.timer.oops > 0) return
-	
+
 	if a.ride then
 		board_control(a, btn)
 	else
@@ -480,7 +500,7 @@ end
 
 function animate_player(a)
 	a.oy = 0
-	
+
 	if a.timer.oops > 0 then
 		a.f0 = 0
 		a.frame = sp.player + 5
@@ -519,7 +539,10 @@ function player(a,flipx)
 		{ bounce = 0
 		, ride = false
 		, grab = false
-		, timer = {oops=-1}
+		, timer =
+				{ oops = -1
+				, land = -1
+				}
 		, control = control_player
 		, animate = animate_player
 		, collide = collide_player
