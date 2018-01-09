@@ -129,6 +129,7 @@ sideways = sys:add {
 	end,
 
 	update = function (a)
+		if (pl.grab == a) return
 		local dx3 = sgn(a.dx) * 0.3
 		local x0 = a.x + a.dx + dx3
 
@@ -152,6 +153,7 @@ upwards = sys:add {
 	end,
 
 	update = function (a)
+		if (pl.grab == a) return
 		if (a.dy >= 0) return
 		local xl,xr=a.x-0.2,a.x+0.2
 		local y0 = a.y + a.dy - 1
@@ -179,6 +181,7 @@ downwards = sys:add {
 
 	update = function (a)
 		a.standing = false
+		if (pl.grab == a) return
 		if (a.dy < 0) return
 		local xl,xr=a.x-0.2,a.x+0.2
 		local y0 = a.y + a.dy
@@ -217,6 +220,7 @@ gravities = sys:add {
 	end,
 
 	update = function (a)
+		if (pl.grab == a) return
 		a.dy += a.ddy
 		a.dy *= 0.95
 	end
@@ -229,6 +233,7 @@ frictions = sys:add {
 	end,
 
 	update = function (a)
+		if (pl.grab == a) return
 		if a.standing then
 			a.dx *= a.fric
 		else
@@ -409,7 +414,9 @@ function ground_control(a, btn)
 	elseif not a.holdx then
 		a.holdx = true
 
-		if a.grab then
+		if a.grab and not solid(
+				a.grab.x + (a.flipx and -0.25 or 0.25),
+				a.grab.y) then
 			a.ride = a.grab
 			a.ride.dx = a.dx * 1.2
 			a.grab = nil
