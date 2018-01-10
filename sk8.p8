@@ -320,7 +320,7 @@ riders = sys:add {
 	update = function (a)
 		if a.ride then
 			local b = a.ride
-			a.x += (b.x-a.x)*0.3
+			b.x = a.x
 			a.y = b.y-0.25
 			a.dx = b.dx
 			a.dy = b.dy
@@ -455,10 +455,9 @@ function ground_control(a, btn)
 	elseif not a.holdx then
 		a.holdx = true
 
-		if a.grab and not solid(
-				a.grab.x + (a.flipx and -0.25 or 0.25),
-				a.grab.y) then
+		if a.grab then
 			a.ride = a.grab
+			a.ride.x = a.x
 			a.ride.dx = a.dx * 1.2
 			a.grab = nil
 			a.timer.land = 5
@@ -475,6 +474,7 @@ function board_control(a, btn)
 		a.holdo = true
 		if a.ride.standing then
 			a.ride.dx += sgn(a.dx) * 0.2
+			a.dx = a.ride.dx
 		else
 			a.timer.land = 5
 		end
