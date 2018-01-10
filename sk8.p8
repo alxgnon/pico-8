@@ -5,7 +5,6 @@ __lua__
 -- work in progress
 
 -- to do:
--- after landing recovery time
 -- top-solid ground
 -- variable jump height
 
@@ -205,33 +204,17 @@ downwards = sys:add {
 	end,
 
 	update = function (a)
+		a.standing = false
 		if (pl.grab == a) return
-		if a.dy < 0 then
-			a.standing = false
-			return
-		end
+		if (a.dy < 0) return
 		local xl,xr=a.x-0.2,a.x+0.2
 		local y0 = a.y + a.dy
 
 		if not (solid(xl,y0) or
 				solid(xr,y0)) then
 			a.y += a.dy
-			a.standing = false
 			return
 		end
-
-		if not a.standing and
-				pl.ride == a and
-				pl.timer.land <= 0 then
-			pl.ride = nil
-
-			local dy = abs(a.dy)
-			if dy > 0.1 then
-				pl.timer.oops = dy * 140
-			end
-		end
-
-		a.standing = false
 
 		if a.bounce > 0 and a.dy > 0.2 then
 			a.dy *= -pl.bounce
@@ -277,6 +260,7 @@ frictions = sys:add {
 		if (pl.grab == a) return
 		if a.standing then
 			a.dx *= a.fric
+			if (abs(a.dx) < 0.01) a.dx = 0
 		else
 			a.dx *= a.airfric
 		end
@@ -321,7 +305,7 @@ riders = sys:add {
 		if a.ride then
 			local b = a.ride
 			b.x = a.x
-			a.y = b.y-0.25
+			a.y = b.y - 0.25
 			a.dx = b.dx
 			a.dy = b.dy
 		end
@@ -417,7 +401,7 @@ function board(a)
 		object(a),
 		{ bounce = 0
 		, frame = sp.board
-		, fric = 0.98
+		, fric = 0.985
 		, h = 0.25
 		, animate = animate_board
 		})
@@ -458,9 +442,10 @@ function ground_control(a, btn)
 		if a.grab then
 			a.ride = a.grab
 			a.ride.x = a.x
-			a.ride.dx = a.dx * 1.2
+			a.ride.y = a.y
+			a.ride.dx = a.dx * 1.4
+			a.ride.dy = a.dy
 			a.grab = nil
-			a.timer.land = 5
 		elseif a.contact then
 			a.grab = a.contact
 		end
@@ -473,10 +458,8 @@ function board_control(a, btn)
 	elseif not a.holdo then
 		a.holdo = true
 		if a.ride.standing then
-			a.ride.dx += sgn(a.dx) * 0.2
-			a.dx = a.ride.dx
-		else
-			a.timer.land = 5
+			a.dx += sgn(a.dx) * 0.13
+			a.ride.dx = a.dx
 		end
 	end
 
@@ -539,10 +522,7 @@ function player(a,flipx)
 		{ bounce = 0
 		, ride = false
 		, grab = false
-		, timer =
-				{ oops = -1
-				, land = -1
-				}
+		, timer = {oops=-1}
 		, control = control_player
 		, animate = animate_player
 		, collide = collide_player
