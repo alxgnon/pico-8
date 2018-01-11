@@ -402,6 +402,7 @@ function board(a)
 		{ bounce = 0
 		, frame = sp.board
 		, fric = 0.985
+		, airfric = 0.985
 		, h = 0.25
 		, animate = animate_board
 		})
@@ -453,6 +454,15 @@ function ground_control(a, btn)
 end
 
 function board_control(a, btn)
+	if btn.l or btn.r or
+			btn.u or btn.d then
+		a.olli = true
+	elseif a.olli then
+		a.olli = false
+		a.ride.dy = -0.7
+		sfx(sound.jump)
+	end
+
 	if not btn.o then
 		a.holdo = false
 	elseif not a.holdo then
