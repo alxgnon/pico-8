@@ -21,344 +21,6 @@ sp =
 { player = 064
 , board = 081
 }
--->8
-------------------- system ----
-
--- manages component systems
-sys =
-{ systems = {}
-, updates = {}
-, draws   = {}
-}
-
--- add a component system
-function sys:add(s)
-	s.as = {}
-	add(self.systems, s)
-
-	if s.update then
-		add(self.updates, s)
-	end
-
-	if s.draw then
-		add(self.draws, s)
-	end
-
-	return s
-end
-
--- update all systems
-function sys:update()
-	for s in all(self.updates) do
-		for a in all(s.as) do
-			s.update(a)
-		end
-	end
-end
-
--- draw all systems
-function sys:draw()
-	for s in all(self.draws) do
-		for i = #s.as, 1, -1 do
-			local a = s.as[i]
-			s.draw(a)
-		end
-	end
-end
-
--- indexed add
-function addi(tbl, v)
-	if not tbl[v] then
-		local i = #tbl + 1
-		tbl[v] = i
-		tbl[i] = v
-	end
-end
-
--- add actor to matching systems
-function sys:spawn(a)
-	for s in all(self.systems) do
-		if s.match(a) then
-			addi(s.as, a)
-		end
-	end
-end
-
--- indexed delete
-function deli(tbl, v)
-	if tbl[v] then
-		tbl[v] = nil
-		del(tbl, v)
-	end
-end
-
--- remove actor from all systems
-function sys:kill(a)
-	for s in all(self.systems) do
-		deli(s.as, a)
-	end
-end
--->8
---------------- components ----
-
--- timers count down 1 per frame
-sys:add {
-	name = "timer",
-
-	match = function (a)
-		return a.timer
-	end,
-
-	update = function (a)
-		for k, _ in pairs(a.timer) do
-			a.timer[k] -= 1
-		end
-	end,
-}
-
--- listens to controller input
-controls = sys:add {
-	match = function (a)
-		return a.control
-	end,
-
-	update = function (a)
-		a:control(
-		{ l=btn"0", r=btn"1"
-		, u=btn"2", d=btn"3"
-		, o=btn"4", x=btn"5"
-		})
-	end
-}
-
--- test if a point is solid
-function solid(x, y)
-	return x < 0 or x >= 128 or
-			fget(mget(x, y), 1)
-end
-
--- applies x movement
-sideways = sys:add {
-	match = function (a)
-		return a.dx
-	end,
-
-	update = function (a)
-		if (pl.grab == a) return
-		local dx3 = sgn(a.dx) * 0.3
-		local x0 = a.x + a.dx + dx3
-
-		if not solid(x0,a.y-0.5) then
-			a.x += a.dx
-			return
-		end
-
-		while not solid(a.x+dx3,a.y-0.5) do
-			a.x += sgn(a.dx) * 0.1
-		end
-
-		a.dx *= -0.5
-
-		if pl.ride == a then
-			pl.ride = nil
-
-			local dx = abs(a.dx)
-			if dx > 0.1 then
-				pl.timer.oops = dx * 140
-			end
-		end
-	end
-}
-
--- applies upwards y movement
-upwards = sys:add {
-	match = function (a)
-		return a.dy
-	end,
-
-	update = function (a)
-		if (pl.grab == a) return
-		if (a.dy >= 0) return
-		local xl,xr=a.x-0.2,a.x+0.2
-		local y0 = a.y + a.dy - 1
-
-		if not (solid(xl,y0) or
-				solid(xr,y0)) then
-			a.y += a.dy
-			return
-		end
-
-		a.dy = 0
-
-		while not (solid(xl,a.y-1) or
-				solid(xr,a.y-1)) do
-			a.y -= 0.01
-		end
-	end
-}
-
--- applies downwards y movement
-downwards = sys:add {
-	match = function (a)
-		return a.dy
-	end,
-
-	update = function (a)
-		a.standing = false
-		if (pl.grab == a) return
-		if (a.dy < 0) return
-		local xl,xr=a.x-0.2,a.x+0.2
-		local y0 = a.y + a.dy
-
-		if not (solid(xl,y0) or
-				solid(xr,y0)) then
-			a.y += a.dy
-			return
-		end
-
-		if a.bounce > 0 and a.dy > 0.2 then
-			a.dy *= -pl.bounce
-		else
-			a.standing = true
-			a.dy = 0
-		end
-
-		while not (solid(xl,a.y) or
-				solid(xr,a.y)) do
-			a.y += 0.05
-		end
-
-		while solid(xl,a.y-0.1) do
-			a.y-=0.05
-		end
-		while	solid(xr,a.y-0.1) do
-			a.y-=0.05
-		end
-	end
-}
-
--- applies gravity
-gravities = sys:add {
-	match = function (a)
-		return a.ddy
-	end,
-
-	update = function (a)
-		if (pl.grab == a) return
-		a.dy += a.ddy
-		a.dy *= 0.95
-	end
-}
-
--- applies x friction
-frictions = sys:add {
-	match = function (a)
-		return a.fric and a.airfric
-	end,
-
-	update = function (a)
-		if (pl.grab == a) return
-		if a.standing then
-			a.dx *= a.fric
-			if (abs(a.dx) < 0.01) a.dx = 0
-		else
-			a.dx *= a.airfric
-		end
-	end
-}
-
--- check if actors are colliding
-function are_colliding(a, b)
-	if (a==b) return
-	local dx = a.x - b.x
-	local dy = a.y - b.y
-	if abs(dx) < a.w+b.w then
-		if abs(dy) < a.h+b.h then
-			return true
-		end
-	end
-end
-
--- collides with other actors
-collides = sys:add {
-	match = function (a)
-		return a.collide
-	end,
-
-	update = function (a)
-		a.contact = nil
-		for b in all(sprites.as) do
-			if are_colliding(a, b) then
-				a:collide(b)
-			end
-		end
-	end
-}
-
--- yeehaw
-riders = sys:add {
-	match = function (a)
-		return a.ride ~= nil
-	end,
-
-	update = function (a)
-		if a.ride then
-			local b = a.ride
-			b.x = a.x
-			a.y = b.y - 0.25
-			a.dx = b.dx
-			a.dy = b.dy
-		end
-	end
-}
-
--- grabbers
-grabbers = sys:add {
-	match = function (a)
-		return a.grab ~= nil
-	end,
-
-	update = function (a)
-		if a.grab then
-			local b = a.grab
-			b.x = a.x + (a.flipx and -0.75 or 0.75)
-			b.y = a.y - 0.25
-			b.dx = 0
-			b.dy = 0
-		end
-	end
-}
-
--- animates sprites
-animates = sys:add {
-	match = function (a)
-		return a.animate
-	end,
-
-	draw = function (a)
-		a:animate()
-	end
-}
-
--- get corner from sprite origin
-function get_corner(a)
-	local oy = a.oy or 0
-	return a.x*8-4, (a.y+oy)*8-8
-end
-
--- draws sprites
-sprites = sys:add {
-	match = function (a)
-		return a.frame
-	end,
-
-	draw = function (a)
-		local x, y = get_corner(a)
-		spr(a.frame,x,y,1,1,a.flipx)
-	end
-}
--->8
------------------ entities ----
 
 -- merges tables b into a
 function merge(a, b)
@@ -369,23 +31,205 @@ function merge(a, b)
 	end
 	return a
 end
+-->8
+--------------- physics ----
 
--- game object with physics
-function object(a,flipx)
-	return
-		{ x=a.x,y=a.y,flipx=flipx
-		, dx=0, dy=0
-		, ddy=0.06 -- gravity
-		, w=0.3, h=0.5 -- half-width
-		, bounce=0.8
-		, frame=1, f0=0
-		, standing=false
-		, fric = 0.8
-		, airfric = 0.9
-		}
+-- basic game object
+function object(opts)
+	return merge(
+	{ x=0, y=0
+	, dx=0, dy=0
+	, ddy=0.06
+	, w=0.3, h=0.5
+	, bounce=0.8
+	, frame=1, f0=0
+	, fric=0.8
+	, airfric=0.9
+	, timer={}
+	}, opts)
 end
 
+-- timers count down 1 per frame
+function update_timers(a)
+	for k, _ in pairs(a.timer) do
+		a.timer[k] -= 1
+	end
+end
+
+-- test if a point is solid
+function solid(x, y)
+	return x < 0 or x >= 128 or
+			fget(mget(x, y), 1)
+end
+
+-- applies x movement
+function update_sideways(a)
+	local dx3 = sgn(a.dx) * 0.3
+	local x0 = a.x + a.dx + dx3
+
+	if not solid(x0,a.y-0.5) then
+		a.x += a.dx
+		return
+	end
+
+	while not solid(a.x+dx3,a.y-0.5) do
+		a.x += sgn(a.dx) * 0.1
+	end
+
+	a.dx *= -0.5
+
+	if pl.ride == a then
+		pl.ride = nil
+
+		local dx = abs(a.dx)
+		if dx > 0.1 then
+			pl.timer.oops = dx * 140
+		end
+	end
+end
+
+-- applies upwards y movement
+function update_upwards(a)
+	if (a.dy >= 0) return
+	local xl,xr=a.x-0.2,a.x+0.2
+	local y0 = a.y + a.dy - 1
+
+	if not (solid(xl,y0) or
+			solid(xr,y0)) then
+		a.y += a.dy
+		return
+	end
+
+	a.dy = 0
+
+	while not (solid(xl,a.y-1) or
+			solid(xr,a.y-1)) do
+		a.y -= 0.01
+	end
+end
+
+-- applies downwards y movement
+function update_downwards(a)
+	a.standing = false
+	if (a.dy < 0) return
+	local xl,xr=a.x-0.2,a.x+0.2
+	local y0 = a.y + a.dy
+
+	if not (solid(xl,y0) or
+			solid(xr,y0)) then
+		a.y += a.dy
+		return
+	end
+
+	if a.bounce > 0 and a.dy > 0.2 then
+		a.dy *= -pl.bounce
+	else
+		a.standing = true
+		a.dy = 0
+	end
+
+	while not (solid(xl,a.y) or
+			solid(xr,a.y)) do
+		a.y += 0.05
+	end
+
+	while solid(xl,a.y-0.1) do
+		a.y-=0.05
+	end
+	while	solid(xr,a.y-0.1) do
+		a.y-=0.05
+	end
+end
+
+-- applies gravity
+function update_gravity(a)
+	a.dy += a.ddy
+	a.dy *= 0.95
+end
+
+-- applies x friction
+function update_friction(a)
+	if a.standing then
+		a.dx *= a.fric
+		if (abs(a.dx) < 0.01) a.dx = 0
+	else
+		a.dx *= a.airfric
+	end
+end
+
+-- check if actors are colliding
+function colliding(a, b)
+	if (a == b) return
+	local dx = a.x - b.x
+	local dy = a.y - b.y
+	if abs(dx) < a.w+b.w then
+		if abs(dy) < a.h+b.h then
+			return true
+		end
+	end
+end
+
+function update_ride(a)
+	if a.ride then
+		local b = a.ride
+		b.x = a.x
+		a.y = b.y - 0.25
+		a.dx = b.dx
+		a.dy = b.dy
+	end
+end
+
+function update_grab(a)
+	if a.grab then
+		local b = a.grab
+		b.x = a.x + (a.flipx and -0.75 or 0.75)
+		b.y = a.y - 0.25
+		b.dx = 0
+		b.dy = 0
+	end
+end
+
+-- get corner from sprite origin
+function get_corner(a)
+	local oy = a.oy or 0
+	return a.x*8-4, (a.y+oy)*8-8
+end
+
+-- draws sprites
+function draw_sprite(a)
+	local x, y = get_corner(a)
+	spr(a.frame,x,y,1,1,a.flipx)
+end
+-->8
 ------------------- board ----
+
+function board(opts)
+	return merge(object
+	{ bounce = 0
+	, frame = sp.board
+	, fric = 0.985
+	, airfric = 0.985
+	, h = 0.25
+	, update = update_board
+	, draw = draw_board
+	}, opts)
+end
+
+function update_board(a)
+	if pl.grab ~= a then
+		update_sideways(a)
+		update_upwards(a)
+		update_downwards(a)
+		update_gravity(a)
+		update_friction(a)
+		update_ride(pl)
+	end
+end
+
+function draw_board(a)
+	animate_board(a)
+	draw_sprite(a)
+end
 
 function animate_board(a)
 	a.frame = sp.board
@@ -395,20 +239,71 @@ function animate_board(a)
 		a.frame = sp.board - 1
 	end
 end
-
-function board(a)
-	return merge(
-		object(a),
-		{ bounce = 0
-		, frame = sp.board
-		, fric = 0.985
-		, airfric = 0.985
-		, h = 0.25
-		, animate = animate_board
-		})
-end
 -->8
 ------------------- player ----
+
+function player(opts)
+	return merge(object
+	{ bounce = 0
+	, timer = {oops=-1}
+	, update = update_player
+	, draw = draw_player
+	}, opts)
+end
+
+function update_player(a)
+	update_timers(a)
+	control_player(a)
+	update_sideways(a)
+	update_upwards(a)
+	update_downwards(a)
+	update_gravity(a)
+	update_friction(a)
+	update_grab(a)
+end
+
+function control_player(a)
+	if (a.timer.oops > 0) return
+	local btn =
+			{ l=btn"0", r=btn"1"
+			, u=btn"2", d=btn"3"
+			, o=btn"4", x=btn"5"
+			}
+
+	if a.ride then
+		board_control(a, btn)
+	else
+		ground_control(a, btn)
+	end
+end
+
+function board_control(a, btn)
+	if btn.l or btn.r or
+			btn.u or btn.d then
+		a.olli = true
+	elseif a.olli then
+		a.olli = false
+		a.ride.dy = -0.7
+		sfx(sound.jump)
+	end
+
+	if not btn.o then
+		a.holdo = false
+	elseif not a.holdo then
+		a.holdo = true
+		if a.ride.standing then
+			a.dx += (a.flipx and -0.13 or 0.13)
+			a.ride.dx = a.dx
+		end
+	end
+
+	if not btn.x then
+		a.holdx = false
+	elseif not a.holdx then
+		a.holdx = true
+		a.ride = false
+	end
+end
 
 function ground_control(a, btn)
 	local accel = 0.025
@@ -435,6 +330,10 @@ function ground_control(a, btn)
 		end
 	end
 
+	if colliding(a, br) then
+		a.contact = br
+	end
+
 	if not btn.x then
 		a.holdx = false
 	elseif not a.holdx then
@@ -453,42 +352,9 @@ function ground_control(a, btn)
 	end
 end
 
-function board_control(a, btn)
-	if btn.l or btn.r or
-			btn.u or btn.d then
-		a.olli = true
-	elseif a.olli then
-		a.olli = false
-		a.ride.dy = -0.7
-		sfx(sound.jump)
-	end
-
-	if not btn.o then
-		a.holdo = false
-	elseif not a.holdo then
-		a.holdo = true
-		if a.ride.standing then
-			a.dx += sgn(a.dx) * 0.13
-			a.ride.dx = a.dx
-		end
-	end
-
-	if not btn.x then
-		a.holdx = false
-	elseif not a.holdx then
-		a.holdx = true
-		a.ride = false
-	end
-end
-
-function control_player(a, btn)
-	if (a.timer.oops > 0) return
-
-	if a.ride then
-		board_control(a, btn)
-	else
-		ground_control(a, btn)
-	end
+function draw_player(a)
+	animate_player(a)
+	draw_sprite(a)
 end
 
 function animate_player(a)
@@ -503,10 +369,6 @@ function animate_player(a)
 	if abs(a.dx) < 0.1 or a.ride then
 		a.f0 = 0
 		a.frame = sp.player
-
-		if a.ride then
-			a.flipx = a.ride.dx < 0
-		end
 		return
 	end
 
@@ -522,63 +384,32 @@ function animate_player(a)
 	end
 end
 
-function collide_player(a, b)
-	a.contact = b
-end
-
-function player(a,flipx)
-	return merge(
-		object(a,flipx),
-		{ bounce = 0
-		, ride = false
-		, grab = false
-		, timer = {oops=-1}
-		, control = control_player
-		, animate = animate_player
-		, collide = collide_player
-		})
-end
 -->8
 ---------------- game loop ----
 
--- map index matchers
-imap = {
-	player = function (tile)
-		return tile == sp.player
-	end
-}
-
--- populate map index
-for key, fn in pairs(imap) do
-	imap[key] = {}
-
-	for y = 0, 63 do
-		for x = 0, 127 do
-			if fn(mget(x,y)) then
-				add(imap[key],{x=x,y=y+1})
-			end
-		end
-	end
-end
+br = board{}
+pl = player{grab=br}
 
 function _init()
-	pl = player(imap.player[1])
-	sys:spawn(pl)
-
-	local br = board({x=0,y=0})
-	sys:spawn(br)
-	pl.grab = br
+	for y = 0,63 do for x = 0,127 do
+		if mget(x,y) == sp.player then
+			pl.x,pl.y = x,y+1
+			return
+		end
+	end end
 end
 
 function _update()
-	sys:update()
+	pl:update()
+	br:update()
 end
 
 function _draw()
 	cls(13)
-	camera(mid(0,pl.x*8-64,1024-128),0)
+	camera(mid(0,pl.x*8-64,896),0)
 	mapdraw(0,0,0,0,128,64,1)
-	sys:draw()
+	pl:draw()
+	br:draw()
 end
 __gfx__
 00000000991199115555555566666666555155555555555555555555515151515151515111111111111111111111111100000000000077777777777777777000
