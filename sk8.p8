@@ -5,6 +5,10 @@ __lua__
 -- work in progress
 
 -- to do:
+-- fix infinite ollies
+-- don't ollie w/ pre-ride hold
+-- crouch anim
+
 -- top-solid ground
 -- variable jump height
 
@@ -56,6 +60,14 @@ function update_timers(a)
 	end
 end
 
+function physics(a)
+	sideways(a)
+	upwards(a)
+	downwards(a)
+	gravity(a)
+	friction(a)
+end
+
 -- test if a point is solid
 function solid(x, y)
 	return x < 0 or x >= 128 or
@@ -63,7 +75,7 @@ function solid(x, y)
 end
 
 -- applies x movement
-function update_sideways(a)
+function sideways(a)
 	local dx3 = sgn(a.dx) * 0.3
 	local x0 = a.x + a.dx + dx3
 
@@ -89,7 +101,7 @@ function update_sideways(a)
 end
 
 -- applies upwards y movement
-function update_upwards(a)
+function upwards(a)
 	if (a.dy >= 0) return
 	local xl,xr=a.x-0.2,a.x+0.2
 	local y0 = a.y + a.dy - 1
@@ -109,7 +121,7 @@ function update_upwards(a)
 end
 
 -- applies downwards y movement
-function update_downwards(a)
+function downwards(a)
 	a.standing = false
 	if (a.dy < 0) return
 	local xl,xr=a.x-0.2,a.x+0.2
@@ -142,13 +154,13 @@ function update_downwards(a)
 end
 
 -- applies gravity
-function update_gravity(a)
+function gravity(a)
 	a.dy += a.ddy
 	a.dy *= 0.95
 end
 
 -- applies x friction
-function update_friction(a)
+function friction(a)
 	if a.standing then
 		a.dx *= a.fric
 		if (abs(a.dx) < 0.01) a.dx = 0
@@ -217,11 +229,7 @@ end
 
 function update_board(a)
 	if pl.grab ~= a then
-		update_sideways(a)
-		update_upwards(a)
-		update_downwards(a)
-		update_gravity(a)
-		update_friction(a)
+		physics(a)
 		update_ride(pl)
 	end
 end
@@ -254,11 +262,7 @@ end
 function update_player(a)
 	update_timers(a)
 	control_player(a)
-	update_sideways(a)
-	update_upwards(a)
-	update_downwards(a)
-	update_gravity(a)
-	update_friction(a)
+	physics(a)
 	update_grab(a)
 end
 
