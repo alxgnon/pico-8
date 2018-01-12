@@ -37,7 +37,7 @@ end
 -- basic game object
 function object(opts)
 	return merge(
-	{ x=0, y=0
+	{ x=0, y=0, d=1
 	, dx=0, dy=0
 	, ddy=0.06
 	, w=0.3, h=0.5
@@ -182,7 +182,7 @@ end
 function update_grab(a)
 	if a.grab then
 		local b = a.grab
-		b.x = a.x + (a.flipx and -0.75 or 0.75)
+		b.x = a.x + a.d * 0.75
 		b.y = a.y - 0.25
 		b.dx = 0
 		b.dy = 0
@@ -198,7 +198,7 @@ end
 -- draws sprites
 function draw_sprite(a)
 	local x, y = get_corner(a)
-	spr(a.frame,x,y,1,1,a.flipx)
+	spr(a.frame,x,y,1,1,a.d<0)
 end
 -->8
 ------------------- board ----
@@ -235,7 +235,7 @@ function animate_board(a)
 	a.frame = sp.board
 
 	if pl.grab == a then
-		a.flipx = pl.flipx
+		a.d = pl.d
 		a.frame = sp.board - 1
 	end
 end
@@ -292,7 +292,7 @@ function board_control(a, btn)
 	elseif not a.holdo then
 		a.holdo = true
 		if a.ride.standing then
-			a.dx += (a.flipx and -0.13 or 0.13)
+			a.dx += a.d * 0.13
 			a.ride.dx = a.dx
 		end
 	end
@@ -311,12 +311,12 @@ function ground_control(a, btn)
 
 	if btn.l then
 		a.dx -= accel
-		a.flipx = true
+		a.d = -1
 	end
 
 	if btn.r then
 		a.dx += accel
-		a.flipx = false
+		a.d = 1
 	end
 
 	if not btn.o then
