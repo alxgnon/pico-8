@@ -254,7 +254,10 @@ end
 function player(opts)
 	return merge(object
 	{ bounce = 0
-	, timer = {oops=-1}
+	, timer =
+			{ oops=-1
+			, push=-1
+			}
 	, update = update_player
 	, draw = draw_player
 	}, opts)
@@ -300,7 +303,9 @@ function board_control(a, btn)
 		a.holdo = false
 	elseif not a.holdo then
 		a.holdo = true
-		if a.ride.standing then
+		if a.ride.standing and
+				a.timer.push <= 0 then
+			a.timer.push = 7
 			a.dx += a.d * 0.13
 			a.ride.dx = a.dx
 		end
@@ -370,6 +375,12 @@ end
 
 function animate_player(a)
 	a.oy = 0
+
+	if a.timer.push > 0 then
+		a.f0 = 0
+		a.frame = sp.player + 4
+		return
+	end
 	
 	if a.olli then
 		a.f0 = 0
