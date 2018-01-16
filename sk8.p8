@@ -5,10 +5,6 @@ __lua__
 -- work in progress
 
 -- to do:
--- fix infinite ollies
--- don't ollie w/ pre-ride hold
--- crouch anim
-
 -- top-solid ground
 -- variable jump height
 
@@ -93,14 +89,17 @@ function sideways(a)
 
 	a.dx *= -0.5
 
-	if pl.ride == a then
-		pl.ride = nil
-		pl.olli = nil
+	if (pl.ride == a) falloff(pl, a)
+end
 
-		local dx = abs(a.dx)
-		if dx > 0.1 then
-			pl.timer.oops = dx * 140
-		end
+-- fall off board
+function falloff(pl, b)
+	pl.ride = nil
+	pl.olli = nil
+
+	local dx = abs(b.dx)
+	if dx > 0.1 then
+		pl.timer.oops = dx * 140
 	end
 end
 
@@ -134,7 +133,7 @@ function downwards(a)
 	if not (solid(xl,y0) or
 			solid(xr,y0)) then
 		a.y += a.dy
-		a.landsfx = false
+		a.air = true
 		return
 	end
 
@@ -143,10 +142,10 @@ function downwards(a)
 	else
 		a.standing = true
 		a.dy = 0
-		
-		if a == br and not a.landsfx then
+
+		if a == br and a.air then
 			sfx(sound.land)
-			a.landsfx = true
+			a.air = false
 		end
 	end
 
@@ -191,26 +190,6 @@ function colliding(a, b)
 	end
 end
 
-function update_ride(a)
-	if a.ride then
-		local b = a.ride
-		b.x = a.x
-		a.y = b.y - 0.25
-		a.dx = b.dx
-		a.dy = b.dy
-	end
-end
-
-function update_grab(a)
-	if a.grab then
-		local b = a.grab
-		b.x = a.x + a.d * 0.75
-		b.y = a.y - 0.25
-		b.dx = 0
-		b.dy = 0
-	end
-end
-
 -- get corner from sprite origin
 function get_corner(a)
 	local oy = a.oy or 0
@@ -240,7 +219,16 @@ end
 function update_board(a)
 	if pl.grab ~= a then
 		physics(a)
-		update_ride(pl)
+		riding(pl, a)
+	end
+end
+
+function riding(a, b)
+	if a.ride == b then
+		b.x = a.x
+		a.y = b.y - 0.25
+		a.dx = b.dx
+		a.dy = b.dy
 	end
 end
 
@@ -276,7 +264,18 @@ function update_player(a)
 	update_timers(a)
 	control_player(a)
 	physics(a)
-	update_grab(a)
+	grabbing(a)
+end
+
+
+function grabbing(a)
+	if a.grab then
+		local b = a.grab
+		b.x = a.x + a.d * 0.75
+		b.y = a.y - 0.25
+		b.dx = 0
+		b.dy = 0
+	end
 end
 
 function control_player(a)
@@ -294,12 +293,25 @@ function control_player(a)
 	end
 end
 
+function press(a, btn, key, fn)
+	local hold = "hold"..key
+	if not btn[key] then
+		a[hold] = false
+	elseif not a[hold] then
+		a[hold] = true
+		fn()
+	end
+end
+
 function board_control(a, btn)
-	if btn.l or btn.r or
-			btn.u or btn.d then
-		if a.olli ~= nil then
-			a.olli = true
-		end
+	local flags =
+			(btn.l and 1 or 0) +
+			(btn.r and 2 or 0) +
+			(btn.u and 4 or 0) +
+			(btn.d and 8 or 0)
+
+	if flags > 0 then
+		develop_trick(a, flags)
 	else
 		if a.olli and
 				a.ride.standing then
@@ -309,10 +321,8 @@ function board_control(a, btn)
 		a.olli = false
 	end
 
-	if not btn.o then
-		a.holdo = false
-	elseif not a.holdo then
-		a.holdo = true
+	-- push
+	press(a, btn, "o", function ()
 		if a.ride.standing and
 				a.timer.push <= -1 then
 			sfx(sound.push)
@@ -320,14 +330,18 @@ function board_control(a, btn)
 			a.dx += a.d * 0.13
 			a.ride.dx = a.dx
 		end
-	end
+	end)
 
-	if not btn.x then
-		a.holdx = false
-	elseif not a.holdx then
-		a.holdx = true
+	-- dismount
+	press(a, btn, "x", function ()
 		a.ride = false
 		a.olli = nil
+	end)
+end
+
+function develop_trick(a, flags)
+	if a.olli ~= nil then
+		a.olli = {}
 	end
 end
 
@@ -345,39 +359,41 @@ function ground_control(a, btn)
 		a.d = 1
 	end
 
-	if not btn.o then
-		a.holdo = false
-	elseif not a.holdo then
-		a.holdo = true
-
+	-- jump
+	press(a, btn, "o", function ()
 		if a.standing then
 			a.dy = -0.7
 			sfx(sound.jump)
 		end
-	end
+	end)
 
 	a.contact = nil
 	if colliding(a, br) then
 		a.contact = br
 	end
 
-	if not btn.x then
-		a.holdx = false
-	elseif not a.holdx then
-		a.holdx = true
-
+	-- grab / drop
+	press(a, btn, "x", function ()
 		if a.grab then
-			a.ride = a.grab
-			a.ride.x = a.x
-			a.ride.y = a.y
-			a.ride.dx = a.dx * 1.4
-			a.ride.dy = a.dy
-			a.grab = nil
+			running_start(a, a.grab)
 		elseif a.contact then
-			a.grab = a.contact
-			a.grab.landsfx = false
+			grab_it(a, a.contact)
 		end
-	end
+	end)
+end
+
+function running_start(a, b)
+	a.ride = b
+	b.x = a.x
+	b.y = a.y
+	b.dx = a.dx * 1.4
+	b.dy = a.dy
+	a.grab = nil
+end
+
+function grab_it(a, b)
+	a.grab = b
+	b.air = true
 end
 
 function draw_player(a)
@@ -393,7 +409,7 @@ function animate_player(a)
 		a.frame = sp.player + 4
 		return
 	end
-	
+
 	if a.olli then
 		a.f0 = 0
 		a.frame = sp.player + 6
