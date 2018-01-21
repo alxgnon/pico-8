@@ -26,10 +26,10 @@ sp =
 , board = 081
 }
 
--- merges tables b into a
-function merge(a, b)
-	if b then
-		for k, v in pairs(b) do
+function merge(tables)
+	local a = {}
+	for b in all(tables) do
+	 for k, v in pairs(b) do
 			a[k] = v
 		end
 	end
@@ -38,19 +38,50 @@ end
 -->8
 --------------- physics ----
 
+-- default components
+def =
+{ timer =
+		{ timer = {}
+		}
+
+, body =
+		{ x = 0
+		, y = 0
+		, w = 0.3
+		, h = 0.5
+		}
+
+, sprite =
+		{ frame = 1
+		, f0 = 0
+		, d = 1
+		, oy = 0
+		}
+
+, movement =
+		{ dx = 0
+		, dy = 0
+		, ddy = 0.06
+		, bounce = 0.8
+		, air = true
+		}
+
+, friction =
+		{ fric = 0.8
+		, airfric = 0.9
+		}
+}
+
 -- basic game object
-function object(opts)
-	return merge(
-	{ x=0, y=0, d=1
-	, dx=0, dy=0
-	, ddy=0.06
-	, w=0.3, h=0.5
-	, bounce=0.8
-	, frame=1, f0=0
-	, fric=0.8
-	, airfric=0.9
-	, timer={}
-	}, opts)
+function object(options)
+	return merge
+	{ def.timer
+	, def.body
+	, def.sprite
+	, def.movement
+	, def.friction
+	, options
+	}
 end
 
 -- timers count down 1 per frame
@@ -216,7 +247,7 @@ end
 ------------------- board ----
 
 function board(opts)
-	return merge(object
+	return merge{object
 	{ bounce = 0
 	, frame = sp.board
 	, fric = 0.985
@@ -224,7 +255,7 @@ function board(opts)
 	, h = 0.25
 	, update = update_board
 	, draw = draw_board
-	}, opts)
+	}, opts}
 end
 
 function update_board(a)
@@ -272,7 +303,7 @@ end
 ------------------- player ----
 
 function player(opts)
-	return merge(object
+	return merge{object
 	{ bounce = 0
 	, timer =
 			{ oops=-1
@@ -280,7 +311,7 @@ function player(opts)
 			}
 	, update = update_player
 	, draw = draw_player
-	}, opts)
+	}, opts}
 end
 
 function update_player(a)
@@ -338,7 +369,7 @@ function board_control(a, btn)
 		 if not a.ride.slide then
 		 	sfx(sound.slide, 3)
 		 end
-		 
+
 		 a.ride.slide = true
 		 a.olli = false
 		end)
