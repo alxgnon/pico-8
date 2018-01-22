@@ -5,7 +5,7 @@ __lua__
 -- work in progress
 
 rose = 003
-vert = 007
+vert = 009
 
 curr = nil
 
@@ -21,10 +21,16 @@ function muted(frame)
 	return 1
 end
 
+function other(snake)
+	if (snake==verte) return rosee
+	if (snake==rosee) return verte
+end
+
 function snake(frame,x,y,dx)
 	local a =
 	{ x = x, y = y
 	,	dx = dx, dy = 0
+	, ddx = dx, ddy = 0
 	, tail = {}
 	, frame = frame
 	, move = move_snake
@@ -33,7 +39,7 @@ function snake(frame,x,y,dx)
 	, ruler = draw_ruler
 	}
 
-	for i=2,1,-1 do
+	for i=6,1,-1 do
 		add(a.tail,
 		{x = x-sgn(dx)*i, y = y})
 	end
@@ -42,6 +48,7 @@ function snake(frame,x,y,dx)
 end
 
 function move_snake(a)
+	a.dx,a.dy=a.ddx,a.ddy
 	add(a.tail,{x=a.x,y=a.y})
 	del(a.tail,a.tail[1])
 	a.x = (a.x+a.dx)%14
@@ -50,23 +57,60 @@ end
 
 function control_snake(a)
 	if a.dx == 0 then
-		if (btn"0") a.dx,a.dy=-1,0
-		if (btn"1")	a.dx,a.dy=1,0
+		if (btn"0") a.ddx,a.ddy=-1,0
+		if (btn"1")	a.ddx,a.ddy=1,0
 	else
-		if (btn"2") a.dx,a.dy=0,-1
-		if (btn"3") a.dx,a.dy=0,1
+		if (btn"2") a.ddx,a.ddy=0,-1
+		if (btn"3") a.ddx,a.ddy=0,1
 	end
 end
 
+function collides(a, b)
+	return
+	flr(a.x)==flr(b.x) and
+	flr(a.y)==flr(b.y)
+end
+
 function draw_snake(a)
+	local other = other(a)
+
 	local frame = a.frame
 	if curr ~= frame then
 		frame += 2
 	end
 
 	for b in all(a.tail) do
+		if collides(b, other) then
+			spr(a.frame+5,
+			flr(b.x+1)*8,flr(b.y+1)*8)
+			goto next
+		end
+
+		for c in all(other.tail) do
+			if collides(b, c) then
+				spr(a.frame+5,
+				flr(b.x+1)*8,flr(b.y+1)*8)
+				goto next
+			end
+		end
+
 		spr(frame+1,
 		flr(b.x+1)*8,flr(b.y+1)*8)
+		::next::
+	end
+
+	if collides(a, other) then
+		spr(a.frame+4,
+		flr(a.x+1)*8,flr(a.y+1)*8)
+		return
+	end
+
+	for c in all(other.tail) do
+		if collides(a, c) then
+			spr(a.frame+4,
+			flr(a.x+1)*8,flr(a.y+1)*8)
+			return
+		end
 	end
 
 	spr(frame,
@@ -105,9 +149,9 @@ function _update()
 	if (curr==vert) verte:control()
 
 	if t % 5 == 0 then
- 	rosee:move()
- 	verte:move()
- end
+		rosee:move()
+		verte:move()
+	end
 end
 
 function draw_border()
@@ -126,13 +170,13 @@ function _draw()
 	verte:draw()
 end
 __gfx__
-000000001111111411111114eeeeeee0eeeeeee02222222022222220bbbbbbb0bbbbbbb033333330333333300000000000000000000000000000000000000000
-000000001000001410000014e22222e0e22222e02eeeee202eeeee20b33333b0b33333b03bbbbb303bbbbb300000000000000000000000000000000000000000
-007007001011101410111014e27772e0e22222e02eeeee202e222e20b37773b0b33333b03bbbbb303b333b300000000000000000000000000000000000000000
-000770001010101410111014e27172e0e22222e02eeeee202e222e20b37173b0b33333b03bbbbb303b333b300000000000000000000000000000000000000000
-000770001011101410111014e27772e0e22222e02eeeee202e222e20b37773b0b33333b03bbbbb303b333b300000000000000000000000000000000000000000
-007007001000001410000014e22222e0e22222e02eeeee202eeeee20b33333b0b33333b03bbbbb303bbbbb300000000000000000000000000000000000000000
-000000001111111411111114eeeeeee0eeeeeee02222222022222220bbbbbbb0bbbbbbb033333330333333300000000000000000000000000000000000000000
+000000001111111411111114eeeeeee0eeeeeee022222220222222200001eee00001eee0bbbbbbb0bbbbbbb03333333033333330bbb10000bbb1000000000000
+000000001000001410000014e22222e0e22222e02eeeee202eeeee200001e2e0000122e0b33333b0b33333b03bbbbb303bbbbb30b3b10000b331000000000000
+007007001011101410111014e27772e0e22222e02eeeee202e222e200001eee0000122e0b37773b0b33333b03bbbbb303b333b30bbb10000b331000000000000
+000770001010101410111014e27172e0e22222e02eeeee202e222e201111111011111110b37173b0b33333b03bbbbb303b333b30111111101111111000000000
+000770001011101410111014e27772e0e22222e02eeeee202e222e20eee10000e2210000b37773b0b33333b03bbbbb303b333b300001bbb0000133b000000000
+007007001000001410000014e22222e0e22222e02eeeee202eeeee20e2e10000e2210000b33333b0b33333b03bbbbb303bbbbb300001b3b0000133b000000000
+000000001111111411111114eeeeeee0eeeeeee02222222022222220eee10000eee10000bbbbbbb0bbbbbbb033333330333333300001bbb00001bbb000000000
 00000000444444444444444400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __label__
 00111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111000
