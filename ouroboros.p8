@@ -9,15 +9,15 @@ vert = 009
 
 curr = nil
 
-function bright(frame)
-	if (frame==rose) return 14
-	if (frame==vert) return 11
+function bright(snake)
+	if (snake==rosee) return 14
+	if (snake==verte) return 11
 	return 1
 end
 
-function muted(frame)
-	if (frame==rose) return 02
-	if (frame==vert) return 03
+function muted(snake)
+	if (snake==rosee) return 02
+	if (snake==verte) return 03
 	return 1
 end
 
@@ -75,7 +75,7 @@ function draw_snake(a)
 	local other = other(a)
 
 	local frame = a.frame
-	if curr ~= frame then
+	if curr ~= a then
 		frame += 2
 	end
 
@@ -118,10 +118,13 @@ function draw_snake(a)
 end
 
 function draw_ruler(a)
-	local color = muted(a.frame)
+	local color = muted(a)
 	local x,y=flr(a.x+1)*8,flr(a.y+1)*8
-	rectfill(x+1,8,x+5,118,color)
-	rectfill(8,y+1,118,y+5,color)
+	if a.dx == 0 then
+		rectfill(x+1,8,x+5,118,color)
+	else
+		rectfill(8,y+1,118,y+5,color)
+	end
 end
 
 function _init()
@@ -132,9 +135,9 @@ end
 
 function switch()
 	if btn"4" then
-		curr = rose
+		curr = rosee
 	elseif btn"5" then
-		curr = vert
+		curr = verte
 	end
 end
 
@@ -144,10 +147,7 @@ function _update()
 	if (not curr) return
 
 	t += 1
-
-	if (curr==rose) rosee:control()
-	if (curr==vert) verte:control()
-
+	curr:control()
 	if t % 5 == 0 then
 		rosee:move()
 		verte:move()
@@ -163,8 +163,9 @@ end
 function _draw()
 	cls()
 	draw_border()
-	if (curr==rose) rosee:ruler()
-	if (curr==vert) verte:ruler()
+	if other(curr) then
+		other(curr):ruler()
+	end
 	map(0,0,0,0,128,128)
 	rosee:draw()
 	verte:draw()
