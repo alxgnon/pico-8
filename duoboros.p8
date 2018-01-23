@@ -7,8 +7,6 @@ __lua__
 rose = 003
 vert = 009
 
-curr = nil
-
 function bright(snake)
 	if (snake==rosee) return 14
 	if (snake==verte) return 11
@@ -37,6 +35,12 @@ function snake(frame,x,y,dx)
 	, control = control_snake
 	, draw = draw_snake
 	, ruler = draw_ruler
+
+	, collide = collide_snake
+	, headheadcols = {}
+	, headtailcols = {}
+	, tailheadcols = {}
+	, tailtailcols = {}
 	}
 
 	for i=6,1,-1 do
@@ -71,50 +75,64 @@ function collides(a, b)
 	flr(a.y)==flr(b.y)
 end
 
-function draw_snake(a)
+function collide_snake(a)
 	local other = other(a)
+	for b in all(a.tail) do
+		-- tail head
+		if collides(b, other) then
+			add(a.tailheadcols, b)
+			goto next
+		end
+		-- tail tail
+		for c in all(other.tail) do
+			if collides(b, c) then
+				add(a.tailtailcols, b)
+				goto next
+			end
+		end
+		::next::
+	end
+	-- head head
+	if collides(a, other) then
+		add(a.headheadcols, a)
+		return
+	end
+	-- head tail
+	for c in all(other.tail) do
+		if collides(a, c) then
+			add(a.headtailcols, a)
+			return
+		end
+	end
+end
 
+function draw_snake(a)
 	local frame = a.frame
 	if curr ~= a then
 		frame += 2
 	end
-
-	for b in all(a.tail) do
-		if collides(b, other) then
-			spr(a.frame+5,
-			flr(b.x+1)*8,flr(b.y+1)*8)
-			goto next
-		end
-
-		for c in all(other.tail) do
-			if collides(b, c) then
-				spr(a.frame+5,
-				flr(b.x+1)*8,flr(b.y+1)*8)
-				goto next
-			end
-		end
-
-		spr(frame+1,
-		flr(b.x+1)*8,flr(b.y+1)*8)
-		::next::
-	end
-
-	if collides(a, other) then
-		spr(a.frame+4,
-		flr(a.x+1)*8,flr(a.y+1)*8)
-		return
-	end
-
-	for c in all(other.tail) do
-		if collides(a, c) then
-			spr(a.frame+4,
-			flr(a.x+1)*8,flr(a.y+1)*8)
-			return
-		end
-	end
-
 	spr(frame,
 	flr(a.x+1)*8,flr(a.y+1)*8)
+	for b in all(a.tail) do
+		spr(frame+1,
+		flr(b.x+1)*8,flr(b.y+1)*8)
+	end
+end
+
+function draw_fuse(a)
+	local frame = a.frame
+	for b in all(a.tailheadcols) do
+		spr(a.frame+5,flr(b.x+1)*8,flr(b.y+1)*8)
+	end
+	for b in all(a.tailtailcols) do
+		spr(a.frame+5,flr(b.x+1)*8,flr(b.y+1)*8)
+	end
+	for b in all(a.headheadcols) do
+		spr(a.frame+4,flr(b.x+1)*8,flr(b.y+1)*8)
+	end
+	for b in all(a.headtailcols) do
+		spr(a.frame+4,flr(b.x+1)*8,flr(b.y+1)*8)
+	end
 end
 
 function draw_ruler(a)
@@ -142,16 +160,19 @@ function switch()
 end
 
 t = 0
-function _update()
-	switch()
-	if (not curr) return
-
+function update()
 	t += 1
 	curr:control()
 	if t % 5 == 0 then
 		rosee:move()
 		verte:move()
+		rosee:collide()
 	end
+end
+
+function _update()
+	switch()
+	if (curr) update()
 end
 
 function draw_border()
@@ -169,6 +190,7 @@ function _draw()
 	map(0,0,0,0,128,128)
 	rosee:draw()
 	verte:draw()
+	draw_fuse(rosee)
 end
 __gfx__
 000000001111111411111114eeeeeee0eeeeeee022222220222222200001eee00001eee0bbbbbbb0bbbbbbb03333333033333330bbb10000bbb1000000000000
