@@ -37,6 +37,7 @@ function snake(frame,x,y,dx)
 	, ruler = draw_ruler
 
 	, collide = collide_snake
+	, selfcol = nil
 	, headheadcol = nil
 	, headtailcol = nil
 	, tailheadcol = nil
@@ -81,6 +82,8 @@ end
 function collide_snake(a)
 	local other = other(a)
 	for b in all(a.tail) do
+		-- self
+		if (collides(a,b)) a.selfcol=b
 		-- tail head
 		if collides(b, other) then
 			a.tailheadcol = other
@@ -107,12 +110,12 @@ function draw_snake(a)
 	if curr ~= a then
 		frame += 2
 	end
-	spr(frame,
-	flr(a.x+1)*8,flr(a.y+1)*8)
 	for b in all(a.tail) do
 		spr(frame+1,
 		flr(b.x+1)*8,flr(b.y+1)*8)
 	end
+	spr(frame,
+	flr(a.x+1)*8,flr(a.y+1)*8)
 end
 
 function draw_ruler(a)
@@ -149,7 +152,9 @@ function switch()
 end
 
 function react(a)
-	if a.headheadcol or a.tailheadcol then
+	if a.headheadcol or
+				a.tailheadcol or
+				a.selfcol then
 		gameover()
 		return
 	end
