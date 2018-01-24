@@ -313,9 +313,9 @@ end
 
 function draw_rumble()
 	if t < (rumble_stop or 0) then
-		camera(
-		rnd(rumble_power)-rumble_power/2,
-		rnd(rumble_power)-rumble_power/2)
+ 	camera(
+ 	rnd(rumble_power)-rumble_power/2,
+ 	rnd(rumble_power)-rumble_power/2)
 	elseif rumble_stop then
 		camera(0,0)
 		rumble_stop = nil
