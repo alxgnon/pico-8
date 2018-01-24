@@ -144,6 +144,7 @@ function perfect_x(cells)
 	if virgin and not is_win() then
 		sfx(sound.perfect)
 		slowness -= 0.5
+		rumble(4, 4)
 	end
 end
 
@@ -159,6 +160,7 @@ function perfect_y(cells)
 	if virgin and not is_win() then
 		sfx(sound.perfect)
 		slowness -= 0.5
+		rumble(4, 4)
 	end
 end
 
@@ -194,6 +196,7 @@ function _init()
 	verte = snake(vert,8,3,1)
 	sfx(sound.boot)
 	slowness = 8
+	rumble_stop = nil
 end
 
 function switch()
@@ -230,6 +233,7 @@ function react(a)
 end
 
 function gameover()
+	rumble(10, 6)
 	curr = false
 	pal(11,6)
 	pal(3,5)
@@ -246,14 +250,15 @@ function is_win()
 end
 
 function check_win()
-	if (not is_win()) return
-	if (curr) sfx(sound.win)
-	curr = false
+	if is_win() and curr then
+		sfx(sound.win)
+		rumble(4, 6)
+		curr = false
+	end
 end
 
 t = 0
 function update()
-	t += 1
 	curr:control()
 	local slow = max(flr(slowness),0)
 	if t % slow == 0 then
@@ -267,6 +272,7 @@ function update()
 end
 
 function _update()
+	t += 1
 	switch()
 	if (curr) update()
 end
@@ -279,6 +285,7 @@ end
 
 function _draw()
 	cls()
+	draw_rumble()
 	draw_border()
 	local other = other(curr)
 	if (other) other:ruler()
@@ -291,6 +298,27 @@ function _draw()
 		verte:draw()
 		spr(005,
 		flr(rosee.x+1)*8,flr(rosee.y+1)*8)
+	end
+end
+
+-- rumble ---------------------
+
+rumble_stop = nil
+rumble_power = nil
+
+function rumble(time, power)
+	rumble_stop = t + time
+	rumble_power = power
+end
+
+function draw_rumble()
+	if t < (rumble_stop or 0) then
+		camera(
+		rnd(rumble_power)-rumble_power/2,
+		rnd(rumble_power)-rumble_power/2)
+	elseif rumble_stop then
+		camera(0,0)
+		rumble_stop = nil
 	end
 end
 __gfx__
