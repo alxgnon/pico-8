@@ -78,8 +78,8 @@ function new_cross()
 		local dx,dy = self:joydelta()
 		self.x += dx
 		self.y += dy
-		self.x %= 128
-		self.y %= 128
+		self.x = min(max(self.x,0),127)
+		self.y = min(max(self.y,0),127)
 	end
 
 	function cross:draw()
