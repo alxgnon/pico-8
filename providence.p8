@@ -43,8 +43,8 @@ function new_eye()
 		self.by = -2+wav(gt+40,2.98,98)
 
 		local d = atan2(cross.x-64,cross.y-20)
-		self.px = 2*cos(d)+0.5
-		self.py = 2*sin(d)+0.5
+		self.px = flr(2*cos(d)+0.5)
+		self.py = flr(2*sin(d)+0.5)
 	end
 
 	function eye:draw()
