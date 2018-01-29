@@ -1,46 +1,73 @@
 pico-8 cartridge // http://www.pico-8.com
 version 15
 __lua__
+pink = 14
+
+function wav(val,amp,len)
+	return amp*sin(val/len)
+end
+
+
 function new_backdrop()
-	local backdrop = {y = 0}
+	local backdrop = {v=0}
 
- function backdrop:update()
-	local speed = wav(gt,0.7,98)
- 	self.y += speed
- end
+	function backdrop:update()
+		local speed = wav(gt,0.7,98)
+		self.v += speed
+	end
 
- function backdrop:draw()
- 	cls()
+	function backdrop:draw()
+		cls()
 		map(16,0,0,0,16,16)
-		map(32,0,0,-64+self.y,16,32)
-		map(0,16,64+self.y,64,16,2)
-		map(0,16,-64-self.y,64,16,2)
+		map(32,0,0,-64+self.v,16,32)
+		map(0,16,64+self.v,64,16,2)
+		map(0,16,-64-self.v,64,16,2)
 		map(0,0,0,0,16,16)
 	end
 
  return backdrop
 end
 
-function _init()
+
+function new_eye()
+	local eye = {y=0, by=0}
+
+	function eye:update()
+		eye.y = 1+wav(gt,1.98,98)
+		eye.by = -2+wav(gt+40,2.98,98)
+	end
+
+	function eye:draw()
+		spr(10,40,self.by,6,4)
+		spr(006,48,self.y,4,4)
+	end
+
+	return eye
+end
+
+
+function transparent(col)
 	palt(0,false)
-	palt(14,true)
+	palt(col,true)
+end
+
+function _init()
 	gt = 0
+	transparent(pink)
+
 	backdrop = new_backdrop()
+	eye = new_eye()
 end
 
 function _update()
 	gt += 1
 	backdrop:update()
-end
-
-function wav(val,amp,len)
-	return amp*sin(val/len)
+	eye:update()
 end
 
 function _draw()
 	backdrop:draw()
-	spr(10,40,-2+wav(gt+40,2.98,98),6,4)
-	spr(006,48,3+wav(gt,1.28,98),4,4)
+	eye:draw()
 end
 __gfx__
 000000002222222222222222eeeeeeee0eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee11dddddddddd116666666666666666666666661111dd11e
