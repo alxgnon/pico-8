@@ -42,9 +42,7 @@ function new_eye()
 		self.y = 1+wav(gt,1.98,98)
 		self.by = -2+wav(gt+40,2.98,98)
 
-		local d = atan2(
-				cross.x-self.x-16,
-				cross.y-self.y-20)
+		local d = atan2(cross.x-64,cross.y-20)
 		self.px = 2*cos(d)+0.5
 		self.py = 2*sin(d)+0.5
 	end
