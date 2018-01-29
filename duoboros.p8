@@ -2,7 +2,7 @@ pico-8 cartridge // http://www.pico-8.com
 version 15
 __lua__
 -- duoboros
--- work in progress
+-- twin serpents of chaos
 
 rose = 003
 vert = 009
@@ -137,7 +137,7 @@ end
 function flip_colors()
 	local temp = verte.frame
 	verte.frame = rosee.frame
-	rosee.frame = temp 
+	rosee.frame = temp
 end
 
 function perfect_x(cells)
