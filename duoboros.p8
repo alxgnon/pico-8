@@ -20,14 +20,16 @@ sound =
 }
 
 function bright(snake)
-	if (snake==rosee) return 14
-	if (snake==verte) return 11
+	if(not snake) return 1
+	if(snake.frame==rose)return 14
+	if(snake.frame==vert)return 11
 	return 1
 end
 
 function muted(snake)
-	if (snake==rosee) return 02
-	if (snake==verte) return 03
+	if(not snake) return 1
+	if(snake.frame==rose)return 02
+	if(snake.frame==vert)return 03
 	return 1
 end
 
@@ -132,6 +134,12 @@ function perfect()
 	perfect_y(cells)
 end
 
+function flip_colors()
+	local temp = verte.frame
+	verte.frame = rosee.frame
+	rosee.frame = temp 
+end
+
 function perfect_x(cells)
 	local x = verte.x
 	for c in all(cells) do
@@ -145,6 +153,7 @@ function perfect_x(cells)
 		sfx(sound.perfect)
 		slowness -= 0.5
 		rumble(4, 4)
+		flip_colors()
 	end
 end
 
@@ -161,6 +170,7 @@ function perfect_y(cells)
 		sfx(sound.perfect)
 		slowness -= 0.5
 		rumble(4, 4)
+		flip_colors()
 	end
 end
 
@@ -178,7 +188,7 @@ function draw_snake(a)
 end
 
 function draw_ruler(a)
-	local color = muted(a)
+	local color = muted(other(a))
 	local x,y=flr(a.x+1)*8,flr(a.y+1)*8
 	if a.dx == 0 then
 		rectfill(x+1,8,x+5,118,color)
