@@ -34,6 +34,7 @@ function new_eye()
 	local eye =
 	{ x = 48, y = 0, by = 0
 	, px = 0, py = 0
+	, health = 47
 	}
 
 	function eye:update()
@@ -63,6 +64,25 @@ function new_lemon(x,y,dx)
 	, dx = dx
 	,	frame = 088
 	}
+	
+	function lemon:allergy()
+		local function test(x,y)
+			if pget(x,y) == 10 then
+				if not self.dead then
+					self.dead = true
+					del(lemons, self)
+					eye.health -= 1
+				end
+			end
+		end
+	
+		local x,y = self.x,self.y
+		for i=x+1,x+5 do
+			test(i,y+3)
+		end
+		test(x+2,y+2)
+		test(x+2,y+4)
+	end
 	
 	function lemon:update()
 		self.x += self.dx
@@ -206,17 +226,32 @@ function _update()
 	end
 end
 
+function draw_health()
+	if eye.health > 0 then
+		rect(41,46,40+eye.health,46,8)
+	else
+		rect(41,46,87,46,4)
+	end
+end
+
 function _draw()
 	backdrop:draw()
+
 	eye:draw()
+	
+	for a in all(lemons) do
+		a:allergy()
+	end
+	
+	draw_health()
 
 	for a in all(lemons) do
 		a:draw()
 	end
-	
+
 	pl:allergy()
 	pl:draw()
-
+	
 	rect(0,0,127,127,1)
 end
 __gfx__
