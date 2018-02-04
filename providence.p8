@@ -64,7 +64,7 @@ function new_lemon(x,y,dx)
 	, dx = dx
 	,	frame = 088
 	}
-	
+
 	function lemon:allergy()
 		local function test(x,y)
 			if pget(x,y) == 10 then
@@ -75,26 +75,26 @@ function new_lemon(x,y,dx)
 				end
 			end
 		end
-	
+
 		local x,y = self.x,self.y
 		for i=x+1,x+6 do
 			test(i,y+3)
 		end
 	end
-	
+
 	function lemon:update()
 		self.x += self.dx
 		if self.x<-20 or self.x>140 then
 			del(lemons, self)
 		end
 	end
-	
+
 	function lemon:draw()
 		spr(self.frame,
 		self.x,self.y,
 		1, 1, self.dx > 0)
 	end
-	
+
 	return lemon
 end
 
@@ -106,7 +106,7 @@ function new_player()
 	, tail = {}
 	, bt = 0
 	}
-	
+
 	for i=1,4 do
 		pl.tail[i] =
 		{ x = pl.x, y = pl.y
@@ -124,17 +124,17 @@ function new_player()
 		if (btn"3") dy += self.speed
 		return dx,dy
 	end
-	
+
 	function pl:shoot(d)
 		if (self.dead) return
-		
+
 		local a =
 				new_lemon(
 				self.x,self.y,3*d)
 
 		add(lemons, a)
 	end
-	
+
 	function pl:allergy()
 		local function test(x,y)
 			if pget(x,y) == 10 then
@@ -142,10 +142,11 @@ function new_player()
 					sfx(1)
 					self.dead = true
 					self.deadt = 0
+					rumble(8, 10)
 				end
 			end
 		end
-	
+
 		local x,y = self.x,self.y
 		for j=y+1,y+5 do
 			test(x+3,j)
@@ -162,13 +163,13 @@ function new_player()
 			a.x,a.y = cx,cy
 			cx,cy = tx,ty
 		end
-	
+
 		local dx,dy = self:joydelta()
 		self.x += dx
 		self.y += dy
 		self.x = min(max(self.x,1),120)
 		self.y = min(max(self.y,1),120)
-	
+
 		if (self.bt < 0) return
 		if (btn"4") self:shoot(-1)
 		if (btn"5") self:shoot(1)
@@ -184,7 +185,7 @@ function new_player()
 			spr(077,self.x,self.y)
 			return
 		end
-		
+
 		for a in all(pl.tail) do
 			spr(a.frame,a.x,a.y)
 		end
@@ -208,6 +209,9 @@ function _init()
 	eye = new_eye()
 	pl = new_player()
 	lemons = {}
+
+	rumble_stop = nil
+	rumble_power = nil
 end
 
 function _update()
@@ -231,14 +235,15 @@ function draw_health()
 end
 
 function _draw()
+	draw_rumble()
 	backdrop:draw()
 
 	eye:draw()
-	
+
 	for a in all(lemons) do
 		a:allergy()
 	end
-	
+
 	draw_health()
 
 	for a in all(lemons) do
@@ -247,8 +252,28 @@ function _draw()
 
 	pl:allergy()
 	pl:draw()
-	
-	rect(0,0,127,127,1)
+
+	for i=0,32 do
+		rect(-i,-i,127+i,127+i,1)
+	end
+end
+
+-- rumble ---------------------
+
+function rumble(time, power)
+	rumble_stop = gt + time
+	rumble_power = power
+end
+
+function draw_rumble()
+	if gt < (rumble_stop or 0) then
+		camera(
+		rnd(rumble_power)-rumble_power/2,
+		rnd(rumble_power)-rumble_power/2)
+	elseif rumble_stop then
+		camera(0,0)
+		rumble_stop = nil
+	end
 end
 __gfx__
 000000001111111111111111ffffffff0ffffffffffffffffffffffffffffffffffffffffffffffff11dddddddddd116666666666666666666666661111dd11f
