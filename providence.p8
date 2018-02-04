@@ -253,7 +253,7 @@ function _draw()
 	pl:allergy()
 	pl:draw()
 
-	for i=0,32 do
+	for i=0,5 do
 		rect(-i,-i,127+i,127+i,1)
 	end
 end
