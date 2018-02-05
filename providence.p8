@@ -116,16 +116,16 @@ function new_lemon(x,y,dx)
 end
 
 
-function new_shield()
-	local shield =
+function new_barrier()
+	local barrier =
 	{ y = 40
 	, frame = 096 }
-	
-	function shield:draw()
+
+	function barrier:draw()
  	map(0,24,-16+(gt%8),self.y,32,1)
 	end
-	
-	return shield
+
+	return barrier
 end
 
 
@@ -229,10 +229,10 @@ function _init()
 	gt = 0
 	transparent(15)
 	backdrop = new_backdrop()
-	
-	shield = new_shield()
+
+	barrier = new_barrier()
 	eye = new_eye()
-	
+
 	pl = new_player()
 	lemons = {}
 
@@ -256,7 +256,7 @@ function _draw()
 	draw_rumble()
 	backdrop:draw()
 
-	shield:draw()
+	barrier:draw()
 	eye:draw()
 
 	for a in all(lemons) do
@@ -273,9 +273,9 @@ function _draw()
 	for i=0,5 do
 		rect(-i,-i,127+i,127+i,1)
 	end
-	
+
 	draw_health()
-	
+
 	if pl.dead then
 		circfill(pl.x+3,pl.y+3,
 		pl.deadt*5,0)
