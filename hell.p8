@@ -2,7 +2,7 @@ pico-8 cartridge // http://www.pico-8.com
 version 15
 __lua__
  -- hell
--- descend
+-- work in progress
 
 gfx =
 { jesus = 001
