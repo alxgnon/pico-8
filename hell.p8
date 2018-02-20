@@ -66,7 +66,7 @@ function move_jesus(a)
 		a.power += 1
 	end
 	
-	if (a.power < 0) a.power = 0
+	if (a.power < -16) a.power = -16
 
 	a.x = max(min(a.x,123),-2)
 	a.y = max(a.y,-1)
@@ -412,7 +412,11 @@ function _level(n)
 	function lvl:draw()
 		cls()
 		palette()
-		rectfill(1,1,self.jc.power,9,10)
+		
+		if self.jc.power > 0 then	
+			rectfill(1,1,self.jc.power,9,10)
+		end
+		
 		rect(0,0,127,180,2)
 		print(romanize(lvl.n+1),3,3,0)
 		self.jc:draw()
