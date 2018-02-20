@@ -52,6 +52,7 @@ function jesus(x, y)
 	{ f = gfx.jesus
 	, x = x, y = y
 	, speed = 2
+	, power = 100
 	, aura = aura(x, y)
 	, move = move_jesus
 	, draw = draw_jesus
@@ -61,6 +62,12 @@ function jesus(x, y)
 end
 
 function move_jesus(a)
+	if a.power <= 126 then
+		a.power += 1
+	end
+	
+	if (a.power < 0) a.power = 0
+
 	a.x = max(min(a.x,123),-2)
 	a.y = max(a.y,-1)
 
@@ -144,9 +151,21 @@ function _blade(x,y)
 				if b.hp <= 0 then
 					sfx(4)
 					del(gamestate.totems,b)
+					if b.f == gfx.heart then
+						local x, y = a.x, a.y
+						add(gamestate.balls,_ball(x-4,y+2))
+						add(gamestate.balls,_ball(x,y))
+						add(gamestate.balls,_ball(x+4,y))
+						add(gamestate.balls,_ball(x+8,y+2))
+					
+						for d=-1,1,0.02 do
+							add(gamestate.rings,{x=x,y=y,ng=d})
+						end
+					end
 					rumble(8, 3)
 					return
 				end
+				
 				if not b.awake then
 					rumble(8, 3)
 					for b in all(gamestate.totems) do
@@ -177,7 +196,7 @@ function heart(x, y)
 	{ f = gfx.heart
 	, x = x
 	, y = y
-	, hp = 26
+	, hp = 6
 	, oy = y
 	, t = 0
 	, move = move_heart
@@ -315,7 +334,7 @@ function _level(n)
 	, y = n % 4 * 16
 	, fadein = 144 }
 
-	lvl.jc = jesus(60,12)
+	lvl.jc = jesus(60,16)
 	lvl.blades = {}
 	lvl.balls = {}
 
@@ -393,8 +412,9 @@ function _level(n)
 	function lvl:draw()
 		cls()
 		palette()
+		rectfill(1,1,self.jc.power,9,10)
 		rect(0,0,127,180,2)
-		print(romanize(lvl.n+1),3,3,10)
+		print(romanize(lvl.n+1),3,3,0)
 		self.jc:draw()
 		map(self.x,self.y,0,0,16,16,1)
 		for i=#self.blades,1,-1 do
@@ -457,6 +477,9 @@ function pad.control(a)
 
 	local speed = 1
 	if a.four then
+		if a.power < 1 then
+			return
+		end
 		speed *= 2
 	end
 
@@ -465,6 +488,7 @@ function pad.control(a)
 	a.y += dy * speed
 
 	if a.four then
+		a.power -= 7
 		if dx != 0 or dy != 0 then
 			a.four -= 1
 		end
@@ -477,18 +501,22 @@ function pad.control(a)
 	if not btn"5" then
 		a.five = false
 	elseif not a.five and btn"5" then
+		if (a.power < 1) return
 		a.five = true
 		add(gamestate.blades,
 		_blade(a.x,a.y))
 		sfx(2)
 		a.st = 0
+		a.power -= 16
 	else
+		if (a.power < 1) return
 		if a.st % 6 == 0 then
 			add(gamestate.blades,
 			_blade(a.x,a.y))
 		sfx(5)
 		end
 		a.st += 1
+		a.power -= 2
 	end
 end
 
