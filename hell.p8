@@ -79,12 +79,17 @@ function move_jesus(a)
 end
 
 function draw_jesus(a)
+	if a.powerup then
+		a.powerup = false
+		pal(7, 10)
+	end
 	a.aura:draw()
 	if a.four then
 		spr(018,a.x,a.y)
 	else
-	spr(a.f,a.x,a.y)
+		spr(a.f,a.x,a.y)
 	end
+	palette()
 end
 
 
@@ -151,6 +156,10 @@ function _blade(x,y)
 				if b.hp <= 0 then
 					sfx(4)
 					del(gamestate.totems,b)
+					
+					add(gamestate.beams,beam(a.x))
+					gamestate.jc.power += 66
+					
 					if b.f == gfx.heart then
 						local x, y = a.x, a.y
 						add(gamestate.balls,_ball(x-4,y+2))
@@ -346,6 +355,9 @@ function _level(n)
 
 	lvl.totems = {}
 	lvl.rings = {}
+	
+	lvl.fairies = {}
+	lvl.beams = {}
 
 	for i=0,15 do
 		for j=0,15 do
@@ -408,6 +420,15 @@ function _level(n)
 			a.x += cos(a.ng)
 			a.y += sin(a.ng)
 		end
+		
+		generate_fairies()
+		for a in all(lvl.fairies) do
+			a:move()
+		end
+		
+		for a in all(lvl.beams) do
+			a:move()
+		end
 
 		self.jc:move()
 		if self.chain then
@@ -423,9 +444,18 @@ function _level(n)
 		if self.jc.power > 0 then	
 			rectfill(0,0,self.jc.power,10,10)
 		end
+
+		for a in all(lvl.beams) do
+			a:draw()
+		end
+
 		print(romanize(lvl.n+1),3,3,0)
 		self.jc:draw()
 		map(self.x,self.y,0,0,16,16,1)
+		for a in all(lvl.fairies) do
+			a:draw()
+		end
+		
 		for i=#self.blades,1,-1 do
 			self.blades[i]:draw()
 		end
@@ -480,7 +510,6 @@ function pad.control(a)
 
 	if not a.four and btn"4" then
 		a.four = 6
-		gamestate.blades = {}
 	end
 
 	local speed = 1
@@ -577,6 +606,58 @@ end
 function _draw()
 	draw_rumble()
 	gamestate:draw()
+end
+-->8
+function generate_fairies()
+	if flr(rnd(8)) == 0 then
+		add(gamestate.fairies,fairy())
+	end
+end
+
+function fairy()
+	return
+	{ x = 1+flr(rnd(126))
+	, y = 0
+	, move = move_fairy
+	, draw = draw_fairy
+	}
+end
+
+function move_fairy(a)
+	a.y += 0.25
+	local jc = gamestate.jc
+	if a.x >= jc.x and
+			a.x < jc.x+7 and
+			a.y >= jc.y and
+			a.y < jc.y+7 then
+		jc.power += 4
+		jc.powerup = true
+		del(gamestate.fairies, a)
+	end
+end
+
+function draw_fairy(a)
+	pset(a.x,a.y,10)
+end
+
+function beam(x)
+	return
+	{ x = x + 6
+	, hw = 7
+	, move = move_beam
+	, draw = draw_beam
+	}
+end
+
+function move_beam(a)
+	a.hw -= 1
+	if a.hw <= 0 then
+		del(gamestate.beams, a)
+	end
+end
+
+function draw_beam(a)
+	rectfill(a.x-a.hw,0,a.x+a.hw,127,10)
 end
 __gfx__
 00000000cc777ccccc777ccccccccccccccccccccccccccccc000cccccc000ccc000cccccc000cccccc000ccc000cccccc222ccccc222ccc0000000000000000
