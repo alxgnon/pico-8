@@ -65,7 +65,7 @@ function move_jesus(a)
 	if a.power <= 126 then
 		a.power += 1
 	end
-	
+
 	if (a.power < -16) a.power = -16
 
 	a.x = max(min(a.x,123),-2)
@@ -156,10 +156,10 @@ function _blade(x,y)
 				if b.hp <= 0 then
 					sfx(4)
 					del(gamestate.totems,b)
-					
+
 					add(gamestate.beams,beam(a.x))
 					gamestate.jc.power += 66
-					
+
 					if b.f == gfx.heart then
 						local x, y = a.x, a.y
 						add(gamestate.balls,_ball(x-4,y+2))
@@ -180,7 +180,7 @@ function _blade(x,y)
 					rumble(8, 3)
 					return
 				end
-				
+
 				if not b.awake then
 					rumble(8, 3)
 					for b in all(gamestate.totems) do
@@ -355,8 +355,7 @@ function _level(n)
 
 	lvl.totems = {}
 	lvl.rings = {}
-	
-	lvl.fairies = {}
+
 	lvl.beams = {}
 
 	for i=0,15 do
@@ -420,12 +419,7 @@ function _level(n)
 			a.x += cos(a.ng)
 			a.y += sin(a.ng)
 		end
-		
-		generate_fairies()
-		for a in all(lvl.fairies) do
-			a:move()
-		end
-		
+
 		for a in all(lvl.beams) do
 			a:move()
 		end
@@ -439,9 +433,9 @@ function _level(n)
 	function lvl:draw()
 		cls()
 		palette()
-		
+
 		rect(0,0,127,180,2)
-		if self.jc.power > 0 then	
+		if self.jc.power > 0 then
 			rectfill(0,0,self.jc.power,10,10)
 		end
 
@@ -452,10 +446,7 @@ function _level(n)
 		print(romanize(lvl.n+1),3,3,0)
 		self.jc:draw()
 		map(self.x,self.y,0,0,16,16,1)
-		for a in all(lvl.fairies) do
-			a:draw()
-		end
-		
+
 		for i=#self.blades,1,-1 do
 			self.blades[i]:draw()
 		end
@@ -608,38 +599,6 @@ function _draw()
 	gamestate:draw()
 end
 -->8
-function generate_fairies()
-	if flr(rnd(8)) == 0 then
-		add(gamestate.fairies,fairy())
-	end
-end
-
-function fairy()
-	return
-	{ x = 1+flr(rnd(126))
-	, y = 0
-	, move = move_fairy
-	, draw = draw_fairy
-	}
-end
-
-function move_fairy(a)
-	a.y += 0.25
-	local jc = gamestate.jc
-	if a.x >= jc.x and
-			a.x < jc.x+7 and
-			a.y >= jc.y and
-			a.y < jc.y+7 then
-		jc.power += 4
-		jc.powerup = true
-		del(gamestate.fairies, a)
-	end
-end
-
-function draw_fairy(a)
-	pset(a.x,a.y,10)
-end
-
 function beam(x)
 	return
 	{ x = x + 6
