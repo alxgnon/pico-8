@@ -15,6 +15,8 @@ function pallergy(a, x,y)
 	if pget(x,y) == 8 then
 		if not a.dead then
 			a.dead = true
+			sfx(7)
+			rumble(8, 8)
 			gamestate.fadeout = 288
 		end
 	end
@@ -56,7 +58,9 @@ function move_jesus(a)
 	a.x = max(min(a.x,123),-2)
 	a.y = max(a.y,-1)
 
+	if a.power >= 50 then
 	a.aura:move(a.x,a.y)
+	end
 
 	if a.y > 127 then
 		descend()
@@ -65,15 +69,14 @@ end
 
 function draw_jesus(a)
 	if a.power < 50 then
-		pal(10, 6)
-	end
-	a.aura:draw()
-	if a.four then
+		pal(7,5)
+		a.aura:draw()
+		palette()
 		spr(017,a.x,a.y)
 	else
+		a.aura:draw()
 		spr(a.f,a.x,a.y)
 	end
-	palette()
 end
 
 
@@ -134,6 +137,7 @@ function _blade(x,y)
 					a.x >= b.x-3 and
 					a.x < b.x + 12 then
 				del(gamestate.blades, a)
+				spawn_dust(a.x+3.5, a.y+rnd(8))
 				b.hp -= 1
 				sfx(3)
 				shake(b, 8, 3)
@@ -177,6 +181,8 @@ function _blade(x,y)
 		if a.y > 112 and
 				not gamestate.chain.dt then
 			del(gamestate.blades, a)
+			spawn_dust(a.x+3.5, a.y+rnd(8))
+			sfx(1)
 		end
 	end
 
@@ -212,7 +218,7 @@ function draw_heart(a)
 	if gt < (a.shake_stop or 0) then
 		ox=rnd(a.shake_power)-a.shake_power/2
 		oy=rnd(a.shake_power)-a.shake_power/2
-		pal(2, 8)
+		pal(2, 10)
 	end
 
 	spr(a.f,a.x+ox,a.y+oy,2,2)
@@ -264,7 +270,8 @@ function _totem(x,y)
  	if gt < (a.shake_stop or 0) then
  		ox=rnd(a.shake_power)-a.shake_power/2
  		oy=rnd(a.shake_power)-a.shake_power/2
- 		pal(2, 8)
+ 		pal(2, 10)
+ 		pal(8, 9)
  	end
 
 		if a.awake then
@@ -287,6 +294,14 @@ function _chain()
 
 		if #gamestate.totems < 1 then
 			a.dt = (a.dt or 0) + 4
+		end
+
+		if a.dt and a.dt >0 then
+		for i = 0, 10 do
+			local a =
+			bullet(rnd(128), 128, 0.45+rnd(0.10), 1)
+			add(gamestate.dust, a)
+		end
 		end
 	end
 
@@ -321,6 +336,8 @@ function _level(n)
 	lvl.rings = {}
 
 	lvl.beams = {}
+
+	lvl.dust = {}
 
 	for i=0,15 do
 		for j=0,15 do
@@ -389,38 +406,53 @@ function _level(n)
 		if self.chain then
 			self.chain:move()
 		end
+
+		move_dust()
 	end
 
 	function lvl:draw()
+		if not self.jc.dead then
 		cls()
 		palette()
 
-		rect(0,0,127,180,2)
+		rect(0,0,127,180,1)
 
 		for a in all(lvl.beams) do
 			a:draw()
 		end
 
-		self.jc:draw()
-		map(self.x,self.y,0,0,16,16,1)
+		draw_dust()
 
 		for i=#self.blades,1,-1 do
 			self.blades[i]:draw()
 		end
 
-		for a in all(lvl.totems) do
-			a:draw()
-		end
-
-		for a in all(lvl.rings) do
-			local off = (a.t/ 3) % 4
-			spr(gfx.ring + off,a.x,a.y)
-		end
+		self.jc:draw()
 
 		if self.chain then
 			self.chain:draw()
 		end
+
+		if self.jc.four then
+			pal(8, 9)
+		end
+		for a in all(lvl.rings) do
+			local off = (a.t/ 3) % 4
+			spr(gfx.ring + off,a.x,a.y)
+		end
+		palette()
+
+
+		for a in all(lvl.totems) do
+			a:draw()
+		end
+
 		allergy(self.jc)
+		else -- dead
+			for i = 0, 800 do
+			pset(rnd(128),rnd(128), 0)
+			end
+		end
 
 		if self.fadein > 0 then
 			rectfill(0,0,127,self.fadein,0)
@@ -471,6 +503,7 @@ function pad.control(a)
 
 	if a.four then
 		a.power -= 7
+		sfx(6)
 		if dx != 0 or dy != 0 then
 			a.four -= 1
 		end
@@ -504,14 +537,6 @@ function palette()
 	pal()
 	palt(0, false)
 	palt(12, true)
-	if gamestate then
-		if gamestate.jc.dead then
-			pal(7, 8)
-		elseif gamestate.jc.four then
-			pal(8, 6)
-			pal(2, 5)
-		end
-	end
 end
 
 -- rumble ---------------------
@@ -568,14 +593,61 @@ end
 function draw_beam(a)
 	rectfill(a.x-a.hw,0,a.x+a.hw,127,10)
 end
+
+
+function bullet(x, y, ang, spd)
+	return
+	{ x=x,y=y
+	, dx = sin(ang) * spd
+	, dy = cos(ang) * spd
+	, t = 35
+	}
+end
+
+function spawn_dust(x,y)
+	for i = 0, 10 do
+		local a =
+		bullet(x, y, 0.45+rnd(0.10), 1)
+		add(gamestate.dust, a)
+	end
+end
+
+function move_dust()
+	for a in all(gamestate.dust) do
+		a.t -= rnd(2)
+		if a.t <= 0 then
+			del(gamestate.dust, a)
+		else
+ 		a.x += a.dx
+ 		a.y += a.dy
+
+ 		if a.x < 0 or a.x > 128 or
+ 				a.y < 0 or a.y > 128 then
+ 			del(gamestate.dust,  a)
+ 		end
+ 	end
+	end
+end
+
+function draw_dust()
+	for a in all(gamestate.dust) do
+		if a.t > 18 then
+			pset(a.x, a.y, 10)
+		elseif a.t > 5 then
+			pset(a.x, a.y, 9)
+		else
+			pset(a.x, a.y, 5)
+		end
+	end
+end
 __gfx__
-00000000ccaaacccccaaaccccccccccccccccccccccccccccc000cccccc000ccc000cccc00000000ccc000ccc000cccccc222ccccc222ccc0000000000000000
-00000000caa0aacccaaaaaccccaaaccccccccccccccccccccc0a0ccccc02200000220ccc00000000cc02200000220cccc22222ccc22222cc0000000000000000
-00700700aa000aacaaaaaaaccaaaaaccccaaaccccccccccc000a000cc0220020200220cc00000000c0220020200220ccc220222c222222cc0000000000000000
-00077000aaa0aaacaaaaaaaccaaaaaccccaaaccccccacccc0aaaaa0c002202202202200c00000000002202202202200c222022202222222c0000000000000000
-00077000aaa0aaacaaaaaaaccaaaaaccccaaaccccccccccc000a000c022202202202220c00000000022202202202220c220002000220222c0000000000000000
-00700700caa0aacccaaaaaccccaaaccccccccccccccccccccc0a0ccc022222222222220c00000000022222222222220c222200020002222c0000000000000000
-00000000ccaaacccccaaaccccccccccccccccccccccccccccc0a0ccc022222222222220c00000000022220000022220c222200222022222c0000000000000000
+00000000cc777ccccc777ccccccccccccccccccccccccccccc000cccccc000ccc000cccc00000000ccc000ccc000cccccc222ccccc222ccc0000000000000000
+00000000c77077ccc77777cccc777ccccccccccccccccccccc0a0ccccc02200000220ccc00000000cc02200000220cccc22222ccc22222cc0000000000000000
+007007007700077c7777777cc77777cccc777ccccccccccc000a000cc0220020200220cc00000000c0220020200220ccc220222c222222cc0000000000000000
+000770007770777c7777777cc77777cccc777cccccc7cccc0aaaaa0c002202202202200c00000000002202202202200c222022202222222c0000000000000000
+000770007770777c7777777cc77777cccc777ccccccccccc000a000c022202202202220c00000000022202202202220c220002000220222c0000000000000000
+00700700c77077ccc77777cccc777ccccccccccccccccccccc0a0ccc022222222222220c00000000022222222222220c222200020002222c0000000000000000
+00000000cc777ccccc777ccccccccccccccccccccccccccccc0a0ccc022222222222220c00000000022220000022220c222200222022222c0000000000000000
 00000000cccccccccccccccccccccccccccccccccccccccccc0a0cccc0222222222220cc00000000c0220088800220cc222220022222222c0000000000000000
 00000000cc000ccccccccccccccccccccccccccccccccccccc0a0cccc0200000000020cc00000000c0200080800020cc222200002222222c0000000000000000
 08888880c00700ccccc80ccccc80ccccc80cc8ccc0cc80cccc0a0cccc0222222222220cc00000000c0220088800220ccc2200220022222cc0000000000000000
@@ -756,8 +828,8 @@ __sfx__
 01030000186301113011143011001d6001e6000710008100091001610000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00020000306602e6602a65021650276502565023640216301e6301c6301a630176201562014610146101b6001d6001c6001c6001b6001b600196001860017600166001460013600126001160011600106000e600
 0000000021040200301f0301d0201c0001c000140001f0001e0000a00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000000002e02003000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+003e0000150733b600256001b60012600036000160000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
