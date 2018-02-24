@@ -37,7 +37,7 @@ function jesus(x, y)
 	{ f = gfx.jesus
 	, x = x, y = y
 	, speed = 2
-	, power = 128
+	, power = 50
 	, aura = aura(x, y)
 	, move = move_jesus
 	, draw = draw_jesus
@@ -47,7 +47,7 @@ function jesus(x, y)
 end
 
 function move_jesus(a)
-	if a.power <= 126 then
+	if a.power <= 50 then
 		a.power += 1
 	end
 
@@ -64,8 +64,8 @@ function move_jesus(a)
 end
 
 function draw_jesus(a)
-	if a.power < 21 then
-		pal(10, 9)
+	if a.power < 50 then
+		pal(10, 6)
 	end
 	a.aura:draw()
 	if a.four then
@@ -149,7 +149,6 @@ function _blade(x,y)
 					del(gamestate.totems,b)
 
 					add(gamestate.beams,beam(a.x))
-					gamestate.jc.power += 66
 
 					if b.f == gfx.heart then
 						for d=-1,1,0.015 do
@@ -454,7 +453,7 @@ function pad.control(a)
 	if (a.dead) return
 	if (a.four and a.four < 1) return
 
-	if not a.four and btn"4" then
+	if not a.four and btn"4" and a.power >= 50 then
 		a.four = 6
 	end
 
@@ -490,12 +489,12 @@ function pad.control(a)
 		sfx(2)
 		a.st = 0
 	else
-		if a.st % 6 == 3 then
+		if a.st % 5 == 3 then
 			add(gamestate.blades,
 			_blade(a.x,a.y))
-		sfx(5)
- 		a.st += 1
+			sfx(5)
 		end
+		a.st += 1
 	end
 end
 
