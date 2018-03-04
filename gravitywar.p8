@@ -15,6 +15,7 @@ planets = {}
 shots = {}
 
 local power_limit = 2.0
+expl_radius = 15
 
 function player(x, y, col)
 	local d = atan2(64-x,64-y,x,y)
@@ -47,6 +48,7 @@ function shot(x, y, d, v, col)
 		dx = cos(d) * v,
 		dy = sin(d) * v,
 		col = col,
+		expl = 0,
 	}
 end
 
@@ -66,44 +68,55 @@ end
 
 function sqr(x) return x * x end
 
-function simulate_shots()
-	for a in all(shots) do
-		a.ox = a.x
-		a.oy = a.y
-		a.x += a.dx
-		a.y += a.dy
+function simulate_shot(a)
+	a.ox = a.x
+	a.oy = a.y
+	a.x += a.dx
+	a.y += a.dy
 
-		for b in all(players) do
-			if collides(a, b) then
-				del(shots, a)
-				del(players, b)
-			end
+	for b in all(players) do
+		if collides(a, b) then
+			a.expl = 0.01
+			a.x = b.x
+			a.y = b.y
+			a.dx = 0
+			a.dy = 0
+			del(players, b)
 		end
+	end
 
-		for b in all(planets) do
-			local d = atan2(b.x-a.x,b.y-a.y,a.x,a.y)
-			local grav = b.mass / abs(sqr(b.x-a.x)+sqr(b.y-a.y))
-			a.dx += grav * cos(d)
-			a.dy += grav * sin(d)
+	if a.expl > 0 then
+		a.expl += 0.01
+		if (a.expl > 0.5) del(shots, a)
+		return
+	end
 
-			if collides(a, b) then
-				del(shots, a)
-			end
-		end
+	for b in all(planets) do
+		local d = atan2(b.x-a.x,b.y-a.y,a.x,a.y)
+		local grav = b.mass / abs(sqr(b.x-a.x)+sqr(b.y-a.y))
+		a.dx += grav * cos(d)
+		a.dy += grav * sin(d)
 
-		if a.x < 0 or a.x > 128 or a.y < 0 or a.y > 128 then
+		if collides(a, b) then
 			del(shots, a)
 		end
 	end
 
-	if #shots == 0 then
-		playing += 1
+	if a.x < 0 or a.x > 128 or a.y < 0 or a.y > 128 then
+		del(shots, a)
 	end
 end
 
 function _update()
 	if playing == 0 then
-		simulate_shots()
+		for a in all(shots) do
+			simulate_shot(a)
+		end
+
+		if #shots == 0 then
+			playing += 1
+		end
+
 		return
 	end
 
@@ -178,7 +191,12 @@ function _draw()
 	maybe_clear()
 
 	for a in all(shots) do
-		line(a.ox, a.oy, a.x, a.y, a.col + 1)
+		if (a.expl == 0) then
+			line(a.ox, a.oy, a.x, a.y, a.col + 1)
+		else
+			if (a.expl > 0.25) circfill(a.x, a.y, expl_radius, 0)
+			circfill(a.x, a.y, expl_radius * -sin(a.expl), a.col + 1)
+		end
 	end
 
 	draw_planets()
