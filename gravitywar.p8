@@ -1,6 +1,15 @@
 pico-8 cartridge // http://www.pico-8.com
 version 15
 __lua__
+rylander_dither = {
+	0x0000, 0x8000, 0x8020, 0xA020,
+	0xA0A0, 0xA8A0, 0xA8A2, 0xAAA2,
+	0xAAAA, 0xEAAA, 0xEABA, 0xFABA,
+	0xFAFA, 0xFEFA, 0xFEFB, 0xFFFB,
+}
+
+planet_colors = {15, 14, 4, 2, 5}
+
 players = {}
 planets = {}
 shots = {}
@@ -20,12 +29,14 @@ function player(x, y, col)
 	}
 end
 
-function planet(x, y, r)
+function planet(x, y, r, mass)
 	return {
 		x = x,
 		y = y,
 		r = r,
-		mass = 150,
+		mass = mass,
+		dither_idx = flr((mass/4)%16 + 1),
+		color_idx = flr((mass/4)/16),
 	}
 end
 
@@ -43,7 +54,7 @@ end
 
 function _init()
 	cls()
-	add(planets, planet(64, 64, 20))
+	add(planets, planet(64, 64, 20, 150))
 	add(players, player(15, 15, 8))
 	add(players, player(113, 113, 12))
 	playing = 0
@@ -151,8 +162,12 @@ function _draw()
 	end
 
 	for a in all(planets) do
-		circfill(a.x, a.y, a.r, 15)
+		local color = planet_colors[a.color_idx]
+		color += planet_colors[a.color_idx + 1] * 16
+		fillp(rylander_dither[a.dither_idx])
+		circfill(a.x, a.y, a.r, color)
 		print(a.mass, a.x - 5, a.y - 2, 0)
+		fillp(0)
 	end
 
 	draw_players()
