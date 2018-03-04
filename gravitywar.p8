@@ -6,11 +6,12 @@ planets = {}
 shots = {}
 
 function player(x, y, col)
+	local d = atan2(64-x,64-y,x,y)
 	return {
 		x = x,
 		y = y,
-		d = 0,
-		od = 0,
+		d = d,
+		od = d,
 		r = 2,
 		col = col,
 	}
@@ -39,7 +40,7 @@ end
 
 function _init()
 	cls()
-	--add(planets, planet(64, 64, 20))
+	add(planets, planet(64, 64, 20))
 	add(players, player(15, 15, 8))
 	add(players, player(113, 113, 12))
 	playing = 0
@@ -85,6 +86,7 @@ function _update()
 	end
 
 	local a = players[playing]
+	if (not a) return
 	a.od = a.d
 	if (btn"0") a.d += 0.005
 	if (btn"1") a.d -= 0.005
@@ -106,8 +108,8 @@ end
 
 function draw_players()
 	for i, a in pairs(players) do
-		line(a.x, a.y, a.x + cos(a.od) * 6, a.y + sin(a.od) * 6, 0)
-		line(a.x, a.y, a.x + cos(a.d) * 6, a.y + sin(a.d) * 6, a.col)
+		line(a.x, a.y, a.x + cos(a.od) * 7, a.y + sin(a.od) * 7, 0)
+		line(a.x, a.y, a.x + cos(a.d) * 7, a.y + sin(a.d) * 7, a.col)
 		circfill(a.x, a.y, a.r, a.col)
 
 		if i == playing then
