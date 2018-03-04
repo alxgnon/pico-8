@@ -23,11 +23,15 @@ function planet(x, y, r)
 	}
 end
 
-function shot(x, y, d)
+function shot(x, y, d, v, col)
 	return {
 		x = x,
 		y = y,
-		d = d,
+		ox = x,
+		oy = y,
+		dx = cos(d) * v,
+		dy = sin(d) * v,
+		col = col,
 	}
 end
 
@@ -41,8 +45,10 @@ end
 function _update()
 	if playing == 0 then
 		for a in all(shots) do
-			a.x += cos(a.d) * 2
-			a.y += sin(a.d) * 2
+			a.ox = a.x
+			a.oy = a.y
+			a.x += a.dx
+			a.y += a.dy
 		end
 		return
 	end
@@ -60,22 +66,13 @@ function _update()
 
 	if playing > #players then
 		for a in all(players) do
-			add(shots, shot(a.x, a.y, a.d))
+			add(shots, shot(a.x, a.y, a.d, 2, a.col))
 		end
 		playing = 0
 	end
 end
 
-function _draw()
-	cls()
-	for a in all(planets) do
-		circfill(a.x, a.y, a.r, 7)
-	end
-
-	for a in all(shots) do
-		circfill(a.x, a.y, 1, 10)
-	end
-
+function draw_players()
 	for i, a in pairs(players) do
 		circfill(a.x, a.y, 2, a.col)
 		line(a.x, a.y, a.x + cos(a.d) * 6, a.y + sin(a.d) * 6, a.col)
@@ -84,4 +81,20 @@ function _draw()
 			circfill(a.x, a.y, 1, 0)
 		end
 	end
+end
+
+function _draw()
+	if playing == 0 then
+		for a in all(shots) do
+			line(a.ox, a.oy, a.x, a.y, a.col + 1)
+		end
+	else
+		cls()
+	end
+
+	for a in all(planets) do
+		circfill(a.x, a.y, a.r, 15)
+	end
+
+	draw_players()
 end
