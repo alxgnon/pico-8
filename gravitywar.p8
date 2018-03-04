@@ -35,8 +35,6 @@ function planet(x, y, r, mass)
 		y = y,
 		r = r,
 		mass = mass,
-		dither_idx = flr((mass/4)%16 + 1),
-		color_idx = flr((mass/4)/16),
 	}
 end
 
@@ -68,41 +66,44 @@ end
 
 function sqr(x) return x * x end
 
-function _update()
-	if playing == 0 then
-		for a in all(shots) do
-			a.ox = a.x
-			a.oy = a.y
-			a.x += a.dx
-			a.y += a.dy
+function simulate_shots()
+	for a in all(shots) do
+		a.ox = a.x
+		a.oy = a.y
+		a.x += a.dx
+		a.y += a.dy
 
-			for b in all(players) do
-				if collides(a, b) then
-					del(shots, a)
-					del(players, b)
-				end
+		for b in all(players) do
+			if collides(a, b) then
+				del(shots, a)
+				del(players, b)
 			end
+		end
 
-			for b in all(planets) do
-				local d = atan2(b.x-a.x,b.y-a.y,a.x,a.y)
-				local grav = b.mass / abs(sqr(b.x-a.x)+sqr(b.y-a.y))
-				a.dx += grav * cos(d)
-				a.dy += grav * sin(d)
+		for b in all(planets) do
+			local d = atan2(b.x-a.x,b.y-a.y,a.x,a.y)
+			local grav = b.mass / abs(sqr(b.x-a.x)+sqr(b.y-a.y))
+			a.dx += grav * cos(d)
+			a.dy += grav * sin(d)
 
-				if collides(a, b) then
-					del(shots, a)
-				end
-			end
-
-			if a.x < 0 or a.x > 128 or a.y < 0 or a.y > 128 then
+			if collides(a, b) then
 				del(shots, a)
 			end
 		end
 
-		if #shots == 0 then
-			playing += 1
+		if a.x < 0 or a.x > 128 or a.y < 0 or a.y > 128 then
+			del(shots, a)
 		end
+	end
 
+	if #shots == 0 then
+		playing += 1
+	end
+end
+
+function _update()
+	if playing == 0 then
+		simulate_shots()
 		return
 	end
 
@@ -113,6 +114,9 @@ function _update()
 	if (btn"1") a.d -= 0.005
 	if (btn"2") a.power += 0.03
 	if (btn"3") a.power -= 0.03
+
+	if(btnp(2, 1)) planets[1].mass += 4
+	if(btnp(3, 1)) planets[1].mass -= 4
 
 	a.power = max(min(a.power, 2), 0)
 
@@ -143,6 +147,22 @@ function draw_players()
 	end
 end
 
+function draw_planets()
+	for a in all(planets) do
+		local dither_idx = flr((a.mass/4)%16 + 1)
+		local color_idx = flr((a.mass/4)/16 + 1)
+		local color1 = planet_colors[min(color_idx, #planet_colors)]
+		local color2 = planet_colors[min(color_idx + 1, #planet_colors)]
+		local dither = rylander_dither[dither_idx]
+
+		local color = color1 + (color2 * 0x10)
+		fillp(dither)
+		circfill(a.x, a.y, a.r, color)
+		print(a.mass, a.x - 5, a.y - 2, 0)
+		fillp(0)
+	end
+end
+
 function maybe_clear()
 	if playing == 0 then
 		if not cleared then
@@ -161,14 +181,7 @@ function _draw()
 		line(a.ox, a.oy, a.x, a.y, a.col + 1)
 	end
 
-	for a in all(planets) do
-		local color = planet_colors[a.color_idx]
-		color += planet_colors[a.color_idx + 1] * 16
-		fillp(rylander_dither[a.dither_idx])
-		circfill(a.x, a.y, a.r, color)
-		print(a.mass, a.x - 5, a.y - 2, 0)
-		fillp(0)
-	end
+	draw_planets()
 
 	draw_players()
 
