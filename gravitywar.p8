@@ -2,7 +2,7 @@ pico-8 cartridge // http://www.pico-8.com
 version 15
 __lua__
 -- gravity war
--- work in progress
+-- by ace + 15
 
 function _init()
 	cls()
