@@ -227,8 +227,8 @@ end
 function move_shots()
 	for a in all(shots) do
 		if a.expl > 0 then
-			a.expl += 0.01
-			if (a.expl>0.5) del(shots,a)
+			a.expl += 0.02
+			if (a.expl>1) del(shots,a)
 			return
 		end
 
@@ -306,7 +306,7 @@ function draw_shots()
 			end
 			circfill(
 				x,y,
-				expl_radius*-sin(a.expl),
+				expl_radius*-sin(a.expl/2),
 				a.col+1)
 		end
 	end
