@@ -5,6 +5,8 @@ players = {}
 planets = {}
 shots = {}
 
+local power_limit = 2.0
+
 function player(x, y, col)
 	local d = atan2(64-x,64-y,x,y)
 	return {
@@ -13,6 +15,7 @@ function player(x, y, col)
 		d = d,
 		od = d,
 		r = 2,
+		power = 1.0,
 		col = col,
 	}
 end
@@ -22,7 +25,7 @@ function planet(x, y, r)
 		x = x,
 		y = y,
 		r = r,
-		mass = 1,
+		mass = 150,
 	}
 end
 
@@ -49,8 +52,10 @@ end
 function collides(shot, other)
 	local sx, sy = shot.x, shot.y
 	local ox, oy, r = other.x, other.y, other.r
-	return sqrt((ox-sx)*(ox-sx)+(oy-sy)*(oy-sy)) < r
+	return sqrt(sqr(ox-sx)+sqr(oy-sy)) < r
 end
+
+function sqr(x) return x * x end
 
 function _update()
 	if playing == 0 then
@@ -68,6 +73,11 @@ function _update()
 			end
 
 			for b in all(planets) do
+				local d = atan2(b.x-a.x,b.y-a.y,a.x,a.y)
+				local grav = b.mass / abs(sqr(b.x-a.x)+sqr(b.y-a.y))
+				a.dx += grav * cos(d)
+				a.dy += grav * sin(d)
+
 				if collides(a, b) then
 					del(shots, a)
 				end
@@ -90,6 +100,10 @@ function _update()
 	a.od = a.d
 	if (btn"0") a.d += 0.005
 	if (btn"1") a.d -= 0.005
+	if (btn"2") a.power += 0.03
+	if (btn"3") a.power -= 0.03
+
+	a.power = max(min(a.power, 2), 0)
 
 	if not btn"4" then
 		hold4 = false
@@ -100,7 +114,7 @@ function _update()
 
 	if playing > #players then
 		for a in all(players) do
-			add(shots, shot(a.x, a.y, a.d, 2, a.col))
+			add(shots, shot(a.x + cos(a.d) * 4, a.y + sin(a.d) * 4, a.d, 2 * a.power, a.col))
 		end
 		playing = 0
 	end
@@ -138,7 +152,14 @@ function _draw()
 
 	for a in all(planets) do
 		circfill(a.x, a.y, a.r, 15)
+		print(a.mass, a.x - 5, a.y - 2, 0)
 	end
 
 	draw_players()
+
+	local a = players[playing]
+	if a then
+		rectfill(0, 0, 128, 3, 10)
+		rectfill(a.power * (128/power_limit), 0, 128, 3, 0)
+	end
 end
