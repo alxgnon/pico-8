@@ -10,6 +10,8 @@ function player(x, y, col)
 		x = x,
 		y = y,
 		d = 0,
+		od = 0,
+		r = 2,
 		col = col,
 	}
 end
@@ -36,10 +38,17 @@ function shot(x, y, d, v, col)
 end
 
 function _init()
-	add(planets, planet(64, 64, 20))
+	cls()
+	--add(planets, planet(64, 64, 20))
 	add(players, player(15, 15, 8))
 	add(players, player(113, 113, 12))
-	playing = 1
+	playing = 0
+end
+
+function collides(shot, other)
+	local sx, sy = shot.x, shot.y
+	local ox, oy, r = other.x, other.y, other.r
+	return sqrt((ox-sx)*(ox-sx)+(oy-sy)*(oy-sy)) < r
 end
 
 function _update()
@@ -49,11 +58,34 @@ function _update()
 			a.oy = a.y
 			a.x += a.dx
 			a.y += a.dy
+
+			for b in all(players) do
+				if collides(a, b) then
+					del(shots, a)
+					del(players, b)
+				end
+			end
+
+			for b in all(planets) do
+				if collides(a, b) then
+					del(shots, a)
+				end
+			end
+
+			if a.x < 0 or a.x > 128 or a.y < 0 or a.y > 128 then
+				del(shots, a)
+			end
 		end
+
+		if #shots == 0 then
+			playing += 1
+		end
+
 		return
 	end
 
 	local a = players[playing]
+	a.od = a.d
 	if (btn"0") a.d += 0.005
 	if (btn"1") a.d -= 0.005
 
@@ -74,8 +106,9 @@ end
 
 function draw_players()
 	for i, a in pairs(players) do
-		circfill(a.x, a.y, 2, a.col)
+		line(a.x, a.y, a.x + cos(a.od) * 6, a.y + sin(a.od) * 6, 0)
 		line(a.x, a.y, a.x + cos(a.d) * 6, a.y + sin(a.d) * 6, a.col)
+		circfill(a.x, a.y, a.r, a.col)
 
 		if i == playing then
 			circfill(a.x, a.y, 1, 0)
@@ -83,13 +116,22 @@ function draw_players()
 	end
 end
 
-function _draw()
+function maybe_clear()
 	if playing == 0 then
-		for a in all(shots) do
-			line(a.ox, a.oy, a.x, a.y, a.col + 1)
+		if not cleared then
+			cls()
+			cleared = true
 		end
 	else
-		cls()
+		cleared = false
+	end
+end
+
+function _draw()
+	maybe_clear()
+
+	for a in all(shots) do
+		line(a.ox, a.oy, a.x, a.y, a.col + 1)
 	end
 
 	for a in all(planets) do
