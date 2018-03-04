@@ -227,10 +227,10 @@ end
 function move_shots()
 	for a in all(shots) do
 		if a.expl > 0 then
- 		a.expl += 0.01
- 		if (a.expl>0.5) del(shots,a)
- 		return
- 	end
+			a.expl += 0.01
+			if (a.expl>0.5) del(shots,a)
+			return
+		end
 
 		a.ox = a.x
 		a.oy = a.y
@@ -274,7 +274,7 @@ function follow_planets(a)
 
 		local grav = b.mass /
 			abs(sqr(b.x-a.x)+sqr(b.y-a.y))
-		
+
 		a.dx += grav * cos(d)
 		a.dy += grav * sin(d)
 
@@ -294,7 +294,7 @@ end
 function draw_shots()
 	for i, a in pairs(shots) do
 		local x, y = a.x, a.y
-			
+
 		if a.expl == 0 then
 			line(a.ox,a.oy,x,y,a.col+1)
 			local size =
