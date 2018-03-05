@@ -72,13 +72,13 @@ aim_sens = 0.005
 power_sens = 0.03
 max_power = 2.0
 
-player_radius = 2
-gun_length = 7
+player_radius = 3
+gun_length = 9
 
 function init_players()
 	return {
-		player(15, 15, 8),
-		player(113, 113, 12),
+		player(15, 15, 9),
+		player(113, 113, 13),
 	}
 end
 
@@ -204,8 +204,8 @@ expl_radius = 15
 
 function shoot(pl)
 	return shot(
-		pl.x + cos(pl.d) * 4,
-		pl.y + sin(pl.d) * 4,
+		pl.x + cos(pl.d) * gun_length,
+		pl.y + sin(pl.d) * gun_length,
 		pl.d,
 		pl.power * 2,
 		pl.col)
@@ -221,6 +221,7 @@ function shot(x, y, d, v, col)
 		dy = sin(d) * v,
 		col = col,
 		expl = 0,
+		dotted = 0,
 	}
 end
 
@@ -296,7 +297,11 @@ function draw_shots()
 		local x, y = a.x, a.y
 
 		if a.expl == 0 then
-			line(a.ox,a.oy,x,y,a.col+1)
+			a.dotted = a.dotted + 0.25
+			local col = 7
+			if (a.dotted%2<1) col=a.col-1
+			line(a.ox,a.oy,x,y,col)
+
 			local size =
 				sqrt(sqr(a.dx)+sqr(a.dy))
 			sfx(3+i%2, i, size * 7, 1)
