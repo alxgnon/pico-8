@@ -7,9 +7,10 @@ __lua__
 function _init()
 	cls()
 	playing = 0
-	players = init_players()
-	planets = init_planets()
+	players = {}
+	planets = {}
 	shots = {}
+	gen_map(2,3)
 end
 
 function control()
@@ -65,8 +66,80 @@ function draw_power(a)
 	rectfill(0, 0, 128, 3, 10)
 	rectfill(x, 0, 128, 3, 0)
 end
+
+function gen_map(n_players, n_planets)
+	local n = n_players + n_planets
+	local r, k = 25, 10
+	
+	local points = distribute_points(r, k)
+
+	for i=1, n_players do
+		local p = points[flr(rnd(#points)) + 1]
+		add(players, player(p.x, p.y,player_colors[i]))
+		del(points, p)
+	end
+
+	for i=1, n_planets do
+		local p = points[flr(rnd(#points)) + 1]
+		local size = flr(p_min_size + rnd(r/2-p_min_size))
+		local mass = flr(p_min_mass + rnd(p_max_mass - p_min_mass))
+		add(planets, planet(p.x, p.y, size, mass))
+		del(points, p)
+	end
+
+	for p in all(points) do
+		circfill(p.x, p.y, 1, 11)
+	end
+end
+
+function distribute_points(r, k)
+	-- Poisson disc distribution algo
+	local points = {}
+	local active = {}
+	local x0, y0 = flr(rnd(128)), flr(rnd(128))
+	add(points, {x=x0, y=y0})
+	add(active, {x=x0, y=y0})
+
+	while (#active > 0) do
+		local a = active[flr(rnd(#active)) + 1]
+
+		for i=1, k do
+			local x,y = random_point_around(a.x, a.y, r, 2*r)
+			local valid = true
+
+			if (outside({x=x, y=y})) valid = false
+			
+			for p in all(points) do
+				if (not valid) break
+				if collides(p, {x=x, y=y, r=r}) then
+					valid = false
+				end
+			end
+
+			if (valid) then
+				add(points, {x=x, y=y})
+				add(active, {x=x, y=y})
+				break
+			end
+
+			if (i == k) then
+				del(active, a)
+			end
+		end
+	end
+
+	return points
+end
+
+function random_point_around(x, y, r, r2)
+	local dist = r2 * sqrt(rnd(1)) + r
+	local rot = rnd(1)
+	return x + dist * cos(rot), y + dist * sin(rot)
+end
 -->8
 ------------------- player ----
+
+player_colors = {8, 12}
 
 aim_sens = 0.005
 power_sens = 0.03
@@ -152,11 +225,9 @@ rylander_dither = {
 
 planet_colors = {15, 14, 4, 2, 5}
 
-function init_planets()
-	return {
-		planet(64, 64, 20, 150),
-	}
-end
+p_min_size = 5
+p_min_mass = 50
+p_max_mass = 250
 
 function planet(x, y, r, mass)
 	return {
