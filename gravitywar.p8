@@ -87,9 +87,9 @@ function gen_map(n_players, n_planets)
 		del(points, p)
 	end
 
-	--for p in all(points) do
-	--	circfill(p.x, p.y, 1, 11)
-	--end
+	for p in all(points) do
+		circfill(p.x, p.y, 1, 11)
+	end
 end
 
 function distribute_points(r, k)
