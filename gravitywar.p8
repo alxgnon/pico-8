@@ -6,11 +6,17 @@ __lua__
 
 function _init()
 	cls()
+	played = false
 	playing = 0
 	players = {}
 	planets = {}
 	shots = {}
 	gen_map(2,3)
+end
+
+function can_reset()
+	return not played or
+		#players <= 1
 end
 
 function control()
@@ -19,6 +25,10 @@ function control()
 	if btnp"4" then
 		playing += 1
 		sfx(7)
+	end
+
+	if btnp"5" and can_reset() then
+		_init()
 	end
 
 	--local mars = planets[1]
@@ -42,6 +52,7 @@ function _update()
 			add(shots, shoot(a))
 		end
 		playing = -1
+		played = true
 	end
 end
 
