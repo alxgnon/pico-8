@@ -98,9 +98,9 @@ function gen_map(n_players, n_planets)
 		del(points, p)
 	end
 
-	-- for p in all(points) do
-	-- 	circfill(p.x, p.y, 1, 11)
-	-- end
+	for p in all(points) do
+		circfill(p.x, p.y, 1, 11)
+	end
 end
 
 function distribute_points(r, k)
@@ -154,7 +154,8 @@ player_colors = {8, 12}
 
 aim_sens = 0.005
 power_sens = 0.03
-max_power = 2.0
+min_power = 0.5
+max_power = 2.5
 
 player_radius = 3
 gun_length = 9
@@ -190,9 +191,9 @@ function move_player(a)
 	local pwr = a.power
 	if (btn"2") pwr += power_sens
 	if (btn"3") pwr -= power_sens
-	pwr = min(max(pwr,0),max_power)
+	pwr = min(max(pwr,min_power),max_power)
 	if pwr != a.power then
-		sfx(1, 3, pwr * 3, 1)
+		sfx(1, 3, pwr * 2, 1)
 		a.power = pwr
 	end
 end
