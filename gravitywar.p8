@@ -139,7 +139,7 @@ end
 -->8
 ------------------- player ----
 
-player_colors = {9, 13}
+player_colors = {8, 12}
 
 aim_sens = 0.005
 power_sens = 0.03
@@ -189,9 +189,9 @@ end
 function draw_players()
 	for i, a in pairs(players) do
 		draw_gun(a.x, a.y, a.old, 0)
-		draw_gun(a.x, a.y, a.d, a.col)
+		draw_gun(a.x,a.y,a.d,a.col)
 
-		circfill(a.x, a.y, a.r, a.col)
+		circfill(a.x,a.y,a.r,a.col)
 
 		if i == playing then
 			circfill(a.x, a.y, 1, 0)
@@ -362,8 +362,8 @@ function draw_shots()
 
 		if a.expl == 0 then
 			a.dotted += 0.25
-			local col = 7
-			if (a.dotted%2<1) col=a.col-1
+			local col = a.col
+			if(a.dotted%2<1)col=7
 			line(a.ox,a.oy,x,y,col)
 
 			local size =
@@ -376,7 +376,7 @@ function draw_shots()
 			circfill(
 				x,y,
 				expl_radius*-sin(a.expl/2),
-				a.col+1)
+				10)
 		end
 	end
 end
