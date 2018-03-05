@@ -107,7 +107,7 @@ function distribute_points(r, k)
 			local x,y = random_point_around(a.x, a.y, r, 2*r)
 			local valid = true
 
-			if (outside({x=x, y=y})) valid = false
+			if (outside({x=x,y=y},8)) valid = false
 
 			for p in all(points) do
 				if (not valid) break
@@ -350,10 +350,13 @@ function follow_planets(a)
 	end
 end
 
-function outside(a)
+function outside(a, margin)
+	if (not margin) margin=0
 	return
-		a.x < 0 or a.x > 128 or
-		a.y < 0 or a.y > 128
+		a.x < margin or
+		a.x > 128-margin or
+		a.y < margin or
+		a.y > 128-margin
 end
 
 function draw_shots()
