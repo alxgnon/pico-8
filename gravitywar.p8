@@ -70,7 +70,7 @@ end
 function gen_map(n_players, n_planets)
 	local n = n_players + n_planets
 	local r, k = 25, 10
-	
+
 	local points = distribute_points(r, k)
 
 	for i=1, n_players do
@@ -108,7 +108,7 @@ function distribute_points(r, k)
 			local valid = true
 
 			if (outside({x=x, y=y})) valid = false
-			
+
 			for p in all(points) do
 				if (not valid) break
 				if collides(p, {x=x, y=y, r=r}) then
@@ -139,7 +139,7 @@ end
 -->8
 ------------------- player ----
 
-player_colors = {8, 12}
+player_colors = {9, 13}
 
 aim_sens = 0.005
 power_sens = 0.03
@@ -147,13 +147,6 @@ max_power = 2.0
 
 player_radius = 3
 gun_length = 9
-
-function init_players()
-	return {
-		player(15, 15, 9),
-		player(113, 113, 13),
-	}
-end
 
 function aim_center(x, y)
 	return atan2(64-x, 64-y, x, y)
@@ -368,7 +361,7 @@ function draw_shots()
 		local x, y = a.x, a.y
 
 		if a.expl == 0 then
-			a.dotted = a.dotted + 0.25
+			a.dotted += 0.25
 			local col = 7
 			if (a.dotted%2<1) col=a.col-1
 			line(a.ox,a.oy,x,y,col)
