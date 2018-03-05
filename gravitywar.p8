@@ -94,6 +94,7 @@ function gen_map(n_players, n_planets)
 		local p = points[flr(rnd(#points)) + 1]
 		local size = flr(p_min_size + rnd(r/2-p_min_size))
 		local mass = flr(p_min_mass + rnd(p_max_mass - p_min_mass))
+		if (rnd(15) < 1) mass = -mass
 		add(planets, planet(p.x, p.y, size, mass))
 		del(points, p)
 	end
@@ -245,6 +246,14 @@ end
 
 function draw_planets()
 	for a in all(planets) do
+		if a.mass < 1 then
+			local col = dither(-a.mass)
+			fillp(0)
+			circ(a.x, a.y, a.r, col)
+			print(a.mass,a.x-8,a.y-2,7)
+			return
+		end
+
 		local col = dither(a.mass)
 		circfill(a.x, a.y, a.r, col)
 		draw_label(a)
@@ -325,6 +334,7 @@ function sqr(x) return x*x end
 function collides(a, b)
 	local ax, ay = a.x, a.y
 	local bx, by, r = b.x, b.y, b.r
+	if (r < 1) r = -r
 	return r > sqrt(
 		sqr(ax - bx) + sqr(ay - by))
 end
