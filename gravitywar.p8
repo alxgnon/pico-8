@@ -132,7 +132,7 @@ function distribute_points(r, k)
 end
 
 function random_point_around(x, y, r, r2)
-	local dist = r2 * sqrt(rnd(1)) + r
+	local dist = r + rnd(r2-r)
 	local rot = rnd(1)
 	return x + dist * cos(rot), y + dist * sin(rot)
 end
