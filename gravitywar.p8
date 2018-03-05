@@ -11,7 +11,7 @@ function _init()
 	players = {}
 	planets = {}
 	shots = {}
-	gen_map(2,3)
+	gen_map(2, 3)
 end
 
 function can_reset()
@@ -86,12 +86,14 @@ function gen_map(n_players, n_planets)
 
 	for i=1, n_players do
 		local p = points[flr(rnd(#points)) + 1]
+		if(not p)return _init()
 		add(players, player(p.x, p.y,player_colors[i]))
 		del(points, p)
 	end
 
 	for i=1, n_planets do
 		local p = points[flr(rnd(#points)) + 1]
+		if(not p)return _init()
 		local size = flr(p_min_size + rnd(r/2-p_min_size))
 		local mass = flr(p_min_mass + rnd(p_max_mass - p_min_mass))
 		if (rnd(15) < 1) mass = -mass
