@@ -63,7 +63,7 @@ end
 function draw_power(a)
 	if (not a) return
 	local x=a.power*(128/max_power)
-	rectfill(0, 0, 128, 3, 10)
+	rectfill(0, 0, 128, 3, a.col)
 	rectfill(x, 0, 128, 3, 0)
 end
 
