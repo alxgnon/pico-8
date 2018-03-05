@@ -7,10 +7,10 @@ __lua__
 function _init()
 	cls()
 	playing = 0
-	players = init_players()
-	planets = init_planets()
+	players = {}
+	planets = {}
 	shots = {}
-	gen_map(1,1)
+	gen_map(2,3)
 end
 
 function control()
@@ -46,11 +46,11 @@ function _update()
 end
 
 function _draw()
-	--maybe_clear()
-	--draw_shots()
-	--draw_planets()
-	--draw_players()
-	--draw_power(players[playing])
+	maybe_clear()
+	draw_shots()
+	draw_planets()
+	draw_players()
+	draw_power(players[playing])
 end
 
 function maybe_clear()
@@ -72,6 +72,21 @@ function gen_map(n_players, n_planets)
 	local r, k = 25, 10
 	
 	local points = distribute_points(r, k)
+
+	for i=1, n_players do
+		local p = points[flr(rnd(#points)) + 1]
+		add(players, player(p.x, p.y,player_colors[i]))
+		del(points, p)
+	end
+
+	for i=1, n_planets do
+		local p = points[flr(rnd(#points)) + 1]
+		local size = flr(p_min_size + rnd(r/2-p_min_size))
+		local mass = flr(p_min_mass + rnd(p_max_mass - p_min_mass))
+		add(planets, planet(p.x, p.y, size, mass))
+		del(points, p)
+	end
+
 	for p in all(points) do
 		circfill(p.x, p.y, 1, 11)
 	end
@@ -124,19 +139,14 @@ end
 -->8
 ------------------- player ----
 
+player_colors = {8, 12}
+
 aim_sens = 0.005
 power_sens = 0.03
 max_power = 2.0
 
 player_radius = 2
 gun_length = 7
-
-function init_players()
-	return {
-		player(15, 15, 8),
-		player(113, 113, 12),
-	}
-end
 
 function aim_center(x, y)
 	return atan2(64-x, 64-y, x, y)
@@ -208,11 +218,9 @@ rylander_dither = {
 
 planet_colors = {15, 14, 4, 2, 5}
 
-function init_planets()
-	return {
-		planet(64, 64, 20, 150),
-	}
-end
+p_min_size = 5
+p_min_mass = 50
+p_max_mass = 250
 
 function planet(x, y, r, mass)
 	return {
