@@ -8,26 +8,21 @@ function _init()
 	cls()
 	played = false
 	playing = 0
-	players = {}
+	pl = nil
 	planets = {}
 	shots = {}
-	gen_map(1, 5, 4)
-end
-
-function can_reset()
-	return not played or
-		#players <= 1
+	gen_map(5, 4)
 end
 
 function control()
-	move_player(players[playing])
+	move_player(pl)
 
 	if btnp"4" then
 		playing += 1
 		sfx(7)
 	end
 
-	if btnp"5" and can_reset() then
+	if btnp"5" then
 		_init()
 	end
 end
@@ -43,10 +38,8 @@ function _update()
 
 	control()
 
-	if playing > #players then
-		for a in all(players) do
-			add(shots, shoot(a))
-		end
+	if playing > 1 then
+		add(shots, shoot(pl))
 		playing = -1
 		played = true
 	end
@@ -56,8 +49,8 @@ function _draw()
 	maybe_clear()
 	draw_shots()
 	draw_planets()
-	draw_players()
-	draw_power(players[playing])
+	draw_player(pl)
+	draw_power(pl)
 end
 
 function maybe_clear()
@@ -74,18 +67,11 @@ function draw_power(a)
 	rectfill(x, 0, 128, 3, 0)
 end
 
-function gen_map(n_players, n_planets, n_waters)
-	local n = n_players + n_planets
+function gen_map(n_planets, n_waters)
+	local n = n_planets + n_waters
 	local r, k = 25, 10
 
 	local points = distribute_points(r, k)
-
-	for i=1, n_players do
-		local p = points[flr(rnd(#points)) + 1]
-		if(not p)return _init()
-		add(players, player(p.x, p.y,player_colors[i]))
-		del(points, p)
-	end
 
 	for i=1, n_planets do
 		local p = points[flr(rnd(#points)) + 1]
@@ -95,6 +81,11 @@ function gen_map(n_players, n_planets, n_waters)
 		add(planets, planet(p.x, p.y, size, mass))
 		del(points, p)
 	end
+	
+	local p = planets[flr(rnd(#planets)) + 1]
+	if(not p)return _init()
+	p.green = true
+	pl = player({x=64,y=64},p)
 
 	for i=1, n_waters do
 		local p = points[flr(rnd(#points)) + 1]
@@ -163,22 +154,19 @@ max_power = 2.5
 player_radius = 3
 gun_length = 9
 
-function aim_center(x, y)
-	return atan2(64-x, 64-y, x, y)
+function aim(x1,y1,x2,y2)
+	return atan2(x1-x2,y1-y2,x2,y2)
 end
 
-function player(x, y, col)
-	local d = aim_center(x, y)
-
-	return {
-		x = x,
-		y = y,
-		col = col,
-		d = d,
-		old = d,
-		r = player_radius,
-		power = max_power / 2,
-	}
+function player(shot, planet)
+	local d=aim(shot.x,shot.y,planet.x,planet.y)
+	
+	planet.col = 10
+	planet.d = d
+	planet.old = d
+	planet.mass = 10
+	planet.power = max_power / 2
+	return planet
 end
 
 function move_player(a)
@@ -201,24 +189,17 @@ function move_player(a)
 	end
 end
 
-function draw_players()
-	for i, a in pairs(players) do
-		draw_gun(a.x, a.y, a.old, 0)
-		draw_gun(a.x,a.y,a.d,a.col)
-
-		circfill(a.x,a.y,a.r,a.col)
-
-		if i == playing then
-			circfill(a.x, a.y, 1, 0)
-		end
-	end
+function draw_player(a)
+	draw_gun(a,a.old,0)
+	draw_gun(a,a.d,11)
 end
 
-function draw_gun(x, y, d, col)
+function draw_gun(a, d, col)
+	local x, y, r = a.x, a.y, a.r
 	line(
 			x, y,
-			x + cos(d) * gun_length,
-			y + sin(d) * gun_length,
+			x + cos(d) * (r+gun_length),
+			y + sin(d) * (r+gun_length),
 			col)
 end
 -->8
@@ -288,8 +269,8 @@ expl_radius = 15
 
 function shoot(pl)
 	return shot(
-		pl.x + cos(pl.d) * gun_length,
-		pl.y + sin(pl.d) * gun_length,
+		pl.x + cos(pl.d) * (pl.r+gun_length),
+		pl.y + sin(pl.d) * (pl.r+gun_length),
 		pl.d,
 		pl.power * 2,
 		pl.col)
@@ -361,6 +342,7 @@ function follow_planets(a)
 			sfx(5)
 			if a.water then
 				b.green = true
+				pl = player(a, b)
 			end
 		end
 	end
@@ -399,6 +381,12 @@ function draw_shots()
 		end
 	end
 end
+__gfx__
+00000000ee0ee0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000ee0ee0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0070070000a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00077000ee0ee0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00077000ee0ee0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __label__
 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb000000000000
 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb000000000000
