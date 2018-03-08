@@ -4,6 +4,8 @@ __lua__
 -- gravity war
 -- by ace + 15
 
+if(stat(6) != "") DEBUG = true
+
 function _init()
 	cls()
 	played = false
@@ -64,6 +66,23 @@ function _draw()
 	draw_power(players[playing])
 end
 
+function show_gravity()
+	local thermal_scale = {0,1,2,13,12,3,11,10,9,8,14,15,7}
+
+	for i=0,127 do
+		for j=0,127 do
+			local grav = 0
+			for k=1,#planets do
+				p = planets[k]
+				grav += p.mass/abs(sqr(p.x-i)+sqr(p.y-j))
+			end
+
+			local color_idx = min(max(flr(grav*15), 1), #thermal_scale)
+			pset(i,j,thermal_scale[color_idx])
+		end
+	end
+end
+
 function maybe_clear()
 	if playing < 0 then
 		playing = 0
@@ -84,6 +103,16 @@ function gen_map(n_players, n_planets)
 
 	local points = distribute_points(r, k)
 
+	for i=1, n_planets do
+		local p = points[flr(rnd(#points)) + 1]
+		if(not p)return _init()
+		local size = flr(p_min_size + rnd(r/2-p_min_size))
+		local mass = flr(p_min_mass + rnd(p_max_mass - p_min_mass))
+		--if (rnd(15) < 1) mass = -mass
+		add(planets, planet(p.x, p.y, size, mass))
+		del(points, p)
+	end
+
 	for i=1, n_players do
 		local p = points[flr(rnd(#points)) + 1]
 		if(not p)return _init()
@@ -91,18 +120,12 @@ function gen_map(n_players, n_planets)
 		del(points, p)
 	end
 
-	for i=1, n_planets do
-		local p = points[flr(rnd(#points)) + 1]
-		if(not p)return _init()
-		local size = flr(p_min_size + rnd(r/2-p_min_size))
-		local mass = flr(p_min_mass + rnd(p_max_mass - p_min_mass))
-		if (rnd(15) < 1) mass = -mass
-		add(planets, planet(p.x, p.y, size, mass))
-		del(points, p)
-	end
+	if DEBUG then
+		show_gravity()
 
-	for p in all(points) do
-		circfill(p.x, p.y, 1, 11)
+		for p in all(points) do
+			circfill(p.x, p.y, 1, 11)
+		end
 	end
 end
 
