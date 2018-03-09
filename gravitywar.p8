@@ -331,7 +331,6 @@ function shot(x, y, d, v, col)
 		dy = sin(d) * v,
 		col = col,
 		expl = 0,
-		dotted = 0,
 	}
 end
 
@@ -411,10 +410,7 @@ function draw_shots()
 		local x, y = a.x, a.y
 
 		if a.expl == 0 then
-			a.dotted += 0.25
-			local col = a.col
-			if(a.dotted%2<1)col=7
-			line(a.ox,a.oy,x,y,col)
+			line(a.ox,a.oy,x,y,a.col+1)
 
 			local size =
 				sqrt(sqr(a.dx)+sqr(a.dy))
