@@ -204,19 +204,30 @@ function player(x, y, col)
 	}
 end
 
+_btnpp = {}
+function btnpp(n)
+	if btn(n) then
+		local t = (_btnpp[n] or 0) + 1
+		_btnpp[n] = t
+		return btnp(n) or t > 40
+	else
+		_btnpp[n] = 0
+	end
+end
+
 function move_player(a)
 	if (not a) return
 
 	a.old = a.d
-	if (btn"0") a.d+=aim_sens
-	if (btn"1") a.d-=aim_sens
+	if (btnpp"0") a.d+=aim_sens
+	if (btnpp"1") a.d-=aim_sens
 	if a.old != a.d then
 		sfx(2)
 	end
 
 	local pwr = a.power
-	if (btn"2") pwr += power_sens
-	if (btn"3") pwr -= power_sens
+	if (btnpp"2") pwr += power_sens
+	if (btnpp"3") pwr -= power_sens
 	pwr = mid(pwr,min_power,max_power)
 	if pwr != a.power then
 		sfx(1, 3, pwr * 2, 1)
