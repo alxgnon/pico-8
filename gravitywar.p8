@@ -4,7 +4,7 @@ __lua__
 -- gravity war
 -- by ace + 15
 
-if(stat(6) != "") DEBUG = true
+if(stat(6) != "") debug = true
 
 function _init()
 	cls()
@@ -77,8 +77,8 @@ function show_gravity()
 				grav += p.mass/abs(sqr(p.x-i)+sqr(p.y-j))
 			end
 
-			local color_idx = min(max(flr(grav*15), 1), #thermal_scale)
-			pset(i,j,thermal_scale[color_idx])
+			local color_idx = mid(grav*15, 1, #thermal_scale)
+			pset(i,j,thermal_scale[flr(color_idx)])
 		end
 	end
 end
@@ -120,7 +120,7 @@ function gen_map(n_players, n_planets)
 		del(points, p)
 	end
 
-	if DEBUG then
+	if debug then
 		show_gravity()
 
 		for p in all(points) do
@@ -130,7 +130,7 @@ function gen_map(n_players, n_planets)
 end
 
 function distribute_points(r, k)
-	-- Poisson disc distribution algo
+	-- poisson disc distribution algo
 	local points = {}
 	local active = {}
 	local x0, y0 = flr(rnd(128)), flr(rnd(128))
@@ -217,7 +217,7 @@ function move_player(a)
 	local pwr = a.power
 	if (btn"2") pwr += power_sens
 	if (btn"3") pwr -= power_sens
-	pwr = min(max(pwr,min_power),max_power)
+	pwr = mid(pwr,min_power,max_power)
 	if pwr != a.power then
 		sfx(1, 3, pwr * 2, 1)
 		a.power = pwr
