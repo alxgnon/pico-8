@@ -71,12 +71,7 @@ function show_gravity()
 
 	for i=0,127 do
 		for j=0,127 do
-			local grav = 0
-			for k=1,#planets do
-				p = planets[k]
-				grav += p.mass/abs(sqr(p.x-i)+sqr(p.y-j))
-			end
-
+			local grav = get_gravity_at(i, j)
 			local color_idx = mid(grav*15, 1, #thermal_scale)
 			pset(i,j,thermal_scale[flr(color_idx)])
 		end
@@ -389,18 +384,37 @@ function collide_players(a)
 	end
 end
 
+function get_gravity_at(x, y, pl)
+	local grav = 0
+	local planets = planets
+	if (pl) planets = {pl}
+
+	for p in all(planets) do 
+		grav = grav + p.mass /
+			abs(sqr(p.x-x)+sqr(p.y-y))
+	end
+	return grav
+end
+
+function get_force_at(x, y)
+	local fx, fy = 0, 0
+	for p in all(planets) do
+		local d = atan2(p.x-x,p.y-y,x,y)
+
+		local grav = get_gravity_at(x,y,p)
+
+		fx += grav * cos(d)
+		fy += grav * sin(d)
+	end
+	return fx, fy
+end
+
 function follow_planets(a)
+	local fx, fy = get_force_at(a.x, a.y)
+	a.dx += fx
+	a.dy += fy
+	
 	for b in all(planets) do
-		local d = atan2(
-			b.x-a.x,b.y-a.y,
-			a.x,a.y)
-
-		local grav = b.mass /
-			abs(sqr(b.x-a.x)+sqr(b.y-a.y))
-
-		a.dx += grav * cos(d)
-		a.dy += grav * sin(d)
-
 		if collides(a,b) then
 			del(shots,a)
 			sfx(5)
