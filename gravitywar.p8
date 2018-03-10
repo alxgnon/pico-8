@@ -118,12 +118,13 @@ function gen_map(n_players, n_planets)
 
 	if debug then
 		show_gravity()
-		dump_screen_to_map()
-
+	else
 		for p in all(points) do
-			circfill(p.x, p.y, 1, 11)
+			circfill(p.x, p.y, 1, 6)
 		end
 	end
+
+	dump_screen_to_map()
 end
 
 function dump_screen_to_map()
