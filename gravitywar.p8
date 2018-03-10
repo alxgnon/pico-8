@@ -82,6 +82,7 @@ function maybe_clear()
 	if playing < 0 then
 		playing = 0
 		cls()
+		load_map_background()
 	end
 end
 
@@ -117,11 +118,23 @@ function gen_map(n_players, n_planets)
 
 	if debug then
 		show_gravity()
+		dump_screen_to_map()
 
 		for p in all(points) do
 			circfill(p.x, p.y, 1, 11)
 		end
 	end
+end
+
+function dump_screen_to_map()
+	--0x1000 gfx2/map2 (shared)
+	--0x2000 map
+	--0x6000 screen (8k)
+	memcpy(0x1000, 0x6000, 0x2000)
+end
+
+function load_map_background()
+	memcpy(0x6000, 0x1000, 0x2000)
 end
 
 function distribute_points(r, k)
@@ -452,6 +465,30 @@ function draw_shots()
 		end
 	end
 end
+-->8
+------------------- vector ----
+
+vector_mt = {
+	__add = function(a,b)
+		return {x=a.x+b.x, y=a.y+b.y}
+	end,
+}
+
+function vec(x, y)
+	local v = {x=x,y=y}
+	setmetatable(v, vector_mt)
+	return v
+end
+
+function vec_to_string(v)
+	return "("..v.x..","..v.y..")"
+end
+
+-- v1 = vec(42,-5)
+-- v2 = vec(6,66)
+-- v3 = v1+v2
+-- v4 = v3+vec(3,5)
+-- printh(vec_to_string(v4))
 __label__
 88888888888888888888888888888888888888888888888888888888888888888888888888888888800000000000000000000000000000000000000000000000
 88888888888888888888888888888888888888888888888888888888888888888888888888888888800000000000000000000000000000000000000000000000
