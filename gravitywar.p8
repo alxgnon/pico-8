@@ -38,7 +38,7 @@ function control()
 	--if (btnp(3,1)) mars.mass -= 4
 end
 
-function _update()
+function _update60()
 	if playing < 1 then
 		move_shots()
 		if #shots < 1 then
@@ -321,6 +321,7 @@ end
 -->8
 --------------------- shot ----
 
+shot_speed = 0.5
 expl_radius = 15
 
 function shoot(pl)
@@ -355,8 +356,8 @@ function move_shots()
 
 		a.ox = a.x
 		a.oy = a.y
-		a.x += a.dx
-		a.y += a.dy
+		a.x += a.dx * shot_speed
+		a.y += a.dy * shot_speed
 
 		collide_players(a)
 		follow_planets(a)
