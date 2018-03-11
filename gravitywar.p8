@@ -67,19 +67,20 @@ function _draw()
 end
 
 thermal_scale = {0,1,2,13,12,3,11,10,9,8,14,15,7}
-thermal_mult = 1.5
+thermal_step = 1/78
 
-function grav_color(i)
-	i = mid(i,1,#thermal_scale)
-	return thermal_scale[flr(i)]
-end
+function dither(value, palette, increment_size)
+	if(not increment_size) increment_size = 1
+	local value = value/increment_size
+	local substeps = #rylander_dither
 
-function grav_dither(grav)
-	grav = grav
-	local i = flr(grav/4/16+1)
-	local j = flr(grav/4%16+1)
-	local col1 = grav_color(i)
-	local col2 = grav_color(i+1)
+	local i = flr(value/substeps+1)
+	local j = flr(value%substeps+1)
+	
+	i = mid(1,i,#palette)
+	i2 = min(i+1,#palette)
+	local col1 = palette[i]
+	local col2 = palette[i2]
 
 	fillp(rylander_dither[j])
 	return col1 + (col2 * 0x10)
@@ -89,8 +90,7 @@ function show_gravity()
 	for i=0,127 do
 		for j=0,127 do
 			local grav = get_gravity_at(i, j)
-			local col = grav_dither(
-				grav*thermal_mult*#rylander_dither*#thermal_scale)
+			local col = dither(grav, thermal_scale, thermal_step)
 			rectfill(i,j,i,j,col)
 		end
 	end
@@ -317,26 +317,11 @@ function draw_planets()
 		--	return
 		--end
 
-		local col = dither(a.mass)
+		local col = dither(a.mass, planet_colors, 4)
 		circfill(a.x, a.y, a.r, col)
 		--draw_label(a)
 	end
 	fillp(0)
-end
-
-function planet_color(i)
-	i = min(i, #planet_colors)
-	return planet_colors[i]
-end
-
-function dither(mass)
-		local i = flr(mass/4/16+1)
-		local j = flr(mass/4%16+1)
-		local col1 = planet_color(i)
-		local col2 = planet_color(i+1)
-
-		fillp(rylander_dither[j])
-		return col1 + (col2 * 0x10)
 end
 
 function draw_label(a)
