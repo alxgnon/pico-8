@@ -87,8 +87,8 @@ function dither(value, palette, increment_size)
 end
 
 function show_gravity()
-	for i=0,127 do
-		for j=0,127 do
+	for i=0,127,2 do
+		for j=0,127,2 do
 			local grav = get_gravity_at(i, j)
 			local col = dither(grav, thermal_scale, thermal_step)
 			rectfill(i,j,i,j,col)
@@ -203,7 +203,7 @@ end
 -->8
 ------------------- player ----
 
-player_colors = {8, 12}
+player_colors = {9, 13}
 
 aim_sens = 0.005
 power_sens = 0.03
@@ -264,7 +264,8 @@ end
 
 function draw_players()
 	for i, a in pairs(players) do
-		draw_gun(a.x, a.y, a.old, 0)
+		circfill(a.x,a.y,a.r+1,0)
+		draw_gun(a.x,a.y,a.old,0)
 		draw_gun(a.x,a.y,a.d,a.col)
 
 		circfill(a.x,a.y,a.r,a.col)
@@ -318,6 +319,7 @@ function draw_planets()
 		--end
 
 		local col = dither(a.mass, planet_colors, 4)
+		circfill(a.x, a.y, a.r+1, 0)
 		circfill(a.x, a.y, a.r, col)
 		--draw_label(a)
 	end
@@ -336,10 +338,8 @@ end
 shot_speed = 0.5
 expl_radius = 15
 shot_colors = {}
-shot_colors[8] = 5
-shot_colors[12] = 6
---shot_colors[8] = 9
---shot_colors[12] = 13
+shot_colors[9] = 8
+shot_colors[13] = 12
 
 function shoot(pl)
 	return shot(
@@ -461,7 +461,7 @@ function draw_shots()
 			local col = shot_colors[a.col]
 			--rect(a.ox,a.oy,x,y,0)
 			rectfill(a.ox,a.oy,x,y,col)
-			pset(a.x,a.y,a.col)
+			pset(a.x,a.y,7)
 
 			local size =
 				sqrt(sqr(a.dx)+sqr(a.dy))
