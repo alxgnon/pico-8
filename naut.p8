@@ -81,7 +81,7 @@ end
 function _init()
 	gt = 0
 
-	pl = player(56, 84)
+	pl = player(52, 84)
 
 	actors = {}
 	add(actors, pl)
