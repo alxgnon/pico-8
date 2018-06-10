@@ -1,0 +1,101 @@
+pico-8 cartridge // http://www.pico-8.com
+version 15
+__lua__
+function set_transparent(col)
+	palt(0, false)
+	palt(col, true)
+end
+
+function _init()
+	set_transparent(1)
+	player = new_player(25, 25)
+end
+
+function _update()
+	control_movement(player)
+	control_shooting(player)
+	update_sparks(player)
+end
+
+function draw_sprite(a)
+	spr(a.n,a.x,a.y,a.w,a.h,a.f)
+end
+
+function _draw()
+	cls()
+	draw_sparks(player)
+	draw_sprite(player)
+end
+-->8
+function new_player(x, y)
+	return
+	{ n = 000
+	, x = x
+	, y = y
+	, dx = 0
+	, dy = 0
+	, w = 1
+	, h = 1
+	, speed = 2
+	, sparks = {}
+	}
+end
+
+function control_movement(a)
+	a.dx, a.dy = 0, 0
+	local speed = a.speed
+	if (btn"0") a.dx -= speed
+	if (btn"1") a.dx += speed
+	if (btn"2") a.dy -= speed
+	if (btn"3") a.dy += speed
+	a.x += a.dx
+	a.y += a.dy
+end
+
+function control_shooting(a)
+	if btn"4" then
+		a.f = true
+	end
+	
+	if btn"5" then
+		a.f = false
+	end
+end
+
+function update_sparks(a)
+	if a.dx != 0 or a.dy != 0 then
+		moving += 1
+	else
+		moving = 0
+	end
+
+	for b in all(a.sparks) do
+		b.t -= 1
+		if b.t < 1 then
+			del(a.sparks, b)
+		end
+	end
+
+	if moving % 4 == 1 then
+		add(a.sparks,
+		{ x = a.x + (a.f and 6 or 1)
+		, y = a.y + 5
+		, t = 16
+		})
+ end
+end
+
+function draw_sparks(a)
+	for b in all(a.sparks) do
+		pset(b.x, b.y, 7)
+	end
+end
+__gfx__
+11177111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+11170711000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+11777711000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+17771111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+17777771000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+11771111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+11177111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+11171711000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
