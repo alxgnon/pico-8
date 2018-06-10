@@ -16,20 +16,28 @@ function travel(a)
 	a.y += a.dy
 end
 
+function xleaving(a)
+	local x = player.rx * 128
+	return a.x<x or a.x>x+128
+end
+
 function _update()
 	load_room(player)
 	control_movement(player)
-	travel(player)
+	slide(player)
 	update_sparks(player)
 
 	control_shooting(player)
 	for a in all(player.lemons) do
 		travel(a)
+		if xleaving(a) then
+			del(player.lemons, a)
+		end
 	end
 end
 
 function draw_sprite(a)
-	spr(a.n,a.x,a.y,a.w,a.h,a.f)
+	spr(a.n,a.x,a.y,a.sw,a.sh,a.f)
 end
 
 function _draw()
@@ -44,18 +52,22 @@ end
 -->8
 function new_player(x, y)
 	return
-	{ n = 000
-	, x = x
-	, y = y
-	, rx = 0
-	, ry = 0
-	, dx = 0
-	, dy = 0
-	, w = 1
-	, h = 1
-	, speed = 2
-	, lemons = {}
-	, sparks = {}
+	{ n = 000 -- sprite number
+	, x = x -- x position
+	, y = y -- y position
+	, rx = 0 -- room x
+	, ry = 0 -- room y
+	, dx = 0 -- x movement
+	, dy = 0 -- y movement
+	, sw = 1 -- sprite width
+	, sh = 1 -- sprite height
+	, cx = 4 -- collision offset x
+	, cy = 4 -- collision offset y
+	, cw = 1.5 -- collision width
+	, ch = 3.5 -- collision height
+	, speed = 2 -- movement speed
+	, lemons = {} -- shots
+	, sparks = {} -- jetpack fx
 	}
 end
 
@@ -66,8 +78,8 @@ function new_lemon(x, y, f)
 	, y = y + 3
 	, dx = f and -3 or 3
 	, dy = 0
-	, w = 1
-	, h = 1
+	, sw = 1
+	, sh = 1
 	}
 end
 
@@ -132,9 +144,14 @@ function load_room(a)
 	local rx = flr(a.x/128)
 	local ry = flr(a.y/128)
 	if rx!=a.rx or ry!=a.ry then
-		a.rx = rx
-		a.ry = ry
+		init_room(a, rx, ry)
 	end
+end
+
+function init_room(a, rx, ry)
+	a.rx = rx
+	a.ry = ry
+	a.lemons = {}
 end
 
 function draw_room(a)
@@ -142,6 +159,63 @@ function draw_room(a)
 	camera(x,y)
 	map(x/8,y/8,x,y,16,16)
 end
+
+function solid(x,y)
+	local n = mget(x/8,y/8)
+	if fget(n,1) then
+		return n
+	end
+end
+
+-- does rect overlap any solids?
+-- todo: support large actors
+function solid_area(x,y,w,h)
+	return
+	solid(x-w,y-h) or
+	solid(x+w,y-h) or
+	solid(x-w,y+h) or
+	solid(x+w,y+h)
+end
+
+-- check moving actors on solids
+function solid_collide(a,mult)
+	mult = mult or 1
+	local x,y=a.x+a.cx,a.y+a.cy
+	local w,h=a.cw,a.ch
+	local dx,dy=a.dx*mult,a.dy*mult
+	return
+	solid_area(x+dx,y,w,h),
+	solid_area(x,y+dy,w,h),
+	solid_area(x+dx,y+dy,w,h)
+end
+
+-- slide collision movement
+function slide(a)
+	local dx,dy = a.dx/2,a.dy/2
+	local x,y=solid_collide(a,0.5)
+	if (not x) a.x += dx
+	if (not y) a.y += dy
+	x,y=solid_collide(a,0.5)
+	if (not x) a.x += dx
+	if (not y) a.y += dy
+	return not (x or y)
+end
+
+--function shot_collide(a)
+--local x = solid_collide(a)
+--if x then
+--kill(a)
+--if not a.evil and x == sp.switch then
+--room.switch:hurt(1)
+--else
+--if x !=	sp.nowall then
+--sfx(6)
+--local b = plink(a.x, a.y)
+--add(actors, b)
+--end
+--end
+--end
+--end
 __gfx__
 11177111171111110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 11170711707111110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
