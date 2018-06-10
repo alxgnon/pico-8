@@ -58,9 +58,9 @@ end
 function new_lemon(x, y, f)
 	return
 	{ n = 001
-	, x = x + (f and 4 or 1)
+	, x = x + (f and 3 or 2)
 	, y = y + 3
-	, dx = f and -4 or 4
+	, dx = f and -3 or 3
 	, dy = 0
 	, w = 1
 	, h = 1
@@ -85,16 +85,15 @@ function control_movement(a)
 end
 
 function control_shooting(a)
-	if btn"4" then
-		a.f = true
-		add(a.lemons,
-		new_lemon(a.x, a.y, a.f))
-	end
-	
-	if btn"5" then
-		a.f = false
-		add(a.lemons,
-		new_lemon(a.x, a.y, a.f))
+	if btn"4" or btn"5" then
+		a.f = btn"4"
+		shooting += 1
+		if shooting % 4 == 1 then
+			add(a.lemons,
+			new_lemon(a.x, a.y, a.f))
+ 		end
+	else
+		shooting = 0
 	end
 end
 
