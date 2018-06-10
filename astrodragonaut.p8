@@ -6,16 +6,18 @@ __lua__
 
 function _init()
 	gt = 0
-	pl = player(52, 84)
+	mobs = {}
 	shots = {}
-	bads = {}
 	eshots = {}
+	pl = player(52, 84)
 end
 
 function _update()
 	gt += 1
 
-	drive(pl)
+	for a in all(mobs) do
+		a:update()
+	end
 
 	for a in all(shots) do
 		a.x += a.dx
@@ -23,10 +25,6 @@ function _update()
 		if a.y < -5 then
 			del(shots, a)
 		end
-	end
-
-	for a in all(bads) do
-		a:update()
 	end
 
 	for a in all(eshots) do
@@ -39,6 +37,7 @@ function _update()
 		end
 	end
 
+	drive(pl)
 	softwall(pl,-10,-24,115,101)
 	casting(pl)
 	refill_power(pl)
@@ -47,16 +46,16 @@ end
 function _draw()
 	cls()
 	spr(pl.f,pl.x,pl.y,pl.w,pl.h)
+	for a in all(mobs) do
+		a:draw()
+	end
 	for a in all(shots) do
 		spr(a.f,a.x,a.y,a.w,a.h)
-	end
-	for a in all(bads) do
-		a:draw()
 	end
 	for a in all(eshots) do
 		spr(a.f,a.x,a.y,a.w,a.h)
 	end
-	print(#shots + #bads + #eshots)
+	print(#mobs+#shots+#eshots)
 end
 -->8
 function player(x, y)
