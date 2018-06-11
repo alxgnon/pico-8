@@ -1,111 +1,71 @@
 pico-8 cartridge // http://www.pico-8.com
 version 15
 __lua__
-function set_transparent(col)
-	palt(0, false)
-	palt(col, true)
-end
-
 function _init()
-	set_transparent(1)
-	player = new_player(25, 25)
-end
-
-function travel(a)
-	a.x += a.dx
-	a.y += a.dy
-end
-
-function xleaving(a)
-	local x = player.rx * 128
-	return a.x<x or a.x>x+128
+	palt(0, false)
+	palt(1, true)
+	pl = player(24, 24)
+	actors = {pl}
 end
 
 function _update()
-	load_room(player)
-	control_movement(player)
-	slide(player)
-	update_sparks(player)
-	update_plinks(player)
-
-	control_shooting(player)
-	lemon_travel(player)
+	for a in all(actors) do
+		a:update()
+	end
 end
 
-function draw_sprite(a)
-	spr(a.n,a.x,a.y,a.sw,a.sh,a.f)
+function draw_map(a)
+	local x, y = a.rx, a.ry
+	camera(x, y)
+	map(x/8, y/8, x, y, 16, 16)
 end
 
 function _draw()
 	cls()
-	draw_room(player)
-	draw_sparks(player)
-	for a in all(player.plinks) do
-		draw_sprite(a)
+	draw_map(pl)
+	for i = #actors, 1, -1 do
+		actors[i]:draw()
 	end
-	for a in all(player.lemons) do
-		draw_sprite(a)
-	end
-	draw_sprite(player)
 end
 -->8
-function new_player(x, y)
+function player(x, y)
 	return
-	{ n = 000 -- sprite number
-	, x = x -- x position
+	{ x = x -- x position
 	, y = y -- y position
 	, rx = 0 -- room x
 	, ry = 0 -- room y
 	, dx = 0 -- x movement
 	, dy = 0 -- y movement
-	, sw = 1 -- sprite width
-	, sh = 1 -- sprite height
-	, cx = 4 -- collision offset x
-	, cy = 4 -- collision offset y
-	, cw = 1.5 -- collision width
-	, ch = 3.5 -- collision height
+	, ox = 4 -- collision offset x
+	, oy = 4 -- collision offset y
+	, w = 1.5 -- collision width
+	, h = 3.5 -- collision height
 	, speed = 2 -- movement speed
-	, lemons = {} -- shots
-	, plinks = {} -- shot fx
-	, sparks = {} -- jetpack fx
+
+	, update =
+	function(a)
+		load_room(a)
+		control_movement(a)
+		slide(a)
+		jetpack_sparks(a)
+		control_shooting(a)
+	end
+
+	, draw =
+	function(a)
+		spr(000,a.x,a.y,1,1,a.f)
+	end
 	}
 end
 
-function new_lemon(x, y, f)
-	return
-	{ n = 001
-	, x = x + (f and 3 or 2)
-	, y = y + 3
-	, dx = f and -3 or 3
-	, dy = 0
-	, sw = 1
-	, sh = 1
-	, cx = 1.5
-	, cy = 1.5
-	, cw = 1.5
-	, ch = 1.5
-	}
-end
-
-function new_plink(x, y, dx)
-	local f = dx < 0
-	return
-	{ n = 002
-	, x = x - (f and 3 or 1)
-	, y = y - 1
-	, sw = 1
-	, sh = 1
-	, f = f
-	, t = 1
-	}
-end
-
-function new_spark(x, y, f)
-	return
-	{ x = x + (f and 6 or 1)
-	, y = y + 5
-	, t = 16
-	}
+function load_room(a)
+	local rx = flr(a.x/128)*128
+	local ry = flr(a.y/128)*128
+	if rx!=a.rx or ry!=a.ry then
+		a.rx = rx
+		a.ry = ry
+		actors = {a}
+	end
 end
 
 function control_movement(a)
@@ -115,75 +75,6 @@ function control_movement(a)
 	if (btn"1") a.dx += speed
 	if (btn"2") a.dy -= speed
 	if (btn"3") a.dy += speed
-end
-
-function control_shooting(a)
-	if btn"4" or btn"5" then
-		a.f = btn"4"
-		shooting += 1
-		if shooting % 4 == 1 then
-			sfx"01"
-			add(a.lemons,
-			new_lemon(a.x, a.y, a.f))
-		end
-	else
-		shooting = 0
-	end
-end
-
-function update_plinks(a)
-	for b in all(a.plinks) do
-		b.t -= 1
-		if b.t < 1 then
-			del(a.plinks, b)
-		end
-	end
-end
-
-function update_sparks(a)
-	for b in all(a.sparks) do
-		b.t -= 1
-		if b.t < 1 then
-			del(a.sparks, b)
-		end
-	end
-
-	if a.dx != 0 or a.dy != 0 then
-		moving += 1
-	else
-		moving = 0
-	end
-
-	if moving % 4 == 1 then
-		add(a.sparks,
-		new_spark(a.x, a.y, a.f))
-	end
-end
-
-function draw_sparks(a)
-	for b in all(a.sparks) do
-		pset(b.x, b.y, 7)
-	end
-end
--->8
-function load_room(a)
-	local rx = flr(a.x/128)
-	local ry = flr(a.y/128)
-	if rx!=a.rx or ry!=a.ry then
-		init_room(a, rx, ry)
-	end
-end
-
-function init_room(a, rx, ry)
-	a.rx = rx
-	a.ry = ry
-	a.lemons = {}
-end
-
-function draw_room(a)
-	local x,y = a.rx*128,a.ry*128
-	camera(x,y)
-	map(x/8,y/8,x,y,16,16)
 end
 
 function solid(x,y)
@@ -206,8 +97,8 @@ end
 -- check moving actors on solids
 function solid_collide(a,mult)
 	mult = mult or 1
-	local x,y=a.x+a.cx,a.y+a.cy
-	local w,h=a.cw,a.ch
+	local x,y=a.x+a.ox,a.y+a.oy
+	local w,h=a.w,a.h
 	local dx,dy=a.dx*mult,a.dy*mult
 	return
 	solid_area(x+dx,y,w,h),
@@ -215,7 +106,6 @@ function solid_collide(a,mult)
 	solid_area(x+dx,y+dy,w,h)
 end
 
--- slide collision movement
 function slide(a)
 	local dx,dy = a.dx/2,a.dy/2
 	local x,y=solid_collide(a,0.5)
@@ -227,17 +117,104 @@ function slide(a)
 	return x or y
 end
 
-function lemon_travel(a)
-	for b in all(a.lemons) do
-		local coll = slide(b)
-		if coll then
-			add(a.plinks,
-			new_plink(b.x,b.y,b.dx))
+function control_shooting(a)
+	if btn"4" or btn"5" then
+		a.f = btn"4"
+		a.shooting += 1
+		if a.shooting % 4 == 1 then
+			sfx"01"
+			add(actors,
+			lemon(a.x, a.y, a.f))
 		end
-		if coll or xleaving(b) then
-			del(a.lemons, b)
+	else
+		a.shooting = 0
+	end
+end
+
+function lemon(x, y, f)
+	return
+	{ x = x + (f and 3 or 2)
+	, y = y + 3
+	, dx = f and -3 or 3
+	, dy = 0
+	, ox = 1.5
+	, oy = 1.5
+	, w = 1.5
+	, h = 1.5
+
+	, update =
+	function(a)
+		local coll = slide(a)
+		if coll then
+			add(actors,
+			plink(a.x,a.y,a.dx))
+		end
+		if coll or xleaving(a) then
+			del(actors, a)
 		end
 	end
+
+	, draw =
+	function(a)
+		spr(001,a.x,a.y)
+	end
+	}
+end
+
+function xleaving(a)
+	local x = pl.rx
+	return a.x<x or a.x>x+128
+end
+-->8
+-- visual effects
+
+-- kill when timer expires
+function expiration(a)
+	a.t -= 1
+	if a.t < 1 then
+		del(actors, a)
+	end
+end
+
+-- player shot hits wall
+function plink(x, y, dx)
+	local f = dx < 0
+	return
+	{ x = x - (f and 3 or 1)
+	, y = y - 1
+	, f = f
+	, t = 2
+	, update = expiration
+	, draw =
+	function(a)
+		spr(002,a.x,a.y,1,1,a.f)
+	end
+	}
+end
+
+-- leave sparks while moving
+function jetpack_sparks(a)
+	if a.dx == 0 and a.dy == 0 then
+		a.moving = 0
+	else
+		a.moving=(a.moving or 0) + 1
+		if a.moving % 4 == 1 then
+			add(actors,
+			spark(a.x, a.y, a.f))
+		end
+	end
+end
+
+-- left by player jetpack
+function spark(x, y, f)
+	return
+	{ x = x + (f and 6 or 1)
+	, y = y + 5
+	, t = 16
+	, update = expiration
+	, draw =
+	function(a)pset(a.x,a.y,7)end
+	}
 end
 
 __gfx__
