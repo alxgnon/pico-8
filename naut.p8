@@ -139,8 +139,8 @@ function lemon(x, y, f)
 	, dy = 0
 	, ox = 1.5
 	, oy = 1.5
-	, w = 1.3
-	, h = 1.3
+	, w = 1.5
+	, h = 1.5
 
 	, update =
 	function(a)
