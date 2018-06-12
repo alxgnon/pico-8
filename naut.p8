@@ -37,7 +37,11 @@ end
 function draw_map(a)
 	local x, y = a.rx, a.ry
 	if x and y then
-		camera(x, y)
+		if a.hurt and a.hurt>20 then
+			camera(x-1+rnd"3",y-1+rnd"3")
+		else
+			camera(x, y)
+		end
 		map(x/8,y/8,x,y,16,16,2)
 	end
 end
@@ -83,7 +87,11 @@ function player(x, y)
 		and a.hurt and a.hurt>0 then
 			line(x+1,y-2,x+a.hp,y-2,8)
 		end
-		spr(068,x,y,1,1,a.f)
+		if not a.hurt
+		or a.hurt < 1
+		or a.hurt % 4 < 2 then
+			spr(068,x,y,1,1,a.f)
+		end
 	end
 	}
 end
@@ -113,16 +121,18 @@ function spawn_enemies(rx, ry)
 end
 
 function enemy_damage(a)
-	if a.hurt then
-		a.hurt -= 1
-	end
-	for b in all(actors) do
-		if b.edamage then
-			if touching(a, b) then
-				a.hp -= b.edamage
-				a.hurt = 12
-				if a.hp < 1 then
-					_init()
+	if (a.hurt) a.hurt -= 1
+	if not a.hurt or a.hurt<1 then
+		for b in all(actors) do
+			if b.edamage then
+				if touching(a, b) then
+					a.hp -= b.edamage
+					a.hurt = 24
+					if a.hp < 1 then
+						a.x = -rnd"256"
+						a.y = -rnd"256"
+						a.speed = 0
+					end
 				end
 			end
 		end
