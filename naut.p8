@@ -1,60 +1,85 @@
 pico-8 cartridge // http://www.pico-8.com
 version 15
 __lua__
-function paltswap(old, new)
-	palt(old, false)
-	palt(new, true)
+function _init()
+	palt(0, false)
+	palt(1, true)
+	game = new_game()
+end
+
+function _update()
+	game:update()
+end
+
+function _draw()
+	game:draw()
+end
+
+function new_game()
+	return
+	{ player = spawn_player()
+	, actors = {}
+	, sparks = {}
+	, update = update_game
+	, draw = draw_game
+	}
 end
 
 function spawn_player()
-	actors = {}
-	sparks = {}
 	for x = 0, 15 do
 		for y = 0, 15 do
 			if mget(x, y) == 064 then
-				pl = player.new(x*8, y*8)
-				add(actors, pl)
-				return
+				return new_player(x*8, y*8)
 			end
 		end
 	end
 end
 
-function _init()
-	paltswap(0, 1)
-	spawn_player()
+function update_game(game)
+	game.player:update()
+	update_all(game.actors)
+	update_all(game.sparks)
 end
 
-function _update()
-	for a in all(sparks) do
-		a:update()
-	end
-	for a in all(actors) do
-		a:update()
+function update_all(actors)
+	for actor in all(actors) do
+		actor:update()
 	end
 end
 
-function draw_map(a)
-	local x, y = a.rx, a.ry
-	if x and y then
-		if a.hurt and a.hurt>20 then
-			camera(x-1+rnd"3",y-1+rnd"3")
-		else
-			camera(x, y)
-		end
-		map(x/8,y/8,x,y,16,16,4)
-	end
-end
-
-function _draw()
+function draw_game(game)
 	cls()
-	for a in all(sparks) do
-		a:draw()
+	draw_camera(game)
+	draw_all(game.sparks)
+	draw_room(game)
+	draw_all(game.actors)
+	game.player:draw()
+end
+
+function draw_all(actors)
+	for actor in all(actors) do
+		actor:draw()
 	end
-	draw_map(pl)
-	for i = #actors, 1, -1 do
-		actors[i]:draw()
+end
+
+function shake(gx, gy, a)
+	if a.hurt and a.hurt > 20 then
+		return gx-1+rnd"3",gy-1+rnd"3"
 	end
+	return gx, gy
+end
+
+function draw_camera(game)
+	local gx, gy = game.x, game.y
+	if gx and gy then
+		gx,gy=shake(gx,gy,game.player)
+		camera(gx, gy)
+	end
+end
+
+function draw_room(game)
+	local gx, gy = game.x, game.y
+	map(gx/8,gy/8,gx,gy,16,16,4)
 end
 -->8
 -- make a delicious table soup!
@@ -98,7 +123,7 @@ end
 
 player = {}
 
-function player.new(x, y)
+function new_player(x, y)
 	return mix
 	{ point(x, y)
 	, motion(2)
@@ -131,21 +156,22 @@ function player.draw(a)
 end
 
 function load_room(a)
-	local rx = flr(a.x/128)*128
-	local ry = flr(a.y/128)*128
-	if rx!=a.rx or ry!=a.ry then
-		a.rx = rx
-		a.ry = ry
-		actors = {a}
-		spawn_enemies(rx, ry)
+	local gx = flr(a.x/128)*128
+	local gy = flr(a.y/128)*128
+	if gx!=game.x or gy!=game.y then
+		game.x = gx
+		game.y = gy
+		game.actors = {}
+		game.sparks = {}
+		spawn_enemies(gx, gy)
 	end
 end
 
-function spawn_enemies(rx, ry)
+function spawn_enemies(gx, gy)
 	for i = 0, 15 do
 		for j = 0, 15 do
-			local x = rx / 8 + i
-			local y = ry / 8 + j
+			local x = gx / 8 + i
+			local y = gy / 8 + j
 			local n = mget(x, y)
 			if fget(n, 0) then
 				spawn(n, x*8, y*8)
@@ -172,7 +198,7 @@ function control_shooting(a)
 		and (not a.hurt or a.hurt < 0)
 		then
 			sfx"01"
-			add(actors,
+			add(game.actors,
 			lemon(a.x, a.y, a.f))
 		end
 	end
@@ -184,7 +210,7 @@ end
 function expiration(a)
 	a.t -= 1
 	if a.t < 1 then
-		del(sparks, a)
+		del(game.sparks, a)
 	end
 end
 
@@ -211,7 +237,7 @@ function jetpack_sparks(a)
 	else
 		a.moving=(a.moving or 0) + 1
 		if a.moving % 4 == 1 then
-			add(sparks,
+			add(game.sparks,
 			spark(a.x, a.y, a.f))
 		end
 	end
@@ -259,23 +285,23 @@ end
 -->8
 function spawn(n, x, y)
 	if n == 067 then
-		add(actors, drone(x, y))
+		add(game.actors, drone(x, y))
 	end
 end
 
 function lemon_hit(a, b)
 	sfx(02)
-	del(actors, b)
+	del(game.actors, b)
 	a.hp -= b.damage
-	add(sparks,explo(b.x,b.y))
+	add(game.sparks,explo(b.x,b.y))
 end
 
 function lemon_fatality(a)
 	sfx(03)
-	del(actors, a)
+	del(game.actors, a)
 	local ex = a.x + a.w / 2
 	local ey = a.y + a.h / 2
-	add(sparks,explo(ex,ey))
+	add(game.sparks,explo(ex,ey))
 end
 
 function drone_seeking(a)
@@ -288,6 +314,7 @@ function drone_seeking(a)
 		a.dx = 0
 		a.dy = 0
 		if a.t>17 and rnd"22"<2 then
+			local pl = game.player
 			local o =
 			atan2(pl.x-a.x,pl.y-a.y)
 			o = o - 0.1 + rnd"0.2"
@@ -377,7 +404,7 @@ end
 function enemy_damage(a)
 	if (a.hurt) a.hurt -= 1
 	if not a.hurt or a.hurt<1 then
-		for b in all(actors) do
+		for b in all(game.actors) do
 			if b.edamage then
 				if touching(a, b) then
 					sfx"04"
@@ -397,7 +424,7 @@ end
 
 
 function xleaving(a)
-	local x = pl.rx
+	local x = game.x
 	if x then
 		return a.x<x or a.x>x+128
 	end
@@ -419,11 +446,11 @@ function lemon(x, y, f)
 	function(a)
 		local cx, cy = slide(a)
 		if cx or cy then
-			add(sparks,
+			add(game.sparks,
 			plink(a.x,a.y,a.dx))
 		end
 		if cx or cy or xleaving(a) then
-			del(actors, a)
+			del(game.actors, a)
 		end
 	end
 
@@ -447,7 +474,7 @@ function touching(a, b)
 end
 
 function drink_lemonade(a)
-	for b in all(actors) do
+	for b in all(game.actors) do
 		if b.damage then
 			if touching(a, b) then
 				lemon_hit(a, b)
