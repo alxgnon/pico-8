@@ -1,20 +1,9 @@
 pico-8 cartridge // http://www.pico-8.com
 version 15
 __lua__
-function palette(bloody)
-	pal()
+function _init()
 	palt(0, false)
 	palt(1, true)
-	if bloody then
-		pal(5, 2)
-		pal(6, 8)
-		pal(7, 8)
-		pal(10, 8)
-	end
-end
-
-function _init()
-	palette()
 	jeu = new_game()
 end
 
@@ -67,16 +56,11 @@ end
 
 function draw_game(game)
 	cls()
-	local a = game.player
-	if a.hurt and a.hurt > 20 then
-		palette(true)
-	end
 	draw_camera(game)
 	draw_all(game.sparks)
 	draw_room(game)
 	draw_all(game.actors)
 	game.player:draw()
-	palette()
 end
 
 function draw_all(actors)
