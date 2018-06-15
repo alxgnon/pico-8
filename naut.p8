@@ -19,7 +19,6 @@ function new_select()
 	return
 	{ x = 0
 	, y = 0
-	, speed = 4
 	, update = update_select
 	, draw = draw_select
 	}
@@ -30,9 +29,9 @@ function update_select(a)
 		jeu = new_game(a.x+64,a.y+64)
 		return
 	end
-	control_movement(a)
-	a.x += a.dx
-	a.y += a.dy
+	local dx, dy = dpad(4)
+	a.x += dx
+	a.y += dy
 end
 
 function draw_select(a)
@@ -164,7 +163,7 @@ end
 
 function player.update(a)
 	load_room(a)
-	control_movement(a)
+	a.dx, a.dy = dpad(2)
 	slide(a)
 	jetpack_sparks(a)
 	control_shooting(a)
@@ -210,13 +209,13 @@ function spawn_enemies(gx, gy)
 	end
 end
 
-function control_movement(a)
-	a.dx, a.dy = 0, 0
-	local speed = a.speed
-	if (btn"0") a.dx -= speed
-	if (btn"1") a.dx += speed
-	if (btn"2") a.dy -= speed
-	if (btn"3") a.dy += speed
+function dpad(speed)
+	local dx, dy = 0, 0
+	if (btn"0") dx -= speed
+	if (btn"1") dx += speed
+	if (btn"2") dy -= speed
+	if (btn"3") dy += speed
+	return dx, dy
 end
 
 function can_shoot(a)
