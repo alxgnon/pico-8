@@ -211,6 +211,7 @@ function load_room(a)
 	local gx = flr(a.x/128)*128
 	local gy = flr(a.y/128)*128
 	if gx!=jeu.x or gy!=jeu.y then
+		srand(gx + gy)
 		jeu.x = gx
 		jeu.y = gy
 		jeu.lemons = {}
