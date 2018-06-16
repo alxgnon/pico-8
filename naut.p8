@@ -338,7 +338,11 @@ function spark(x, y, f)
 	, update = expiration
 	, draw =
 	function(a)
-		pset(a.x, a.y, fg)
+		if a.t < 6 then
+			pset(a.x, a.y, fg-1)
+		else
+			pset(a.x, a.y, fg)
+		end
 	end
 	}
 end
