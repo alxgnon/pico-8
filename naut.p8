@@ -1,18 +1,17 @@
 pico-8 cartridge // http://www.pico-8.com
 version 16
 __lua__
-function palette(c1, c2)
+palet = {bg = 0, fg = 6}
+function palet:te()
 	pal()
-	bg = c1
-	fg = c2
-	pal(0, bg)
-	pal(6, fg)
+	pal(0, self.bg)
+	pal(6, self.fg)
 	palt(0, false)
 	palt(1, true)
 end
 
 function _init()
-	palette(0, 6)
+	palet:te()
 	jeu = new_select()
 end
 
@@ -44,7 +43,7 @@ function update_select(a)
 end
 
 function draw_select(a)
-	cls(bg)
+	cls(palet.bg)
 	camera(a.x, a.y)
 	map(a.x/8,a.y/8,a.x,a.y,16,16)
 	spr(064,a.x+64,a.y+64)
@@ -100,7 +99,7 @@ function update_all(actors)
 end
 
 function draw_game(game)
-	cls(bg)
+	cls(palet.bg)
 	draw_camera(game)
 	draw_all(game.sparks)
 	draw_all(game.lemons)
@@ -136,7 +135,6 @@ function draw_room(game)
 		map(gx/8,gy/8,gx,gy,16,16,4)
 	end
 end
--->8
 -- make a delicious table soup!
 function mix(tables)
 	local soup = {}
@@ -268,7 +266,6 @@ function control_shooting(a)
 		a.charge = 1
 	end
 end
--->8
 -- visual effects
 
 -- kill when timer expires
@@ -339,15 +336,14 @@ function spark(x, y, f)
 	, draw =
 	function(a)
 		if a.t < 6 then
-			pset(a.x, a.y, fg-1)
+			pset(a.x, a.y, palet.fg-1)
 		else
-			pset(a.x, a.y, fg)
+			pset(a.x, a.y, palet.fg)
 		end
 	end
 	}
 end
 
--->8
 function spawn(n, x, y)
 	if n == 067 then
 		add(jeu.actors, drone(x, y))
@@ -417,7 +413,6 @@ function drone(x, y)
 	end
 	}
 end
--->8
 --------------- collisions ----
 
 -- todo: make edges solid for
