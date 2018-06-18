@@ -196,7 +196,13 @@ end
 
 function player.update(a)
 	load_room(a)
-	a.dx, a.dy = fleches(2)
+	local speed = 2
+	if (btn"5") speed = 3
+	a.dx, a.dy = fleches(speed)
+	if not btn"4" then
+		if (a.dx > 0) a.f = false
+		if (a.dx < 0) a.f = true
+	end
 	slide(a)
 	jetpack_sparks(a)
 	control_shooting(a)
@@ -273,16 +279,8 @@ function control_shooting(a)
 	else
 		a.charge = 1
 	end
-
-	if btnp"5" then
-		a.f = not a.f
-		for le in all(jeu.lemons) do
-			le.dx = -le.dx
-		end
-	end
 end
--- visual effects
-
+------------- visual effects
 -- kill when timer expires
 function expiration(a)
 	a.t -= 1
