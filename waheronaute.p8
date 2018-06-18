@@ -158,14 +158,6 @@ function point(x, y)
 	return {x = x, y = y}
 end
 
-function motion(speed, dx, dy)
-	return
-	{ speed = speed
-	, dx = dx or 0
-	, dy = dy or 0
-	}
-end
-
 function hitbox(ox, oy, w, h)
 	return {ox=ox,oy=oy,w=w,h=h}
 end
@@ -187,7 +179,6 @@ player = {}
 function new_player(x, y)
 	return mix
 	{ point(x, y)
-	, motion(2)
 	, hitbox(0, 0, 7, 6)
 	, hitpoints(6)
 	, methods(player)
@@ -218,7 +209,9 @@ function player.draw(a)
 	if not a.hurt
 	or a.hurt < 1
 	or a.hurt % 4 < 2 then
+		if (btn"5") pal(8, 10)
 		spr(064,x,y,1,1,a.f)
+		transpalette()
 	end
 end
 
@@ -270,7 +263,7 @@ function can_shoot(a)
 end
 
 function control_shooting(a)
-	if btn"4" then
+	if btn"4" and not btn"5" then
 		if can_shoot(a) then
 			sfx"01"
 			add(jeu.lemons,
@@ -312,8 +305,15 @@ function jetpack_sparks(a)
 	else
 		a.moving=(a.moving or 0) + 1
 		if a.moving % 4 == 1 then
-			add(jeu.sparks,
-			spark(a.x, a.y, a.f))
+			if btn"5" then
+				add(jeu.sparks,
+				spark(a.x, a.y-2, a.f, true))
+				add(jeu.sparks,
+				spark(a.x, a.y+2, a.f, true))
+			else
+				add(jeu.sparks,
+				spark(a.x, a.y, a.f))
+			end
 		end
 	end
 end
@@ -340,7 +340,7 @@ function explo(x, y)
 end
 
 -- left by player jetpack
-function spark(x, y, f)
+function spark(x, y, f, golden)
 	return
 	{ x = x + (f and 7 or 0)
 	, y = y + 3
@@ -349,7 +349,13 @@ function spark(x, y, f)
 	, draw =
 	function(a)
 		if a.t < 6 then
-			pset(a.x, a.y, 2)
+			if golden then
+				pset(a.x, a.y, 9)
+			else
+				pset(a.x, a.y, 2)
+			end
+		elseif golden then
+			pset(a.x, a.y, 10)
 		else
 			pset(a.x, a.y, 8)
 		end
