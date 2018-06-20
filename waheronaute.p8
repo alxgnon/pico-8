@@ -4,28 +4,28 @@ __lua__
 -- waheronaute
 -- par alexandre christian elie
 
-function transpalette()
+function palette()
 	pal()
 	palt(0, false)
 	palt(1, true)
 end
 
 function _init()
-	transpalette()
-	jeu = un_jeu(64, 64)
+	palette()
+	game = un_game(64, 64)
 end
 
 function _update()
-	local out = jeu:move()
-	if (out) jeu = out
+	local out = game:move()
+	if (out) game = out
 end
 
 function _draw()
-	jeu:draw()
+	game:draw()
 end
 
 menuitem(1, "warp", function()
-	jeu = un_portail(jeu.x,jeu.y)
+	game = un_portail(game.x,game.y)
 end)
 
 
@@ -40,7 +40,7 @@ end
 
 function move_portail(a)
 	if btn"4" or btn"5" then
-		return un_jeu(a.x+64,a.y+64)
+		return un_game(a.x+64,a.y+64)
 	end
 	local dx, dy = fleches(4)
 	a.x += dx
@@ -55,7 +55,7 @@ function draw_portail(a)
 end
 
 
-function un_jeu(x, y)
+function un_game(x, y)
 	return
 	{ player = new_player(x, y)
 	, lemons = {}
@@ -70,7 +70,7 @@ function update_game(game)
 	if game.countin then
 		game.countin -= 1
 		if game.countin < 1 then
-			jeu = un_jeu(64, 64)
+			game = un_game(64, 64)
 		end
 	else
 		game.player:update()
@@ -92,7 +92,7 @@ function unlock_doors(game)
 				local tile = mget(i, j)
 				if tile == 002 then
 					mset(i, j, 000)
-					add(jeu.sparks,explo(i*8,j*8))
+					add(game.sparks,explo(i*8,j*8))
 				elseif fget(tile, 0) then
 					mset(i, j, 000)
 				end
@@ -212,20 +212,20 @@ function player.draw(a)
 	or a.hurt % 4 < 2 then
 		if (btn"5") pal(8, 10)
 		spr(064,x,y,1,1,a.f)
-		transpalette()
+		palette()
 	end
 end
 
 function load_room(a)
 	local gx = flr(a.x/128)*128
 	local gy = flr(a.y/128)*128
-	if gx!=jeu.x or gy!=jeu.y then
+	if gx!=game.x or gy!=game.y then
 		srand(gx + gy)
-		jeu.x = gx
-		jeu.y = gy
-		jeu.lemons = {}
-		jeu.actors = {}
-		jeu.sparks = {}
+		game.x = gx
+		game.y = gy
+		game.lemons = {}
+		game.actors = {}
+		game.sparks = {}
 		spawn_enemies(gx, gy)
 	end
 end
@@ -259,7 +259,7 @@ function can_shoot(a)
 	a.charge = bang + 1
 	primed = bang%4==1
 	ready = not a.hurt or a.hurt<0
-	open = #jeu.lemons < 6
+	open = #game.lemons < 6
 	return primed and ready and open
 end
 
@@ -267,7 +267,7 @@ function control_shooting(a)
 	if btn"4" and not btn"5" then
 		if can_shoot(a) then
 			sfx"01"
-			add(jeu.lemons,
+			add(game.lemons,
 			lemon(a.x, a.y, a.f))
 		end
 	else
@@ -279,7 +279,7 @@ end
 function expiration(a)
 	a.t -= 1
 	if a.t < 1 then
-		del(jeu.sparks, a)
+		del(game.sparks, a)
 	end
 end
 
@@ -307,12 +307,12 @@ function jetpack_sparks(a)
 		a.moving=(a.moving or 0) + 1
 		if a.moving % 4 == 1 then
 			if btn"5" then
-				add(jeu.sparks,
+				add(game.sparks,
 				spark(a.x, a.y-2, a.f, true))
-				add(jeu.sparks,
+				add(game.sparks,
 				spark(a.x, a.y+2, a.f, true))
 			else
-				add(jeu.sparks,
+				add(game.sparks,
 				spark(a.x, a.y, a.f))
 			end
 		end
@@ -372,7 +372,7 @@ end
 -- pour quelques ferailles
 function qq_ferailles(n, x, y)
 	for i = 1, n do
-		add(jeu.sparks,
+		add(game.sparks,
 		une_feraille(x, y))
 	end
 end
@@ -407,27 +407,27 @@ end
 
 function spawn(n, x, y)
 	if n == 067 then
-		add(jeu.actors, drone(x, y))
+		add(game.actors, drone(x, y))
 	elseif n == 071 then
-		add(jeu.actors, boule(x, y))
+		add(game.actors, boule(x, y))
 	end
 end
 
 function lemon_hit(a, b)
 	sfx(02)
-	del(jeu.lemons, b)
+	del(game.lemons, b)
 	a.hp -= b.damage
-	add(jeu.sparks,explo(b.x,b.y))
+	add(game.sparks,explo(b.x,b.y))
 	qq_ferailles(rnd"3", a.x, a.y)
 end
 
 -- `a` isn't a lemon :^)
 function lemon_fatality(a)
 	sfx(03)
-	del(jeu.actors, a)
+	del(game.actors, a)
 	local ex = a.x + a.w / 2
 	local ey = a.y + a.h / 2
-	add(jeu.sparks,explo(ex,ey))
+	add(game.sparks,explo(ex,ey))
 	qq_ferailles(rnd"6", a.x, a.y)
 end
 
@@ -441,7 +441,7 @@ function drone_seeking(a)
 		a.dx = 0
 		a.dy = 0
 		if a.t>17 and rnd"22"<4 then
-			local pl = jeu.player
+			local pl = game.player
 			local o =
 			atan2(pl.x-a.x,pl.y-a.y)
 			o = o - 0.1 + rnd"0.2"
@@ -494,7 +494,7 @@ function un_disque(x, y)
 	, edamage = 1
 	,update=function(a) -- move
 		drink_lemonade(a)
-		local pl = jeu.player
+		local pl = game.player
 		local o =
 		atan2(pl.x-a.x,pl.y-a.y)
 		a.dx=lerp(0.1,a.dx,cos(o))
@@ -526,7 +526,7 @@ function boule(x, y)
 		if (a.hurt) a.hurt -= 1
 		drink_lemonade(a)
 		if (a.t % 44 == 23) then
- 			add(jeu.actors,
+ 			add(game.actors,
  			un_disque(a.x+2, a.y+2))
  		end
 	 	a.t += 1
@@ -593,7 +593,7 @@ end
 function enemy_damage(a)
 	if (a.hurt) a.hurt -= 1
 	if not a.hurt or a.hurt<1 then
-		for b in all(jeu.actors) do
+		for b in all(game.actors) do
 			if b.edamage then
 				if touching(a, b) then
 					sfx"04"
@@ -601,10 +601,10 @@ function enemy_damage(a)
 					a.hurt = 24
 					qq_ferailles(rnd"4",a.x,a.y)
 					if a.hp < 1 then
-						jeu.countin = 16
+						game.countin = 16
 					end
 					if b.fragile then
-						del(jeu.actors, b)
+						del(game.actors, b)
 					end
 				end
 			end
@@ -614,7 +614,7 @@ end
 
 
 function xleaving(a)
-	local x = jeu.x
+	local x = game.x
 	if x then
 		return a.x<x or a.x>x+128
 	end
@@ -636,11 +636,11 @@ function lemon(x, y, f)
 	function(a)
 		local cx, cy = slide(a)
 		if cx or cy then
-			add(jeu.sparks,
+			add(game.sparks,
 			plink(a.x,a.y,a.dx))
 		end
 		if cx or cy or xleaving(a) then
-			del(jeu.lemons, a)
+			del(game.lemons, a)
 		end
 	end
 
@@ -665,7 +665,7 @@ end
 
 function drink_lemonade(a)
 	local ouch
-	for b in all(jeu.lemons) do
+	for b in all(game.lemons) do
 		if touching(a, b) then
 			ouch = true
 			lemon_hit(a, b)
