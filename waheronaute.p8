@@ -12,12 +12,12 @@ end
 
 function _init()
 	palette()
-	game = un_game(64, 64)
+	game = new_game(64, 64)
 end
 
 function _update()
-	local out = game:move()
-	if (out) game = out
+	local new_state = game:move()
+	if (new_state) game = new_state
 end
 
 function _draw()
@@ -40,7 +40,7 @@ end
 
 function move_portail(a)
 	if btn"4" or btn"5" then
-		return un_game(a.x+64,a.y+64)
+		return new_game(a.x+64,a.y+64)
 	end
 	local dx, dy = fleches(4)
 	a.x += dx
@@ -55,7 +55,7 @@ function draw_portail(a)
 end
 
 
-function un_game(x, y)
+function new_game(x, y)
 	return
 	{ player = new_player(x, y)
 	, lemons = {}
@@ -70,7 +70,7 @@ function update_game(game)
 	if game.countin then
 		game.countin -= 1
 		if game.countin < 1 then
-			game = un_game(64, 64)
+			game = new_game(64, 64)
 		end
 	else
 		game.player:update()
