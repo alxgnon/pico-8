@@ -496,7 +496,7 @@ function boule(x, y)
 		drink_lemonade(a)
 		if (a.t % 44 == 23) then
  			add(game.actors,
- 			un_disque(a.x+2, a.y+2))
+ 			un_disque(a.x+2, a.y-5))
  		end
 	 	a.t += 1
 	end
