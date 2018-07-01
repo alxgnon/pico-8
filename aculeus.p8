@@ -51,6 +51,7 @@ function move_portail(a)
 	if btn "4" or btn "5" then
 		return new_game(a.x + 64, a.y + 64)
 	end
+
 	local dx, dy = fleches(4)
 	a.x = a.x + dx
 	a.y = a.y + dy
@@ -77,6 +78,7 @@ end
 function update_game(game)
 	if game.countin then
 		game.countin = game.countin - 1
+
 		if game.countin < 1 then
 			game = new_game(64, 64)
 		end
@@ -86,6 +88,7 @@ function update_game(game)
 		update_all(game.actors)
 		update_all(game.sparks)
 		unlock_doors(game)
+
 		while #game.actors > 8 do
 			game.actors[#game.actors] = nil
 		end
@@ -94,10 +97,12 @@ end
 
 function unlock_doors(game)
 	local gx, gy = game.x / 8, game.y / 8
+
 	if #game.actors < 1 then
 		for i = gx, gx + 15 do
 			for j = gy, gy + 15 do
 				local tile = mget(i, j)
+
 				if tile == 002 then
 					mset(i, j, 000)
 					add(game.sparks, explo(i * 8, j * 8))
@@ -135,11 +140,13 @@ function shake(gx, gy, a)
 	if a.hurt and a.hurt > 20 then
 		return gx - 1 + rnd "3", gy - 1 + rnd "3"
 	end
+
 	return gx, gy
 end
 
 function draw_camera(game)
 	local gx, gy = game.x, game.y
+
 	if gx and gy then
 		gx, gy = shake(gx, gy, game.player)
 		camera(gx, gy)
@@ -148,6 +155,7 @@ end
 
 function draw_room(game)
 	local gx, gy = game.x, game.y
+
 	if gx and gy then
 		map(gx / 8, gy / 8, gx, gy, 16, 16, 4)
 	end
@@ -186,6 +194,7 @@ function move_player(a)
 			a.f = true
 		end
 	end
+
 	slide(a)
 	jetpack_sparks(a)
 	control_shooting(a)
@@ -194,9 +203,11 @@ end
 
 function draw_player(a)
 	local x, y = a.x, a.y
+
 	if a.hp > 0 and a.hurt and a.hurt > 0 then
 		line(x + 1, y - 2, x + a.hp, y - 2, 8)
 	end
+
 	if not a.hurt or a.hurt < 1 or a.hurt % 4 < 2 then
 		if btn "5" then
 			pal(8, 10)
@@ -210,6 +221,7 @@ end
 function load_room(a)
 	local gx = flr(a.x / 128) * 128
 	local gy = flr(a.y / 128) * 128
+
 	if gx ~= game.x or gy ~= game.y then
 		srand(gx + gy)
 		game.x = gx
@@ -227,6 +239,7 @@ function spawn_enemies(gx, gy)
 			local x = gx / 8 + i
 			local y = gy / 8 + j
 			local n = mget(x, y)
+
 			if fget(n, 0) then
 				spawn(n, x * 8, y * 8)
 			end
@@ -258,11 +271,13 @@ end
 
 function can_shoot(a)
 	local bang, primed, ready, open
+
 	bang = a.charge or 1
 	a.charge = bang + 1
 	primed = bang % 4 == 1
 	ready = not a.hurt or a.hurt < 0
 	open = #game.lemons < 6
+
 	return primed and ready and open
 end
 
@@ -303,6 +318,7 @@ function jetpack_sparks(a)
 		a.moving = 0
 	else
 		a.moving = (a.moving or 0) + 1
+
 		if a.moving % 4 == 1 then
 			if btn "5" then
 				add(game.sparks, spark(a.x, a.y - 2, a.f, true))
@@ -414,8 +430,10 @@ end
 
 function drone_seeking(a)
 	a.t = (a.t or 0) + 1
+
 	if a.t < 1 then
 		local x, y = slide(a)
+
 		if x then
 			a.dx = a.dx * -1
 		end
@@ -426,9 +444,11 @@ function drone_seeking(a)
 	else
 		a.dx = 0
 		a.dy = 0
+
 		if a.t > 17 and rnd "22" < 4 then
 			local pl = game.player
 			local o = atan2(pl.x - a.x, pl.y - a.y)
+
 			o = o - 0.1 + rnd "0.2"
 			a.dx = cos(o) * 2
 			a.dy = sin(o) * 2
@@ -477,6 +497,7 @@ function un_disque(x, y)
 			drink_lemonade(a)
 			local pl = game.player
 			local o = atan2(pl.x - a.x, pl.y - a.y)
+
 			a.dx = lerp(0.1, a.dx, cos(o))
 			a.dy = lerp(0.1, a.dy, sin(o))
 			o = o + 0.25
@@ -505,18 +526,23 @@ function boule(x, y)
 			if a.hurt then
 				a.hurt = a.hurt - 1
 			end
+
 			drink_lemonade(a)
+
 			if (a.t % 44 == 23) then
 				add(game.actors, un_disque(a.x + 2, a.y - 5))
 			end
+
 			a.t = a.t + 1
 		end,
 		draw = function(a)
 			local x, y = a.x, a.y
+
 			if a.hurt and a.hurt > 0 then
 				x = x - 1 + rnd "3"
 				y = y - 1 + rnd "3"
 			end
+
 			spr(071, x, y)
 		end
 	}
@@ -525,6 +551,7 @@ end
 -- is tile under pixel solid?
 function solid(x, y)
 	local tile = mget(x / 8, y / 8)
+
 	if fget(tile, 1) then
 		return tile
 	end
@@ -542,6 +569,7 @@ function solid_collide(a)
 	local y = a.y + a.oy
 	local dx, dy = a.dx, a.dy
 	local w, h = a.w, a.h
+
 	return solid_area(x + dx, y, w, h), solid_area(x, y + dy, w, h), solid_area(x + dx, y + dy, w, h)
 end
 
@@ -550,8 +578,10 @@ function slide(a)
 	local cx, cy
 	a.dx = a.dx / 4
 	a.dy = a.dy / 4
+
 	for i = 1, 4 do
 		cx, cy = solid_collide(a)
+
 		if not cx then
 			a.x = a.x + a.dx
 		end
@@ -560,8 +590,10 @@ function slide(a)
 			a.y = a.y + a.dy
 		end
 	end
+
 	a.dx = a.dx * 4
 	a.dy = a.dy * 4
+
 	return cx, cy
 end
 
@@ -569,20 +601,21 @@ function enemy_damage(a)
 	if a.hurt then
 		a.hurt = a.hurt - 1
 	end
+
 	if not a.hurt or a.hurt < 1 then
 		for b in all(game.actors) do
-			if b.edamage then
-				if touching(a, b) then
-					sfx "04"
-					a.hp = a.hp - b.edamage
-					a.hurt = 24
-					qq_ferailles(rnd "4", a.x, a.y)
-					if a.hp < 1 then
-						game.countin = 16
-					end
-					if b.fragile then
-						del(game.actors, b)
-					end
+			if b.edamage and touching(a, b) then
+				sfx "04"
+				a.hp = a.hp - b.edamage
+				a.hurt = 24
+				qq_ferailles(rnd "4", a.x, a.y)
+
+				if a.hp < 1 then
+					game.countin = 16
+				end
+
+				if b.fragile then
+					del(game.actors, b)
 				end
 			end
 		end
@@ -591,6 +624,7 @@ end
 
 function xleaving(a)
 	local x = game.x
+
 	if x then
 		return a.x < x or a.x > x + 128
 	end
@@ -609,9 +643,11 @@ function lemon(x, y, f)
 		damage = 1,
 		update = function(a)
 			local cx, cy = slide(a)
+
 			if cx or cy then
 				add(game.sparks, plink(a.x, a.y, a.dx))
 			end
+
 			if cx or cy or xleaving(a) then
 				del(game.lemons, a)
 			end
@@ -627,20 +663,24 @@ function touching(a, b)
 	local ay = a.y + a.oy
 	local bx = b.x + b.ox
 	local by = b.y + b.oy
+
 	return ax < bx + b.w and bx < ax + a.w and ay < by + b.h and by < ay + a.h
 end
 
 function drink_lemonade(a)
 	local ouch
+
 	for b in all(game.lemons) do
 		if touching(a, b) then
 			ouch = true
 			lemon_hit(a, b)
+
 			if a.hp < 1 then
 				lemon_fatality(a)
 			end
 		end
 	end
+
 	if ouch then
 		a.hurt = 12
 	end
