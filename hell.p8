@@ -4,10 +4,6 @@ __lua__
 -- hell
 -- work in progress
 
--- in the beginning was the word
--- and the word was with god
--- and the word was god.
-
 gfx =
 { jesus = 001
 , totem = 007
