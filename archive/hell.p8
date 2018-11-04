@@ -1,8 +1,22 @@
 pico-8 cartridge // http://www.pico-8.com
-version 15
+version 16
 __lua__
 -- hell
 -- work in progress
+
+-- make a pico kanban
+
+
+-- todo -----------------------
+
+-- "go!"
+
+-- refactor the shit
+
+-- more enemies
+
+-- remove tail when dashing
+
 
 gfx =
 { jesus = 001
