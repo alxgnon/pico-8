@@ -1,83 +1,92 @@
 pico-8 cartridge // http://www.pico-8.com
 version 16
 __lua__
+-- worm
+-- be the baddest virus
 
--- worm =======================
-
-function make_worm(tile)
-	local x,y=find(tile)
-	return{x=x,y=y,tail={}}
-end
-
-function find(tile)
-	for i=0,127 do
-		for j=0,63 do
-			if	mget(i,j)==tile then
-				return i,j
+function find_tile(tile)
+	for i = 0, 127 do
+		for j = 0, 63 do
+			if	mget(i, j) == tile then
+				return i, j
 			end
 		end
 	end
 end
 
-function move_worm(a)
-	if aim==0 then
-		try_worm(a,a.x-1,a.y)
-	elseif aim==1 then
-		try_worm(a,a.x+1,a.y)
-	elseif aim==2 then
-		try_worm(a,a.x,a.y-1)
-	else
-		try_worm(a,a.x,a.y+1)
-	end
+function make_worm()
+	local worm = {}
+	worm.tail = {}
+	worm.aim = 1
+	worm.x, worm.y = find_tile(056)
+	return worm
 end
 
-function try_worm(a, x, y)
-	local tile=mget(x,y)
-	if fget(tile,0)or fget(tile,2)then
-		x,y = a.x,a.y
-		mset(x,y,056+turn%2)
+function aim_worm(worm)
+	if (btn"0") worm.aim = 0
+	if (btn"1") worm.aim = 1
+	if (btn"2") worm.aim = 2
+	if (btn"3") worm.aim = 3
+end
+
+function move_worm(worm)
+	local tx, ty = worm.x, worm.y
+	if (worm.aim == 0) tx -= 1
+	if (worm.aim == 1) tx += 1
+	if (worm.aim == 2) ty -= 1
+	if (worm.aim == 3) ty += 1
+
+	local tile = mget(tx, ty)
+
+	-- idle biting animation
+	if fget(tile, 0)
+	or fget(tile, 2)
+	then
+		tile = 056 + turn%2
+		mset(worm.x, worm.y, tile)
 		return
 	end
 
-	if a.dig then
-		add(a.tail,{x=x,y=y,f=a.dig})
-		a.dig = nil
-	end
-	if fget(tile,3) then
-		a.dig = tile+16
+	-- drop what you digested
+	if worm.dig then
+		add(worm.tail, {
+			x = tx,
+			y = ty,
+			f = worm.dig
+		})
+		worm.dig = nil
 	end
 
-	local bx,by = a.x,a.y
-	for b in all(a.tail) do
-		local tx,ty = b.x,b.y
-		b.x,b.y = bx,by
-		mset(bx,by,b.f)
-		bx,by = tx,ty
+	-- digest what you eat
+	if fget(tile, 3) then
+		worm.dig = tile + 16
 	end
-	mset(bx,by,000)
-	a.x,a.y = x,y
-	mset(x,y,056+turn%2)
+
+	-- shift body pieces
+	local bx, by = worm.x, worm.y
+	for bod in all(worm.tail) do
+		local fx, fy = bod.x, bod.y
+		bod.x, bod.y = bx, by
+		bx, by = fx, fy
+		mset(bod.x, bod.y, bod.f)
+	end
+
+	-- move
+	mset(bx, by, 000)
+	mset(tx, ty, 056 + turn%2)
+	worm.x, worm.y = tx, ty
 end
-
--- main =======================
 
 function _init()
-	aim = 1
 	turn = 0
-	worm = make_worm(056)
-end
-
-function getaim()
-	if (btn"0") aim = 0 -- left
-	if (btn"1") aim = 1 -- right
-	if (btn"2") aim = 2 -- up
-	if (btn"3") aim = 3 -- down
+	worm = make_worm()
 end
 
 function _update()
-	getaim()
 	turn += 0.25
-	if flr(turn)==turn then
+	aim_worm(worm)
+
+	if flr(turn) == turn then
 		move_worm(worm)
 	end
 end
