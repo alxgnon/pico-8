@@ -39,11 +39,8 @@ function move_worm(worm)
 	local tile = mget(tx, ty)
 
 	-- idle biting animation
-	if fget(tile, 0)
-	or fget(tile, 2)
-	then
-		tile = 056 + turn%2
-		mset(worm.x, worm.y, tile)
+	if fget(tile,0) or fget(tile,2) then
+		mset(worm.x,worm.y,056+turn%2)
 		return
 	end
 
