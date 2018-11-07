@@ -1,6 +1,7 @@
 pico-8 cartridge // http://www.pico-8.com
 version 16
 __lua__
+
 -- worm =======================
 
 function make_worm(tile)
@@ -75,11 +76,7 @@ end
 
 function _update()
 	getaim()
-	turn += 0.125
-	if btnp"0" or btnp"1" or
-			btnp"2" or btnp"3" then
-		turn = flr(turn) + 1
-	end
+	turn += 0.25
 	if flr(turn)==turn then
 		move_worm(worm)
 	end
