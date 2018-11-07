@@ -4,9 +4,13 @@ __lua__
 -- worm
 -- be the baddest virus
 
+-- todo: no blocking yourself
+
+
 function find_tile(tile)
 	for i = 0, 127 do
 		for j = 0, 63 do
+
 			if	mget(i, j) == tile then
 				return i, j
 			end
@@ -14,13 +18,14 @@ function find_tile(tile)
 	end
 end
 
+
 function make_worm()
-	local worm = {}
-	worm.tail = {}
-	worm.aim = 1
+	local worm = {aim=1,tail={}}
 	worm.x, worm.y = find_tile(056)
+
 	return worm
 end
+
 
 function aim_worm(worm)
 	if (btn"0") worm.aim = 0
@@ -29,8 +34,10 @@ function aim_worm(worm)
 	if (btn"3") worm.aim = 3
 end
 
+
 function move_worm(worm)
 	local tx, ty = worm.x, worm.y
+
 	if (worm.aim == 0) tx -= 1
 	if (worm.aim == 1) tx += 1
 	if (worm.aim == 2) ty -= 1
@@ -44,7 +51,16 @@ function move_worm(worm)
 		return
 	end
 
-	-- drop what you digested
+	worm_eat(worm, tile, tx, ty)
+	local bx,by=shift_worm(worm)
+
+	mset(bx, by, 000)
+	mset(tx, ty, 056 + turn%2)
+	worm.x, worm.y = tx, ty
+end
+
+
+function worm_eat(worm,tile,tx,ty)
 	if worm.dig then
 		add(worm.tail, {
 			x = tx,
@@ -54,30 +70,32 @@ function move_worm(worm)
 		worm.dig = nil
 	end
 
-	-- digest what you eat
 	if fget(tile, 3) then
 		worm.dig = tile + 16
 	end
+end
 
-	-- shift body pieces
+
+function shift_worm(worm)
 	local bx, by = worm.x, worm.y
+
 	for bod in all(worm.tail) do
 		local fx, fy = bod.x, bod.y
 		bod.x, bod.y = bx, by
 		bx, by = fx, fy
+
 		mset(bod.x, bod.y, bod.f)
 	end
 
-	-- move
-	mset(bx, by, 000)
-	mset(tx, ty, 056 + turn%2)
-	worm.x, worm.y = tx, ty
+	return bx, by
 end
+
 
 function _init()
 	turn = 0
 	worm = make_worm()
 end
+
 
 function _update()
 	turn += 0.25
@@ -87,6 +105,7 @@ function _update()
 		move_worm(worm)
 	end
 end
+
 
 function _draw()
 	cls()
