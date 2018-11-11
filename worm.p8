@@ -4,9 +4,7 @@ __lua__
 -- worm
 -- be the baddest virus
 
--- todo: no blocking yourself
-
-
+-- find tile position by sprite
 function find_tile(tile)
 	for i = 0, 127 do
 		for j = 0, 63 do
@@ -18,7 +16,9 @@ function find_tile(tile)
 	end
 end
 
+-- worm -----------------------
 
+-- create worm from map
 function make_worm()
 	local worm = {aim=1,tail={}}
 	worm.x, worm.y = find_tile(056)
@@ -26,7 +26,7 @@ function make_worm()
 	return worm
 end
 
-
+-- control worm direction
 function aim_worm(worm)
 	if (btn"0") worm.aim = 0
 	if (btn"1") worm.aim = 1
@@ -34,7 +34,7 @@ function aim_worm(worm)
 	if (btn"3") worm.aim = 3
 end
 
-
+-- move worm w/ collision
 function move_worm(worm)
 	local aim = worm.aim - 1
 	local tile, tx, ty
@@ -62,7 +62,7 @@ function move_worm(worm)
 	worm.x, worm.y = tx, ty
 end
 
-
+-- eat files and poop them out
 function worm_eat(worm,tile,tx,ty)
 	if worm.dig then
 		add(worm.tail, {
@@ -79,7 +79,7 @@ function worm_eat(worm,tile,tx,ty)
 	end
 end
 
-
+-- move worm's body along
 function shift_worm(worm)
 	local bx, by = worm.x, worm.y
 
@@ -94,12 +94,12 @@ function shift_worm(worm)
 	return bx, by
 end
 
+-- callbacks ------------------
 
 function _init()
 	turn = 0
 	worm = make_worm()
 end
-
 
 function _update()
 	turn += 0.25
@@ -110,12 +110,15 @@ function _update()
 	end
 end
 
-
 function _draw()
 	cls()
 	camera(worm.x*8-60,worm.y*8-60)
 	map(0,0,0,0,128,64)
 end
+-->8
+-- todo -----------------------
+
+-- no blocking yourself
 __gfx__
 00000000076666500000000000000000000000000766665007666650000000000000000000000000000000000000000000000000000000000000000000000000
 00000000076666500777777777777750777777777766665007666650077777500000000000000000000000000000000000000000000000000000000000000000
