@@ -19,7 +19,7 @@ end
 -- you lose
 function gameover()
 	sfx(02)
-	gameover = true
+	_gameover = true
 	rumble(1, 2)
 end
 
@@ -110,7 +110,7 @@ end
 
 function _update()
 	t += 0.25
-	if (gameover) return
+	if (_gameover) return
 
 	aim_worm(worm)
 
