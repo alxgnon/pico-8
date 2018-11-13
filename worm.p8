@@ -27,7 +27,8 @@ end
 
 -- create worm from map
 function make_worm()
-	local worm = {aim=1,tail={}}
+	local worm = {aim=2,tail={}}
+	worm._aim = aim
 	worm.x, worm.y = find_tile(056)
 
 	return worm
@@ -35,10 +36,13 @@ end
 
 -- control worm direction
 function aim_worm(worm)
-	if (btn"0") worm.aim = 0
-	if (btn"1") worm.aim = 1
-	if (btn"2") worm.aim = 2
-	if (btn"3") worm.aim = 3
+	local aim = worm.aim
+	if (btn"0") aim = 0
+	if (btn"1") aim = 2
+	if (btn"2") aim = 1
+	if (btn"3") aim = 3
+	if((aim+2)%4==worm._aim)return
+	worm.aim = aim
 end
 
 -- move worm w/ collision
@@ -47,8 +51,8 @@ function move_worm(worm)
 	local tx,ty = worm.x,worm.y
 
 	if (aim == 0) tx -= 1
-	if (aim == 1) tx += 1
-	if (aim == 2) ty -= 1
+	if (aim == 2) tx += 1
+	if (aim == 1) ty -= 1
 	if (aim == 3) ty += 1
 
 	tile = mget(tx, ty)
@@ -58,7 +62,7 @@ function move_worm(worm)
 		gameover()
 	end
 
-	worm.aim = aim
+	worm._aim = aim
 	worm_eat(worm,tile,tx,ty)
 
 	local bx,by=shift_worm(worm)
@@ -142,8 +146,6 @@ function cam(cx, cy)
 end
 -->8
 -- todo -----------------------
-
--- prevent turning backwards
 __gfx__
 00000000076666500000000000000000000000000766665007666650000000000000000000000000000000000000000000000000000000000000000000000000
 00000000076666500777777777777750777777777766665007666650077777500000000000000000000000000000000000000000000000000000000000000000
