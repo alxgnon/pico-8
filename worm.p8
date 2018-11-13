@@ -20,7 +20,7 @@ end
 function gameover()
 	sfx(02)
 	_gameover = true
-	rumble(1, 2)
+	rumble(2, 2)
 end
 
 -- worm -----------------------
@@ -136,9 +136,8 @@ function cam(cx, cy)
 		camera(
 		cx+rnd(rumpower)-rumpower/2,
 		cy+rnd(rumpower)-rumpower/2)
-	elseif rumstop then
+	else
 		camera(cx, cy)
-		rumstop = nil
 	end
 end
 -->8
