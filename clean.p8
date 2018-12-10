@@ -1,67 +1,72 @@
 pico-8 cartridge // http://www.pico-8.com
 version 16
 __lua__
--- enemy behaviour ============
+-- room =======================
 
-movebad = {}
-drawbad = {}
+room = {}
 
--- level loading ==============
-
-function loadroom(n)
-	bads = {}
-	play = true
-
-	local rx = n%8 * 16
-	local ry = flr(n/8) * 16
-
+function room.spawn(a, rx, ry)
+	a.bads = {}
 	for x = 0,16 do
 		for y = 0,16 do
 			local f = mget(rx+x, ry+y)
-
-			if fget(f, 0) then
-   	add(bads,{f=f,x=x*8,y=y*8})
+				if fget(f, 0) then
+					add(a.bads, {
+						f = f,
+						x = x*8,
+						y = y*8
+					})
+				end
 			end
 		end
+end
+
+function room.move()
+end
+
+function room.draw(a)
+	for b in all(a.bads) do
+		spr(b.f, b.x, b.y)
 	end
 end
 
--- main callbacks =============
+-- select =====================
+
+select = {n = 0}
+
+function select.move(a)
+	if btnp"4" then
+		a.n = (a.n + 1) % 32
+	elseif btnp"5" then
+		room:spawn(a:coords())
+		g = room
+	end
+end
+
+function select.coords(a)
+	local x = a.n % 8 * 16
+	local y = flr(a.n / 8) * 16
+	return x, y
+end
+
+function select.draw(a)
+	local x, y = a:coords()
+	map(x, y, 0, 0, 16, 16)
+end
+
+-- callbacks ==================
 
 function _init()
-	play = 0
+	g = select
 end
 
 function _update()
-	if(play!=true)return movesel()
-	
-	for bad in all(bads) do
-		--movebad[bad.f](bad)
-	end
-end
-
-function movesel()
- if btnp"4" then
-		play = (play + 1) % 32
-	elseif btnp"5" then
-		loadroom(play)
-	end
+	g:move()
 end
 
 function _draw()
 	cls()
-	if(play!=true)return drawsel()
-
-	for bad in all(bads) do
-		--drawbad[bad.f](bad)
-		spr(bad.f, bad.x, bad.y)
-	end
-end
-
-function drawsel()
-	local rx = play%8 * 16
-	local ry = flr(play/8) * 16
-	map(rx,ry,0,0,16,16)
+	g:draw()
 end
 __gfx__
 00000000000000000080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
