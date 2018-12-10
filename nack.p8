@@ -1,6 +1,29 @@
 pico-8 cartridge // http://www.pico-8.com
 version 16
 __lua__
+-- player =====================
+
+player = {x = 56, y = 56}
+
+function player.move(a)
+	local dx, dy = 0, 0
+	if (btn"0") dx -= 2
+	if (btn"1") dx += 2
+	if (btn"2") dy -= 2
+	if (btn"3") dy += 2
+	a.x = min(max(a.x+dx,0),120)
+	a.y = min(max(a.y+dy,0),121)
+
+	if not btn "4" then
+		if (dx > 0) a.f = false
+		if (dx < 0) a.f = true
+	end
+end
+
+function player.draw(a)
+	spr(0, a.x, a.y, 1, 1, a.f)
+end
+
 -- room =======================
 
 room = {}
@@ -22,9 +45,11 @@ function room.spawn(a, rx, ry)
 end
 
 function room.move()
+	player:move()
 end
 
 function room.draw(a)
+	player:draw()
 	for b in all(a.bads) do
 		spr(b.f, b.x, b.y)
 	end
@@ -36,10 +61,10 @@ select = {n = 0}
 
 function select.move(a)
 	if btnp"4" then
-		a.n = (a.n + 1) % 32
-	elseif btnp"5" then
 		room:spawn(a:coords())
 		state = room
+	elseif btnp"5" then
+		a.n = (a.n + 1) % 32
 	end
 end
 
