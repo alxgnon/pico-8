@@ -49,6 +49,7 @@ function room.move()
 end
 
 function room.draw(a)
+	rect(0,0,127,127,1)
 	player:draw()
 	for b in all(a.bads) do
 		spr(b.f, b.x, b.y)
