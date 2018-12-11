@@ -1,11 +1,19 @@
 pico-8 cartridge // http://www.pico-8.com
 version 16
 __lua__
+-- nack
+-- destroy all malware
+
 -- player =====================
+function new_player(x, y)
+	return {
+		x = x, y = y,
+		move = move_player,
+		draw = draw_player
+	}
+end
 
-player = {x = 56, y = 56}
-
-function player.move(a)
+function move_player(a)
 	local dx, dy = 0, 0
 	if (btn"0") dx -= 2
 	if (btn"1") dx += 2
@@ -20,73 +28,90 @@ function player.move(a)
 	end
 end
 
-function player.draw(a)
+function draw_player(a)
 	spr(0, a.x, a.y, 1, 1, a.f)
 end
 
+-- baddies ====================
+new_baddy = {}
+
 -- room =======================
+function new_room(n)
+	local a = {
+		baddies = {},
+		player = new_player(8, 56),
+		move = move_room,
+		draw = draw_room
+	}
+	load_room(a, level_coords(n))
+	return a
+end
 
-room = {}
+function spawn(a, g, x, y)
+	local b = new_baddy[g](x, y)
+	add(a.baddies, b)
+end
 
-function room.spawn(a, rx, ry)
-	a.bads = {}
+function load_room(a, rx, ry)
 	for x = 0,16 do
 		for y = 0,16 do
-			local f = mget(rx+x, ry+y)
-			if fget(f, 0) then
-				add(a.bads, {
-					f = f,
-					x = x*8,
-					y = y*8
-				})
+			local g = mget(rx+x, ry+y)
+			if fget(g, 0) then
+				spawn(a, g, x*8, y*8)
 			end
 		end
 	end
 end
 
-function room.move()
-	player:move()
+function move_room(a)
+	a.player:move()
+	for b in all(a.baddies) do
+		b:move()
+	end
 end
 
-function room.draw(a)
+function draw_room(a)
 	rect(0,0,127,127,1)
-	player:draw()
-	for b in all(a.bads) do
-		spr(b.f, b.x, b.y)
+	a.player:draw()
+	for b in all(a.baddies) do
+		b:draw()
 	end
 end
 
 -- select =====================
+function new_select()
+	return {
+		n = 0,
+		move = move_select,
+		draw = draw_select
+	}
+end
 
-select = {n = 0}
-
-function select.move(a)
+function move_select(a)
 	if btnp"4" then
-		room:spawn(a:coords())
-		state = room
+		state = new_room(a.n)
 	elseif btnp"5" then
 		a.n = (a.n + 1) % 32
 	end
 end
 
-function select.coords(a)
-	local x = a.n % 8 * 16
-	local y = flr(a.n / 8) * 16
+function level_coords(n)
+	local x = n % 8 * 16
+	local y = flr(n / 8) * 16
 	return x, y
 end
 
-function select.draw(a)
-	local x, y = a:coords()
+function draw_select(a)
+	local x, y = level_coords(a.n)
 	map(x, y, 0, 0, 16, 16)
 	print(a.n)
 end
 
 -- callbacks ==================
-
 function _init()
 	palt(0, false)
 	palt(1, true)
-	state = select
+	state = new_select()
 end
 
 function _update()
