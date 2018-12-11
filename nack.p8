@@ -5,7 +5,6 @@ __lua__
 -- destroy all malware
 
 -- todo =======================
--- palette hp (w/ rumble)
 
 -- player =====================
 function new_player(x, y)
@@ -45,12 +44,12 @@ end
 function touching(a, b)
 	local ax = a.x + 2
 	local ay = a.y + 2
-	local bx = b.x + 2
-	local by = b.y + 2
-	return ax < bx + 4
-		and bx < ax + 4
-		and ay < by + 4
-		and by < ay + 4
+	local bx = b.x + 1
+	local by = b.y + 1
+	return ax < bx + 5
+		and bx < ax + 3
+		and ay < by + 5
+		and by < ay + 3
 end
 
 function check_player_dmg(a)
@@ -141,7 +140,7 @@ function target_player(a)
 end
 
 -- room =======================
-function new_room(n)
+function new_room()
 	gt = 0
 	local a = {
 		shots = {},
@@ -150,7 +149,7 @@ function new_room(n)
 		move = move_room,
 		draw = draw_room
 	}
-	load_room(a, level_coords(n))
+	load_room(a, level_coords())
 	return a
 end
 
@@ -200,36 +199,35 @@ end
 -- select =====================
 function new_select()
 	return {
-		n = 0,
 		move = move_select,
 		draw = draw_select
 	}
 end
 
-function move_select(a)
+function move_select()
 	if btnp "4" then
-		a.n = (a.n + 1) % 32
+		level=(level+1)%32
 	elseif btnp "5" then
-		state = new_room(a.n)
+		state = new_room()
 	end
 end
 
-function level_coords(n)
-	local x = n % 8 * 16
-	local y = flr(n / 8) * 16
+function level_coords()
+	local x = level%8*16
+	local y = flr(level/8)*16
 	return x, y
 end
 
-function draw_select(a)
-	local x, y = level_coords(a.n)
+function draw_select()
+	local x, y = level_coords()
 	map(x, y, 0, 0, 16, 16)
-	print(a.n, 3, 3, 7)
 end
 
 -- callbacks ==================
 function _init()
 	palt(0, false)
 	palt(1, true)
+	level = 0
 	state = new_select()
 end
 
@@ -240,6 +238,7 @@ end
 function _draw()
 	cls "1"
 	rectfill(2,2,125,125,0)
+	print(level,4,4,1)
 	state:draw()
 end
 __gfx__
