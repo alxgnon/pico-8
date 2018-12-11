@@ -44,11 +44,11 @@ end
 function touching(a, b)
 	local ax = a.x + 2
 	local ay = a.y + 2
-	local bx = b.x + 1
-	local by = b.y + 1
-	return ax < bx + 5
+	local bx = b.x
+	local by = b.y
+	return ax < bx + 7
 		and bx < ax + 3
-		and ay < by + 5
+		and ay < by + 7
 		and by < ay + 3
 end
 
