@@ -11,7 +11,9 @@ __lua__
 function new_player(x, y)
 	return {
 		x = x, y = y,
+		hp = 4,
 		charge = -1,
+		hurt = -1,
 		move = move_player,
 		draw = draw_player
 	}
@@ -30,6 +32,9 @@ function move_player(a)
 		if (dx < 0) a.f = true
 	end
 	control_shooting(a)
+
+	if(a.hurt<0)check_player_dmg(a)
+	a.hurt -= 1
 end
 
 function slide(a, dx, dy)
@@ -37,8 +42,31 @@ function slide(a, dx, dy)
 	a.y = min(max(a.y+dy,0),120)
 end
 
+function touching(a, b)
+	local ax = a.x + 2
+	local ay = a.y + 2
+	local bx = b.x + 2
+	local by = b.y + 2
+	return ax < bx + 4
+		and bx < ax + 4
+		and ay < by + 4
+		and by < ay + 4
+end
+
+function check_player_dmg(a)
+	for b in all(state.baddies) do
+		if touching(a, b) then
+			a.hurt = 24
+			a.hp -= 1
+			pal(11, 7 + a.hp)
+		end
+	end
+end
+
 function draw_player(a)
-	spr(0, a.x, a.y, 1, 1, a.f)
+	if a.hurt<0 or a.hurt%4>1 then
+		spr(0, a.x, a.y, 1, 1, a.f)
+	end
 end
 
 -- shots ======================
@@ -46,6 +74,7 @@ function can_shoot(a)
 	a.charge += 1
 	return a.charge % 4 == 0
 		and #state.shots < 6
+		and a.hurt < 0
 end
 
 function control_shooting(a)
@@ -72,6 +101,7 @@ function move_shots(as)
 end
 
 function draw_shots(as)
+	color "11"
 	for a in all(as) do
 		circ(a.x, a.y, 1)
 	end
@@ -140,6 +170,7 @@ function load_room(a, rx, ry)
 end
 
 function move_room(a)
+	if (a.player.hp < 1) return
 	gt += 1
 	move_shots(a.shots)
 	a.player:move()
@@ -148,8 +179,16 @@ function move_room(a)
 	end
 end
 
+function shake(a)
+	if a.hp>0 and a.hurt>17 then
+		camera(2-rnd"3",2-rnd"3")
+	else
+		camera(0, 0)
+	end
+end
+
 function draw_room(a)
-	rect(0,0,127,127)
+	shake(a.player)
 	draw_shots(a.shots)
 	a.player:draw()
 	local f0 = gt / 14 % 2
@@ -184,14 +223,13 @@ end
 function draw_select(a)
 	local x, y = level_coords(a.n)
 	map(x, y, 0, 0, 16, 16)
-	print(a.n)
+	print(a.n, 3, 3, 7)
 end
 
 -- callbacks ==================
 function _init()
 	palt(0, false)
 	palt(1, true)
-	color(11)
 	state = new_select()
 end
 
@@ -200,7 +238,8 @@ function _update()
 end
 
 function _draw()
-	cls()
+	cls "1"
+	rectfill(2,2,125,125,0)
 	state:draw()
 end
 __gfx__
