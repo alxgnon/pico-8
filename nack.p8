@@ -10,8 +10,8 @@ __lua__
 function new_player(x, y)
 	return {
 		x = x, y = y,
-		hp = 4,
-		charge = -1,
+		hp = 3,
+		charge = 0,
 		hurt = -1,
 		move = move_player,
 		draw = draw_player
@@ -52,12 +52,25 @@ function touching(a, b)
 		and by < ay + 3
 end
 
+function hp_pal(a)
+	if a.hp == 2 then
+		pal(11, 10)
+		pal(3, 4)
+	elseif a.hp == 1 then
+		pal(11, 8)
+		pal(3, 2)
+	else
+		pal(11, 6)
+		pal(3, 5)
+	end
+end
+
 function check_player_dmg(a)
 	for b in all(state.baddies) do
 		if touching(a, b) then
 			a.hurt = 24
 			a.hp -= 1
-			pal(11, 7 + a.hp)
+			hp_pal(a)
 		end
 	end
 end
@@ -70,8 +83,7 @@ end
 
 -- shots ======================
 function can_shoot(a)
-	a.charge += 1
-	return a.charge % 4 == 0
+	return a.charge % 5 == 0
 		and #state.shots < 6
 		and a.hurt < 0
 end
@@ -85,8 +97,9 @@ function control_shooting(a)
 				dx = a.f and -3 or 3
 			})
 		end
+		a.charge += 1
 	else
-		a.charge = -1
+		a.charge = 0
 	end
 end
 
@@ -236,9 +249,9 @@ function _update()
 end
 
 function _draw()
-	cls "1"
-	rectfill(2,2,125,125,0)
-	print(level,4,4,1)
+	cls()
+	rect(1,1,126,126,3)
+	print(level,4,4,3)
 	state:draw()
 end
 __gfx__
