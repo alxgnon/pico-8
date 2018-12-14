@@ -103,10 +103,31 @@ function control_shooting(a)
 	end
 end
 
+function shotouch(a, b)
+	local bx = b.x
+	local by = b.y
+	return a.x < bx + 7
+		and bx < a.x
+		and a.y < by + 7
+		and by < a.y
+end
+
+function check_baddy_dmg(a)
+	for b in all(state.baddies) do
+		if shotouch(a, b) then
+			b.hurt = 12
+			b.hp -= 1
+			return true
+		end
+	end
+end
+
 function move_shots(as)
 	for a in all(as) do
 		a.x += a.dx
-		if a.x < 0 or a.x > 128 then
+		if check_baddy_dmg(a)
+				or a.x < 0
+				or a.x > 128 then
 			del(as, a)
 		end
 	end
@@ -122,14 +143,33 @@ end
 -- baddies ====================
 function new_baddy(g, x, y)
 	return {
-		g = g, x = x, y = y,
+		g = g,
+		x = x, y = y,
+		hurt = 0,
+		hp = hitpoints[g],
 		move = mover[g]
 	}
 end
 
+function draw_baddies(bs)
+	local f0 = gt / 14 % 2
+	for b in all(bs) do
+		local bx, by = b.x, b.y
+		if state.player.hp > 0
+				and b.hurt > 0 then
+			bx = bx - 1 + rnd "3"
+			by = by - 1 + rnd "3"
+		end
+		spr(b.g + f0, bx, by)
+	end
+end
+
+hitpoints = {}
 mover = {}
 
 -- drone ======================
+hitpoints[002] = 3
+
 mover[002] = function (a)
 	a.t = (a.t or 0) + 1
 	if a.t < 1 then
@@ -188,6 +228,7 @@ function move_room(a)
 	a.player:move()
 	for b in all(a.baddies) do
 		b:move()
+		b.hurt -= 1
 	end
 end
 
@@ -203,10 +244,7 @@ function draw_room(a)
 	shake(a.player)
 	draw_shots(a.shots)
 	a.player:draw()
-	local f0 = gt / 14 % 2
-	for b in all(a.baddies) do
-		spr(b.g + f0, b.x, b.y)
-	end
+	draw_baddies(a.baddies)
 end
 
 -- select =====================
