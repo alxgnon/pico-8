@@ -4,14 +4,12 @@ __lua__
 -- pyo
 -- virus containment
 
-
 --------------------- todo ----
 
 -- popping
 -- gravity
 -- chaining
 -- power bars (by color)
-
 
 ---------------- callbacks ----
 
@@ -21,7 +19,8 @@ function new_drop()
 		q2 = 000,
 		q3 = 004 + rnd"4",
 		q4 = 004 + rnd"4",
-		col = 3
+		col = 3,
+		move = move_drop
 	}
 	move_drop(a, true)
 	return a
@@ -29,7 +28,6 @@ end
 
 function move_drop(a, new)
 	local c = a.col
-
 	if not new then
 		mset(c,0,000)
 		mset(c+1,0,000)
@@ -40,7 +38,7 @@ function move_drop(a, new)
 			gravity_drop(a.q4,c+1)
 			gravity_drop(a.q1,c)
 			gravity_drop(a.q2,c+1)
-			drp = new_drop()
+			gs = combo()
 			return
 		end
 		if (btnp"0") c -= 1
@@ -61,19 +59,27 @@ function move_drop(a, new)
 	a.col = c
 end
 
-function gravity_drop(q, c)
-	local j = 0
-	while not fget(mget(c,j),0) do
-		j += 1
-	end
-	mset(c, j-1, q)
+function gravity_drop(tile,col)
+	local row=0
+	repeat	row+=1
+	until fget(mget(col,row),0)
+	mset(col,row-1,tile)
 end
 
+-------------------- combo ----
 
----------------- callbacks ----
+function	combo()
+	for i=1,6 do
+		for j=0,14 do
+		end
+	end
+	return new_drop()
+end
+
+----------- callbacks ----
 
 function _init()
-	drp = new_drop()
+	gs = new_drop()
 end
 
 function input()
@@ -84,7 +90,7 @@ end
 
 function _update()
 	if input() then
-		move_drop(drp)
+		gs:move()
 	end
 end
 
