@@ -37,6 +37,7 @@ function move_drop(a, new)
 			gravity_drop(a.q4,c+1)
 			gravity_drop(a.q1,c)
 			gravity_drop(a.q2,c+1)
+			combo()
 			gs = start
 			return
 		end
@@ -62,9 +63,51 @@ end
 
 function gravity_drop(tile,col)
 	local row=0
-	repeat	row+=1
+	repeat row+=1
 	until fget(mget(col,row),0)
 	mset(col,row-1,tile)
+end
+
+---------------- combo ----
+function combo()
+	links = {}
+	for i=1,6 do
+		local tt = 0
+		for j=0,14 do
+			local te = mget(i,j)
+			if te!=0 and te==tt then
+				add(links,{
+					a={i=i,j=j-1},
+					b={i=i,j=j},
+					clr=colorfor(te)
+				})
+			else
+				tt = te
+			end
+		end
+	end
+	for j=1,14 do
+		local tt = 0
+		for i=1,6 do
+		local te = mget(i,j)
+			if te!=0 and te==tt then
+				add(links,{
+					a={i=i-1,j=j},
+					b={i=i,j=j},
+					clr=colorfor(te)
+				})
+			else
+				tt = te
+			end
+		end
+	end
+end
+
+function colorfor(te)
+	if (te==004) return 11
+	if (te==005) return 12
+	if (te==006) return 10
+	if (te==007) return 14
 end
 
 ----------- callbacks ----
@@ -80,6 +123,7 @@ start = {
 function _init()
 	c = 3
 	gs = start
+	links = {}
 end
 
 function input()
@@ -96,6 +140,13 @@ end
 
 function _draw()
 	cls()
+	for ln in all(links) do
+		rectfill(
+			ln.a.i*8+3,ln.a.j*8+3,
+			ln.b.i*8+5,ln.b.j*8+5,
+			ln.clr
+		)
+	end
 	map(0,0,0,0,16,16)
 end
 __gfx__
