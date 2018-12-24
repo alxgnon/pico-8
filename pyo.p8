@@ -2,73 +2,86 @@ pico-8 cartridge // http://www.pico-8.com
 version 16
 __lua__
 -- pyo
--- virus containment
+-- stack files
 
---------------------- todo ----
+---------------- drop ----
 
--- popping
--- gravity
--- chaining
--- power bars (by color)
+drop = {q={0,0,0,0}}
 
----------------- callbacks ----
-
-function new_drop()
-	local a = {
-		q1 = 004 + rnd"4",
-		q2 = 000,
-		q3 = 004 + rnd"4",
-		q4 = 004 + rnd"4",
-		move = move_drop
-	}
-	move_drop(a, true)
+function drop.rand(a)
+	a.q[1] = 004 + rnd"4"
+	a.q[2] = 000
+	a.q[3] = 004 + rnd"4"
+	a.q[4] = 004 + rnd"4"
+	a:move(true)
 	return a
 end
 
-function move_drop(a, new)
+function drop.move(a, new)
 	if not new then
+		a.clear()
+		if btnp"4" or btnp"5" then
+			a:hard()
+			return
+		end
+		a.aim()
+		if btnp"2" then
+			a.rotate(a.q)
+		end
+	end
+	a.appear(a.q)
+end
+
+function drop.clear()
 		mset(c,0,000)
 		mset(c+1,0,000)
 		mset(c,1,000)
 		mset(c+1,1,000)
-		if btnp"4" or btnp"5" then
-			sfx "02"
-			gravity_drop(a.q3,c)
-			gravity_drop(a.q4,c+1)
-			gravity_drop(a.q1,c)
-			gravity_drop(a.q2,c+1)
-			combo()
-			gs = start
-			return
-		end
-		local tc = c
-		if (btnp"0") c -= 1
-		if (btnp"1") c += 1
-		c = min(max(c,1),5)
-		if(tc != c) sfx"0"
-		if btnp "2" then
-			sfx "01"
-			local qt = a.q1
-			a.q1 = a.q2
-			a.q2 = a.q4
-			a.q4 = a.q3
-			a.q3 = qt
-		end
-	end
-	mset(c,0,a.q1)
-	mset(c+1,0,a.q2)
-	mset(c,1,a.q3)
-	mset(c+1,1,a.q4)
 end
 
-function gravity_drop(tile,col)
+function drop.hard(a)
+	sfx "02"
+	a.gravity(a.q[3],c)
+	a.gravity(a.q[4],c+1)
+	a.gravity(a.q[1],c)
+	a.gravity(a.q[2],c+1)
+	combo()
+	gs = start
+end
+
+function drop.gravity(tile,col)
 	local row=0
 	repeat row+=1
 	until fget(mget(col,row),0)
 	mset(col,row-1,tile)
 end
 
+function drop.aim()
+	local tc = c
+	if (btnp"0") c -= 1
+	if (btnp"1") c += 1
+	c = min(max(c,1),5)
+	if(tc != c) sfx"0"
+end
+
+function drop.rotate(q)
+	sfx "01"
+	local qt = q[1]
+	q[1] = q[2]
+	q[2] = q[4]
+	q[4] = q[3]
+	q[3] = qt
+end
+
+function drop.appear(q)
+	mset(c,0,q[1])
+	mset(c+1,0,q[2])
+	mset(c,1,q[3])
+	mset(c+1,1,q[4])
+end
+
 ---------------- combo ----
+
 function combo()
 	links = {}
 	local index = {}
@@ -118,7 +131,7 @@ end
 start = {
 	move = function()
 		if btn"4" or btn"5" then
-			gs = new_drop()
+			gs = drop:rand()
 		end
 	end
 }
