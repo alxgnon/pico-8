@@ -5,8 +5,17 @@ __lua__
 -- stack files
 
 ---------------- drop ----
+drop = {}
 
-drop = {q={0,0,0,0}}
+function drop.new()
+	local a = {
+		c = 3,
+		q = {},
+		move = drop.move
+	}
+	drop.rand(a)
+	return a
+end
 
 function drop.rand(a)
 	a.q[1] = 004 + rnd"4"
@@ -14,39 +23,38 @@ function drop.rand(a)
 	a.q[3] = 004 + rnd"4"
 	a.q[4] = 004 + rnd"4"
 	a:move(true)
-	return a
 end
 
 function drop.move(a, new)
 	if not new then
-		a.clear()
+		drop.clear(a.c)
 		if btnp"4" or btnp"5" then
-			a:hard()
+			drop.hard(a.c,a.q)
 			return
 		end
-		a.aim()
+		drop.aim(a)
 		if btnp"2" then
-			a.rotate(a.q)
+			drop.rotate(a.q)
 		end
 	end
-	a.appear(a.q)
+	drop.appear(a.c,a.q)
 end
 
-function drop.clear()
+function drop.clear(c)
 		mset(c,0,000)
 		mset(c+1,0,000)
 		mset(c,1,000)
 		mset(c+1,1,000)
 end
 
-function drop.hard(a)
+function drop.hard(c,q)
 	sfx "02"
-	a.gravity(a.q[3],c)
-	a.gravity(a.q[4],c+1)
-	a.gravity(a.q[1],c)
-	a.gravity(a.q[2],c+1)
+	drop.gravity(q[3],c)
+	drop.gravity(q[4],c+1)
+	drop.gravity(q[1],c)
+	drop.gravity(q[2],c+1)
 	combo()
-	gs = start
+	state = start
 end
 
 function drop.gravity(tile,col)
@@ -56,12 +64,12 @@ function drop.gravity(tile,col)
 	mset(col,row-1,tile)
 end
 
-function drop.aim()
-	local tc = c
-	if (btnp"0") c -= 1
-	if (btnp"1") c += 1
-	c = min(max(c,1),5)
-	if(tc != c) sfx"0"
+function drop.aim(a)
+	local tc = a.c
+	if (btnp"0") a.c -= 1
+	if (btnp"1") a.c += 1
+	a.c = min(max(a.c,1),5)
+	if(tc != a.c) sfx"0"
 end
 
 function drop.rotate(q)
@@ -73,7 +81,7 @@ function drop.rotate(q)
 	q[3] = qt
 end
 
-function drop.appear(q)
+function drop.appear(c, q)
 	mset(c,0,q[1])
 	mset(c+1,0,q[2])
 	mset(c,1,q[3])
@@ -131,14 +139,13 @@ end
 start = {
 	move = function()
 		if btn"4" or btn"5" then
-			gs = drop:rand()
+			state = drop.new()
 		end
 	end
 }
 
 function _init()
-	c = 3
-	gs = start
+	state = start
 	links = {}
 end
 
@@ -150,12 +157,17 @@ end
 
 function _update()
 	if input() then
-		gs:move()
+		state:move()
 	end
 end
 
 function _draw()
 	cls()
+	draw_links()
+	map(0,0,0,0,16,16)
+end
+
+function draw_links()
 	for ln in all(links) do
 		rectfill(
 			ln.a.i*8+3,ln.a.j*8+3,
@@ -163,7 +175,6 @@ function _draw()
 			ln.clr
 		)
 	end
-	map(0,0,0,0,16,16)
 end
 __gfx__
 333333330f994000000000000000f994000000000000000000000000000000003333333333333333333333333333333333333333333333333333333333333333
