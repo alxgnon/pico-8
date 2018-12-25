@@ -99,12 +99,7 @@ function combo()
 		for j=0,14 do
 			local te = mget(i,j)
 			if te!=0 and te==tt then
-				local ln = {
-					a={i=i,j=j-1},
-					b={i=i,j=j},
-					clr=colorfor(te)
-				}
-				add(links,ln)
+				make_link(te,i,j-1,i,j)
 			else
 				tt = te
 			end
@@ -115,11 +110,7 @@ function combo()
 		for i=1,6 do
 		local te = mget(i,j)
 			if te!=0 and te==tt then
-				add(links,{
-					a={i=i-1,j=j},
-					b={i=i,j=j},
-					clr=colorfor(te)
-				})
+				make_link(te,i-1,j,i,j)
 			else
 				tt = te
 			end
@@ -127,11 +118,29 @@ function combo()
 	end
 end
 
-function colorfor(te)
-	if (te==004) return 11
-	if (te==005) return 12
-	if (te==006) return 10
-	if (te==007) return 14
+colofor = {
+	[004] = 11,
+	[005] = 12,
+	[006] = 10,
+	[007] = 14
+}
+
+function make_link(te,i,j,k,l)
+	add(links,{
+		a={i=i,j=j},
+		b={i=k,j=l},
+		col=colofor[te]
+	})
+end
+
+function draw_links()
+	for ln in all(links) do
+		rectfill(
+			ln.a.i*8+3,ln.a.j*8+3,
+			ln.b.i*8+5,ln.b.j*8+5,
+			ln.col
+		)
+	end
 end
 
 ----------- callbacks ----
@@ -165,16 +174,6 @@ function _draw()
 	cls()
 	draw_links()
 	map(0,0,0,0,16,16)
-end
-
-function draw_links()
-	for ln in all(links) do
-		rectfill(
-			ln.a.i*8+3,ln.a.j*8+3,
-			ln.b.i*8+5,ln.b.j*8+5,
-			ln.clr
-		)
-	end
 end
 __gfx__
 333333330f994000333333330000f994000000000000000000000000000000003333333333333333333333333333333333333333333333333333333333333333
