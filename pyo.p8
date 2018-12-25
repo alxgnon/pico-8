@@ -98,20 +98,18 @@ function combo()
 			local te = mget(i,j)
 			if te!=0 and te==tt then
 				make_link(te,i,j-1,i,j)
-			else
-				tt = te
 			end
+			tt = te
 		end
 	end
 	for j=1,14 do
 		local tt = 0
 		for i=1,6 do
-		local te = mget(i,j)
+			local te = mget(i,j)
 			if te!=0 and te==tt then
 				make_link(te,i-1,j,i,j)
-			else
-				tt = te
 			end
+			tt = te
 		end
 	end
 end
