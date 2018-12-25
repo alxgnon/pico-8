@@ -92,10 +92,8 @@ end
 
 function combo()
 	links = {}
-	local index = {}
 	for i=1,6 do
 		local tt = 0
-		index[i] = {}
 		for j=0,14 do
 			local te = mget(i,j)
 			if te!=0 and te==tt then
