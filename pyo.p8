@@ -19,10 +19,10 @@ function drop.new()
 end
 
 function drop.rand(a)
-	a.q[1] = 004 + rnd"4"
+	a.q[1] = flr(004 + rnd"4")
 	a.q[2] = 000
-	a.q[3] = 004 + rnd"4"
-	a.q[4] = 004 + rnd"4"
+	a.q[3] = flr(004 + rnd"4")
+	a.q[4] = flr(004 + rnd"4")
 	a:move(true)
 end
 
@@ -54,7 +54,8 @@ function drop.hard(c,q)
 	drop.gravity(q[4],c+1)
 	drop.gravity(q[1],c)
 	drop.gravity(q[2],c+1)
-	combo()
+	check_combo()
+	update_links()
 	state = start
 	sy = 1
 end
@@ -64,6 +65,7 @@ function drop.gravity(tile,col)
 	repeat row+=1
 	until fget(mget(col,row),0)
 	mset(col,row-1,tile)
+	hit[col][row-1] = tile
 end
 
 function drop.aim(a)
@@ -92,7 +94,70 @@ end
 
 ---------------- combo ----
 
-function combo()
+function init_hit()
+	hit = {}
+	for i=1,7 do
+		hit[i]={}
+		for j=1,15 do
+			hit[i][j]=0
+		end
+	end
+end
+
+function check_combo()
+	for i=1,6 do
+		for j=1,14 do
+			if hit[i][j] > 0 then
+				check_for_combo(i,j)
+			end
+		end
+	end
+end
+
+function check_for_combo(i,j)
+	local numhits = 1
+	local h = abs(hit[i][j])
+	hit[i][j]=-h
+	local found = true
+	while found do
+		found = false
+		for x=1,6 do
+			for y=1,14 do
+				if hit[x][y]==h then
+					for dx=-1,1,2 do
+						if x>1 and hit[x+dx][y]==-h then
+							found=true
+							hit[x][y]=-h
+							numhits += 1
+						end
+						if y>1 and hit[x][y+dx]==-h then
+							found=true
+							hit[x][y]=-h
+							numhits += 1
+						end
+					end
+				end
+			end
+		end
+	end
+	for x=1,6 do
+		for y=1,14 do
+			if hit[x][y]<0 then
+				if numhits>3 then
+					hit[x][y]=0
+					mset(x,y,0)
+				else
+					hit[x][y]=abs(hit[x][y])
+				end
+			end
+		end
+	end
+	return numhits
+end
+
+-------------------- links ----
+
+function update_links()
 	links = {}
 	for i=1,6 do
 		local tt = 0
@@ -156,6 +221,7 @@ function _init()
 	state = start
 	links = {}
 	sy = 0
+	init_hit()
 end
 
 function input()
@@ -175,6 +241,15 @@ function _draw()
 	camera(0,-sy)
 	draw_links()
 	map(0,0,0,0,16,16)
+	draw_matrix()
+end
+
+function draw_matrix()
+	for i=1,6 do
+		for j=1,14 do
+			print(flr(hit[i][j]),64+i*8,j*8)
+		end
+	end
 end
 __gfx__
 0000000000f9940033333333000f9940000000000000000000000000000000003333333333333333333333333333333333333333333333333333333333333333
