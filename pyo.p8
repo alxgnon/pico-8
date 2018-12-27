@@ -9,13 +9,13 @@ __lua__
 drop = {}
 
 function drop.new()
+	sfx "05"
 	local a = {
 		c = 3,
 		q = {},
 		move = drop.move
 	}
 	drop.rand(a)
-	sfx "05"
 	return a
 end
 
