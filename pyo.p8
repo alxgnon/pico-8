@@ -16,10 +16,6 @@ function drop.new()
 	}
 	drop.rand(a)
 	sfx "05"
-	if score and score > 0 then
-		add(msg,"")
-		add(msg,"= "..score)
-	end
 	return a
 end
 
@@ -54,16 +50,12 @@ function drop.clear(c)
 end
 
 function drop.hard(c,q)
-	sfx "02"
+	fx.bump(9)
 	drop.gravity(q[3],c)
 	drop.gravity(q[4],c+1)
 	drop.gravity(q[1],c)
 	drop.gravity(q[2],c+1)
-	msg = {}
-	cccombo = 1
-	score = 0
 	check_combo()
-	smash = 9
 	state = start
 end
 
@@ -78,9 +70,8 @@ function fall()
 				mset(i,j,0)
 				drop.gravity(te,i,j)
 				if not sfxplayed then
-					sfx "3"
+					fx.bump(3)
 					sfxplayed = true
-					smash = 3
 				end
 			elseif te>19 then
 				mset(i,j,0)
@@ -213,22 +204,8 @@ function check_for_combo(i,j,change)
 			end
 		end
 	end
-	if change and numhits>3 then
-		local points=cccombo*numhits
-		score += points
-		add(msg,"+ "..points
-		.."  "..ext[te])
-		cccombo += 1
-	end
 	return numhits
 end
-
-ext = {
-	[004] = ".dat",
-	[005] = ".bin",
-	[006] = ".txt",
-	[007] = ".pak"
-}
 
 ----------- callbacks ----
 
@@ -245,8 +222,8 @@ start = {
 }
 
 function _init()
+	fx.init()
 	state = start
-	msg = {}
 	init_hit()
 	palt(0,false)
 end
@@ -258,30 +235,43 @@ function input()
 end
 
 function _update()
-	if smash and smash > 0 then
-		smash -= 1
-	end
+	fx.update()
 	if input() then
 		state:move()
 	end
 end
 
 function _draw()
-	cls "03"
-	camera(0,0)
-	draw_msg()
-	if smash and smash > 0 then
-		camera(0,-1)
-	end
-	rectfill(0,-1,64,128,0)
+	cls()
+	fx.draw()
 	map(0,0,0,0,16,16)
 end
 
-function draw_msg()
-	cursor(72,8)
-	color(smash and smash>0 and 10 or 11)
-	for m in all(msg) do
-		print(m)
+----------------------- fx ----
+
+fx = {}
+
+function fx.init()
+	fx.bump_t = 0
+end
+
+function fx.bump(t)
+	if t > 6 then
+		sfx"2"
+	else
+		sfx"3"
+	end
+	fx.bump_t = t
+end
+
+function fx.update()
+	fx.bump_t -= 1
+end
+
+function fx.draw()
+	camera(0,0)
+	if fx.bump_t > 0 then
+		camera(0,-1)
 	end
 end
 __gfx__
