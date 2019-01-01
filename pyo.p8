@@ -207,7 +207,7 @@ function check_for_combo(i,j,change)
 	return numhits
 end
 
------------ callbacks ----
+---------------- callbacks ----
 
 start = {
 	move = function()
@@ -225,7 +225,6 @@ function _init()
 	fx.init()
 	state = start
 	init_hit()
-	palt(0,false)
 end
 
 function input()
@@ -253,6 +252,7 @@ fx = {}
 
 function fx.init()
 	fx.bump_t = 0
+	fx.blink_t = 0
 end
 
 function fx.bump(t)
@@ -266,6 +266,12 @@ end
 
 function fx.update()
 	fx.bump_t -= 1
+	if fx.blink_t%12==0 then
+		pal()
+	elseif fx.blink_t%12==6 then
+		pal(6,7)
+	end
+	fx.blink_t += 1
 end
 
 function fx.draw()
