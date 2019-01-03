@@ -4,19 +4,10 @@ __lua__
 -- hell
 -- work in progress
 
--- make a pico kanban
-
-
--- todo -----------------------
-
+--------------------- todo ----
 -- "go!"
-
 -- refactor the shit
-
 -- more enemies
-
--- remove tail when dashing
-
 
 gfx =
 { jesus = 001
@@ -45,9 +36,7 @@ function allergy(a)
 	pallergy(a, x+4,y+2)
 end
 
-
------------------- jesus
-
+-------------------- jesus ----
 function jesus(x, y)
 	local a =
 	{ f = gfx.jesus
@@ -93,9 +82,7 @@ function draw_jesus(a)
 	end
 end
 
-
-------------------------- aura
-
+--------------------- aura ----
 function aura(x, y)
 	local a =
 	{ tail = build_tail(x, y)
@@ -133,9 +120,7 @@ function draw_aura(a)
 	end
 end
 
-
----------- blade
-
+--------------------- blade ----
 function _blade(x,y)
 	return
 	{ x=x,y=y
@@ -327,7 +312,6 @@ function _chain()
 	end
 	}
 end
--->8
 -- next level
 function descend()
 	gamestate.fadeout = 144
@@ -368,10 +352,6 @@ function _level(n)
 
 	function lvl:move()
 		local jc = self.jc
-
-		if not btn"4" then
-			jc.four = false
-		end
 
 		pad.control(jc)
 
@@ -475,9 +455,8 @@ function _level(n)
 
 	return lvl
 end
--->8
----------------------- pad ----
 
+---------------------- pad ----
 pad = {}
 
 function pad.get_delta(speed)
@@ -494,39 +473,14 @@ function pad.control(a)
 	if (gamestate.fadeout) return
 
 	if (a.dead) return
-	if (a.four and a.four < 1) return
-
-	if not a.four and btn"4" and a.power >= 50 then
-		a.four = 6
-	end
-
-	local speed = 1
-	if a.four then
-		if a.power < 1 then
-			return
-		end
-		speed *= 2
-	end
 
 	local dx,dy = pad.get_delta(a.speed)
-	a.x += dx * speed
-	a.y += dy * speed
+	a.x += dx
+	a.y += dy
 
-	if a.four then
-		a.power -= 7
-		sfx(6)
-		if dx != 0 or dy != 0 then
-			a.four -= 1
-		end
-		if not gamestate.chain.dt then
-			a.y = min(a.y,112)
-		end
-		return
-	end
-
-	if not btn"5" then
+	if not btn"4" and not btn"5" then
 		a.five = false
-	elseif not a.five and btn"5" then
+	elseif not a.five and (btn"4" or btn"5") then
 		a.five = true
 		add(gamestate.blades,
 		_blade(a.x,a.y))
@@ -542,16 +496,13 @@ function pad.control(a)
 	end
 end
 
-
--->8
 function palette()
 	pal()
 	palt(0, false)
 	palt(12, true)
 end
 
--- rumble ---------------------
-
+------------------- rumble ----
 function rumble(time, power)
 	rumble_stop = gt + time
 	rumble_power = power
@@ -584,7 +535,6 @@ function _draw()
 	draw_rumble()
 	gamestate:draw()
 end
--->8
 function beam(x)
 	return
 	{ x = x + 6
@@ -778,9 +728,10 @@ cccccccccc000ccccccccccccccccccccccccccccccccccccc0a0cccc0200010100020cc00000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000090909090909090909090909090909090
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000090909090909090909090909090909090
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0
+00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000009191919191919191919191919191919191
+91910000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __label__
 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001
