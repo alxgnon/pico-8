@@ -21,7 +21,7 @@ function walls_hero(a)
 	a.y=max(a.y,1)
 	if a.y>528 then
 		lv+=1
-		a.y=1
+		a.y=32
 	end
 end
 
@@ -37,7 +37,7 @@ end
 
 function _init()
 	lv=0
-	pl={x=16,y=16}
+	pl={x=32,y=32}
 end
 
 function _update()
@@ -47,7 +47,6 @@ end
 function _draw()
 	cls()
 	camera_hero(pl)
-	rect(0,0,127,512,07)
 	map(lv*16,0,0,0,16,64)
 	draw_hero(pl)
 end
