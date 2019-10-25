@@ -1,48 +1,59 @@
 pico-8 cartridge // http://www.pico-8.com
 version 18
 __lua__
-function dpad(mult)
-	local dx,dy=0,0
-	if(btn"0")dx-=mult
-	if(btn"1")dx+=mult
-	if(btn"2")dy-=mult
-	if(btn"3")dy+=mult
-	return dx,dy
-end
+-- hero
+-- i want to make a videogame!
+--
 
-function player(x,y)
+-- player ---------------------
+
+function init_player(x,y)
 	return{
+		e=001,
 		x=x,
 		y=y,
-		speed=3,
-		update=function(a)
-			local dx,dy=dpad(a.speed)
-			a.x=a.x+dx
-			a.y=a.y+dy
-		end,
-		draw=function(a)
-			spr(1,a.x,a.y)
-		end
+		speed=3
 	}
 end
 
-function _init()
-	pl=player(32,32)
+function move_player(a)
+	local dx,dy=pad(a.speed)
+	a.x=a.x+dx
+	a.y=a.y+dy
 end
 
-function _update()
-	pl:update()
+function pad(speed)
+	local dx,dy=0,0
+	if(btn"0")dx-=speed
+	if(btn"1")dx+=speed
+	if(btn"2")dy-=speed
+	if(btn"3")dy+=speed
+	return dx,dy
 end
 
-function roomcam(a)
+function camera_player(a)
 	camera(flr(a.x/128)*128,
 		flr(a.y/128)*128)
 end
 
+function draw_player(a)
+	spr(a.e,a.x,a.y)
+end
+
+-- main -----------------------
+
+function _init()
+	pl=init_player(32,32)
+end
+
+function _update()
+	move_player(pl)
+end
+
 function _draw()
 	cls()
-	roomcam(pl)
-	pl:draw()
+	camera_player(pl)
+	draw_player(pl)
 end
 __gfx__
 00000000000770000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
