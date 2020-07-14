@@ -1,0 +1,94 @@
+pico-8 cartridge // http://www.pico-8.com
+version 27
+__lua__
+-- asura
+--
+-- init
+function _init()
+	actors={}
+	pl=_deva(60,1800)
+	camx,camy=0,pl.y
+	add(actors,pl)
+end
+
+-- update
+function _update()
+	for a in all(actors) do
+		if a==pl then
+			a:input()
+		end
+		a:update()
+	end
+end
+
+-- draw
+function _draw()
+	cls(13)
+	local cx,cy=pl:camera()
+	camx=camx+(cx-camx)/8
+	camy=camy+(cy-camy)/8
+	local sky=0
+	local hoz=2000-camy
+	rectfill(0,0,128,max(sky,0),0)
+	rectfill(0,min(hoz,127),128,128,4)
+	camera(camx,camy)
+	for a in all(actors) do
+		a:draw()
+	end
+	camera(0,0)
+	print(pl.x..","..pl.y)
+end
+-->8
+-- deva
+function _deva(x,y)
+	return{
+		x=x,
+		y=y,
+		dx=0,
+		dy=0,
+		flap=0,
+		-- deva:input
+		input=function(a)
+			if(btn(0))a.dx=-3
+			if(btn(1))a.dx=3
+			if btn(4) and a.flap==0 then
+				a.flap=1
+				a.dy=-14
+			elseif not btn(4) and a.dy>=-3 then
+				a.flap=0
+			end
+		end,
+		-- deva:update
+		update=function(a)
+			a.x+=a.dx
+			a.y+=a.dy
+			a.dy=a.dy+abs(a.y*0.001)
+			a.dx*=0.777
+			a.dy*=0.777
+		end,
+		-- deva:camera
+		camera=function(a)
+			return a.x-60,max(a.y-16,a.y+32s)
+		end,
+		-- deva:draw
+		draw=function(a)
+			local f=abs(a.flap)
+			local x,y=a.x,a.y
+			local fx,fy=a.dx/4,a.dy/4
+			rectfill(x+2,y-5,x+5,y-2,0)
+			rect(x+2,y-5,x+5,y-2,10)
+			spr(2+f,x-8,y-fx-fy,1,1,1)
+			spr(2+f,x+8,y+fx-fy)
+			spr(1,x,y)
+		end
+	}
+end
+__gfx__
+00000000006666000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0000000070ffff077777777077770000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0070070077ffff777777777777777000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000770007777f7770777777707777700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00077000777767770077077700777700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00700700077767700000007700077700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000006666000000000000077770000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0000000000aaaa000000000000007770000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
